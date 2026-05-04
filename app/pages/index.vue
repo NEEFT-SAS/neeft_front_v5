@@ -1,6 +1,6 @@
 <template>
   <div class="landing-home" aria-labelledby="landing-home-title">
-    qdz
+    <HomeHeroSection />
   </div>
 </template>
 
