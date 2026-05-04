@@ -1,0 +1,25 @@
+// App theme CSS tokens and component styles
+
+[data-theme='app'] {
+  // App-specific layers
+  --app-layer-modal: calc(var(--layer-header) + var(--layer-step));
+
+  // App-specific header
+  --app-header-height: calc(var(--unit) * 7);
+  --app-header-hit-size: calc(var(--unit) * 5);
+  --app-header-logo-size: calc(var(--unit) * 5);
+  --app-header-icon-size: calc(var(--unit) * 3.5);
+  --app-header-search-width: calc(var(--unit) * 30);
+  --app-header-column-min: calc(var(--unit) * 42);
+
+  // App-specific mobile nav
+  --app-mobile-nav-height: calc(var(--unit) * 5.75);
+
+  // App-specific utility
+  --app-hidden-clip: 50%;
+
+  // App-specific colors
+  --app-color-muted: color-mix(in oklch, var(--color-muted) 72%, var(--color-bg));
+  --app-color-subtle: color-mix(in oklch, var(--color-subtle) 76%, var(--color-bg));
+  --app-color-line: color-mix(in oklch, var(--color-line) 72%, var(--color-transparent));
+}

@@ -1,0 +1,61 @@
+// Landing theme CSS tokens and component styles
+
+[data-theme='landing'] {
+  // Landing-specific sizing
+  --landing-content-max: calc(var(--unit) * 156);
+  --landing-copy-max: calc(var(--unit) * 76);
+  --landing-card-min: calc(var(--unit) * 39);
+
+  // Landing-specific typography
+  --landing-font-footer-brand: calc(var(--unit) * 2.5);
+
+  // Landing-specific layers
+  --landing-blur-header: calc(var(--unit) * 1.5);
+
+  // Landing-specific header
+  --landing-header-height: calc(var(--landing-header-brand-size) * 0.75);
+  --landing-header-brand-size: calc(var(--unit) * 10);
+  --landing-header-hit-size: calc(var(--unit) * 5);
+  --landing-header-column-min: calc(var(--unit) * 42);
+  --landing-header-layer: var(--layer-header);
+
+  // Landing-specific footer
+  --landing-footer-inner-max: calc(var(--unit) * 155);
+  --landing-footer-brand-min: calc(var(--unit) * 34);
+  --landing-footer-column-min: calc(var(--unit) * 22);
+  --landing-footer-social-size: calc(var(--unit) * 6);
+  --landing-footer-help-size: calc(var(--unit) * 6);
+  --landing-footer-icon-size: calc(var(--unit) * 2);
+
+  // Landing-specific colors
+  --landing-color-header-bg: oklch(22.611% 0.02096 264.02 / 0.8);
+  --landing-color-header-text: oklch(96% 0.01 72);
+  --landing-color-header-muted: oklch(84% 0.018 72);
+  --landing-color-header-strong: oklch(99% 0.004 72);
+  --landing-color-header-inverse: oklch(10% 0.018 28);
+  --landing-color-header-line: oklch(96% 0.01 72 / 0.78);
+  --landing-color-header-line-disabled: oklch(96% 0.01 72 / 0.1);
+
+  // Landing-specific footer colors
+  --landing-color-footer-bg: oklch(13.5% 0.018 264);
+  --landing-color-footer-text: oklch(96% 0.01 72);
+  --landing-color-footer-muted: oklch(78% 0.018 72);
+  --landing-color-footer-line: oklch(96% 0.01 72 / 0.16);
+  --landing-color-footer-help-text: oklch(99% 0.004 72);
+
+  // Landing-specific social colors
+  --landing-color-social-bg: oklch(28% 0.035 264);
+  --landing-color-social-hover: oklch(34% 0.04 264);
+
+  // Landing-specific gradients
+  --landing-gradient-action: var(--gradient-action);
+  --landing-gradient-line: var(--gradient-line);
+}
+
+@import './mixins/breakpoints';
+
+@include breakpoint-lg {
+  [data-theme='landing'] {
+    --landing-header-height: var(--landing-header-brand-size);
+  }
+}

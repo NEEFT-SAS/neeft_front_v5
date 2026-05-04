@@ -1,0 +1,104 @@
+// Base global CSS tokens - shared between landing and app themes
+
+@import './landing.scss';
+@import './app.scss';
+
+:root {
+  // Unit system
+  --unit: 0.5rem;
+  --website-unit: var(--unit);
+
+  // Font family
+  --font-ui: ui-sans-serif, system-ui, sans-serif;
+
+  // Spacing scale (shared)
+  --space-1: var(--unit);
+  --space-2: calc(var(--unit) * 2);
+  --space-3: calc(var(--unit) * 3);
+  --space-4: calc(var(--unit) * 4);
+  --space-5: calc(var(--unit) * 5);
+  --space-6: calc(var(--unit) * 6);
+  --space-7: calc(var(--unit) * 7);
+  --space-8: calc(var(--unit) * 8);
+  --space-10: calc(var(--unit) * 10);
+  --space-12: calc(var(--unit) * 12);
+  --space-14: calc(var(--unit) * 14);
+  --space-16: calc(var(--unit) * 16);
+  --space-fluid: clamp(var(--space-3), calc(var(--space-2) + 3vw), var(--space-10));
+
+  // Border & Radius (shared)
+  --border: 0.0625rem;
+  --radius: var(--unit);
+  --radius-round: calc(var(--unit) * 999);
+
+  // Typography scale (shared)
+  --font-eyebrow: calc(var(--unit) * 1.75);
+  --font-body: calc(var(--unit) * 2.125);
+  --font-card: calc(var(--unit) * 2);
+  --font-section: calc(var(--unit) * 4);
+  --font-display: clamp(calc(var(--unit) * 5), calc(var(--unit) * 3 + 4vw), calc(var(--unit) * 7.25));
+  --font-weight-semibold: 600;
+
+  // Line heights (shared)
+  --line-tight: 1;
+  --line-title: 1.18;
+  --line-card: 1.12;
+  --line-base: 1.55;
+
+  // Motion (shared)
+  --motion-fast: 200ms;
+
+  // Layers (shared)
+  --layer-step: 10;
+  --layer-popover: calc(var(--layer-step) * 5);
+  --layer-header: calc(var(--layer-step) * 6);
+
+  // Base colors (shared)
+  --color-bg: oklch(11.5% 0.018 264);
+  --color-bg-soft: oklch(16% 0.021 264 / 0.92);
+  --color-bg-soft-hover: oklch(20% 0.024 264 / 0.95);
+  --color-surface: oklch(18% 0.023 264);
+  --color-surface-deep: oklch(15% 0.021 264);
+  --color-panel: oklch(9.5% 0.014 264 / 0.96);
+  --color-panel-line: oklch(96% 0.008 264 / 0.08);
+  --color-line: oklch(96% 0.008 264 / 0.12);
+  --color-line-strong: oklch(96% 0.01 72 / 0.78);
+  --color-text: oklch(98% 0.006 264);
+  --color-muted: oklch(88% 0.012 264);
+  --color-subtle: oklch(76% 0.03 264);
+  --color-accent: oklch(69.205% 0.20658 42.58);
+  --color-accent-strong: oklch(74.736% 0.18012 57.36);
+  --color-warm: oklch(75% 0.18 58);
+  --color-warm-strong: oklch(70% 0.2 42);
+  --color-success: oklch(72% 0.16 150);
+  --color-danger: oklch(66% 0.19 28);
+  --color-inverse: oklch(10% 0.018 28);
+  --color-shadow: oklch(0% 0 0 / 0.5);
+  --color-transparent: oklch(0% 0 0 / 0);
+
+  // Gradients (shared)
+  --gradient-action: linear-gradient(135deg, var(--color-accent), var(--color-accent-strong));
+  --gradient-line: linear-gradient(90deg, var(--color-warm), var(--color-warm-strong));
+}
+
+// Base HTML styles
+html,
+body,
+#__nuxt {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  min-width: 0;
+  letter-spacing: 0;
+}
