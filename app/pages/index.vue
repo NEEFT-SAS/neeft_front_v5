@@ -3,6 +3,7 @@
     <HomeHeroSection />
     <HomeProcessSection />
     <HomeFeaturesSection />
+    <HomeLaunchSection />
   </div>
 </template>
 

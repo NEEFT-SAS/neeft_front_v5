@@ -59,7 +59,7 @@
 
 @container landing-home-hero (max-width: 42rem) {
   .landing-home-hero__inner {
-    padding: calc(var(--header-height) + var(--space-6)) 0 var(--space-8);
+    padding: calc(var(--landing-header-height) + var(--space-10)) 0 var(--space-8);
   }
 }
 
