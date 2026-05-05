@@ -22,4 +22,8 @@
   --app-color-muted: color-mix(in oklch, var(--color-muted) 72%, var(--color-bg));
   --app-color-subtle: color-mix(in oklch, var(--color-subtle) 76%, var(--color-bg));
   --app-color-line: color-mix(in oklch, var(--color-line) 72%, var(--color-transparent));
+  --app-color-panel: color-mix(in oklch, var(--color-panel) 86%, var(--color-bg));
+  --app-color-panel-hover: color-mix(in oklch, var(--color-panel-hover) 76%, var(--color-bg));
+  --app-color-strong-bg: oklch(99% 0.004 255);
+  --app-color-strong-text: oklch(13% 0.018 255);
 }
