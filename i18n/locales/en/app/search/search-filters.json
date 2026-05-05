@@ -1,0 +1,13 @@
+{
+  "app": {
+    "search": {
+      "filters": {
+        "title": "Filters",
+        "closeLabel": "Close filters",
+        "resetLabel": "Reset",
+        "selectPlaceholder": "All",
+        "modalTitle": "Target search"
+      }
+    }
+  }
+}

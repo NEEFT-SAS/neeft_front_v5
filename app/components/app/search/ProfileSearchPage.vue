@@ -6,11 +6,11 @@
     :title-id="`${searchDomPrefix}-title`"
     :actions-label="actionsLabel"
     :results-count-id="`${searchDomPrefix}-results-count`"
-    :eyebrow="props.eyebrow"
-    :title="props.title"
-    :description="props.description"
+    :eyebrow="eyebrow"
+    :title="title"
+    :description="description"
     :results-label="resultsLabel"
-    :top-label="topGameLabel"
+    :top-label="topLabel"
     :show-header-summary="false"
     show-toolbar-summary
     :show-toolbar-count="false"
@@ -240,6 +240,8 @@ import { composeSearchSchema, searchGameOptions, type SearchEntityKind, type Sea
 type LayoutTheme = 'landing' | 'app'
 type ProfileKind = SearchEntityKind
 
+const { t } = useI18n()
+
 const props = defineProps({
   layoutTheme: {
     type: String,
@@ -251,15 +253,42 @@ const props = defineProps({
     default: 'players',
     validator: (value: string) => ['players', 'staffs', 'teams'].includes(value)
   },
-  eyebrow: { type: String, default: 'Recherche joueurs' },
-  title: { type: String, default: 'Joueurs competitifs' },
-  description: { type: String, default: 'Une liste lisible, filtree a gauche, centree sur les signaux utiles pour recruter vite.' },
-  searchLabel: { type: String, default: 'Joueur' },
-  searchPlaceholder: { type: String, default: 'Pseudo, jeu, role' },
-  resultSingular: { type: String, default: 'joueur' },
-  resultPlural: { type: String, default: 'joueurs' },
-  profilePathPrefix: { type: String, default: '/players' },
-  emptyMessage: { type: String, default: 'Aucun joueur ne correspond a ces filtres.' }
+  profilePathPrefix: { type: String, default: '/players' }
+})
+
+const searchI18nKey = computed(() => `app.search.${props.profileKind}`)
+
+const eyebrow = computed(() => {
+  const value = t(`${searchI18nKey.value}.hero.eyebrow`)
+  return typeof value === 'string' ? value : ''
+})
+const title = computed(() => {
+  const value = t(`${searchI18nKey.value}.hero.title`)
+  return typeof value === 'string' ? value : ''
+})
+const description = computed(() => {
+  const value = t(`${searchI18nKey.value}.hero.description`)
+  return typeof value === 'string' ? value : ''
+})
+const searchLabel = computed(() => {
+  const value = t(`${searchI18nKey.value}.searchLabel`)
+  return typeof value === 'string' ? value : ''
+})
+const searchPlaceholder = computed(() => {
+  const value = t(`${searchI18nKey.value}.searchPlaceholder`)
+  return typeof value === 'string' ? value : ''
+})
+const resultSingular = computed(() => {
+  const value = t(`${searchI18nKey.value}.resultSingular`)
+  return typeof value === 'string' ? value : 'joueur'
+})
+const resultPlural = computed(() => {
+  const value = t(`${searchI18nKey.value}.resultPlural`)
+  return typeof value === 'string' ? value : 'joueurs'
+})
+const emptyMessage = computed(() => {
+  const value = t(`${searchI18nKey.value}.emptyMessage`)
+  return typeof value === 'string' ? value : 'Aucun résultat'
 })
 
 const searchPageSize = 24
@@ -525,8 +554,8 @@ const activeFilters = computed<SearchFilterDefinition[]>(() => {
 
     return {
       ...nextFilter,
-      label: props.searchLabel || nextFilter.label,
-      placeholder: props.searchPlaceholder || nextFilter.placeholder
+      label: searchLabel || nextFilter.label,
+      placeholder: searchPlaceholder || nextFilter.placeholder
     }
   })
 })
@@ -1005,7 +1034,15 @@ const resultsLabel = computed(() => {
     : profileKind.value === 'teams'
       ? teamSearchMeta.found
       : visibleResultCount.value
-  return `${total} ${total > 1 ? props.resultPlural : props.resultSingular}`
+  const singular = typeof resultSingular.value === 'string' ? resultSingular.value : 'joueur'
+  const plural = typeof resultPlural.value === 'string' ? resultPlural.value : 'joueurs'
+  const totalNum = Number(total) || 0
+  return `${totalNum} ${totalNum > 1 ? plural : singular}`
+})
+
+const topLabel = computed(() => {
+  const value = topGameLabel.value
+  return typeof value === 'string' ? value : ''
 })
 
 const emptySearchMessage = computed(() => {
@@ -1019,7 +1056,7 @@ const emptySearchMessage = computed(() => {
     if (teamSearchError.value) return teamSearchError.value
   }
 
-  return props.emptyMessage
+  return emptyMessage
 })
 
 const topGameLabel = computed(() => {

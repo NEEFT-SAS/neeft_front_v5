@@ -1,0 +1,42 @@
+{
+  "app": {
+    "search": {
+      "players": {
+        "hero": {
+          "eyebrow": "Recherche joueurs",
+          "title": "Joueurs compétitifs",
+          "description": "Une liste lisible, filtrée à gauche, centrée sur les signaux utiles pour recruter vite."
+        },
+        "searchLabel": "Joueur",
+        "searchPlaceholder": "Pseudo, jeu, role",
+        "resultSingular": "joueur",
+        "resultPlural": "joueurs",
+        "emptyMessage": "Aucun joueur ne correspond à ces filtres."
+      },
+      "staffs": {
+        "hero": {
+          "eyebrow": "Recherche staff",
+          "title": "Staff compétitifs",
+          "description": "Trouvez le staff dont vous avez besoin, filtré par rôle et jeu."
+        },
+        "searchLabel": "Staff",
+        "searchPlaceholder": "Pseudo, role, jeu",
+        "resultSingular": "staff",
+        "resultPlural": "staffs",
+        "emptyMessage": "Aucun staff ne correspond à ces filtres."
+      },
+      "teams": {
+        "hero": {
+          "eyebrow": "Recherche équipes",
+          "title": "Équipes compétitives",
+          "description": "Trouvez des équipes par jeu, statut et disponibilité."
+        },
+        "searchLabel": "Équipe",
+        "searchPlaceholder": "Nom, jeu, statut",
+        "resultSingular": "équipe",
+        "resultPlural": "équipes",
+        "emptyMessage": "Aucune équipe ne correspond à ces filtres."
+      }
+    }
+  }
+}

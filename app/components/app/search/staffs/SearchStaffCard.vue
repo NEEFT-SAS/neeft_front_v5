@@ -73,7 +73,7 @@
       </dl>
 
       <NuxtLinkLocale class="search-staff-card__profile-link" :to="props.profilePath">
-        {{ props.profileLabel }}
+        {{ profileLabel }}
       </NuxtLinkLocale>
     </div>
   </article>
@@ -114,7 +114,7 @@ const props = defineProps({
   },
   profileLabel: {
     type: String,
-    default: 'Voir le profil'
+    default: ''
   },
   placeholderItem: {
     type: Object as PropType<SearchStaffCardMetaItem>,
@@ -124,6 +124,10 @@ const props = defineProps({
     })
   }
 })
+
+const { t } = useI18n()
+
+const profileLabel = computed(() => props.profileLabel || t('app.search.cards.viewProfile'))
 
 const staffRole = computed(() => {
   return props.staff.role || props.staff.rank || props.placeholderItem

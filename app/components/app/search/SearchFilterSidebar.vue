@@ -4,7 +4,7 @@
       <button
         class="search-filter-sidebar__backdrop"
         type="button"
-        :aria-label="props.closeLabel"
+        :aria-label="closeLabel"
         @click="updateSidebarVisibility(false)"
       />
 
@@ -20,7 +20,7 @@
               <div class="search-filter-sidebar__title">
                 <CustomIcon icon="lucide:list-checks" size="sm" color="primary" shape="ghost" />
                 <h2 :id="panelHeadingId">
-                  {{ props.title }}
+                  {{ title }}
                 </h2>
               </div>
 
@@ -32,7 +32,7 @@
             <button
               class="search-filter-sidebar__close"
               type="button"
-              :aria-label="props.closeLabel"
+              :aria-label="closeLabel"
               @click="updateSidebarVisibility(false)"
             >
               <Icon name="lucide:x" aria-hidden="true" />
@@ -66,7 +66,7 @@
                 :model-value="getSingleValue(filter.key)"
                 :name="filter.key"
                 :label="filter.label"
-                :placeholder="props.selectPlaceholder"
+                :placeholder="selectPlaceholder"
                 :options="getOptions(filter)"
                 :searchable="filter.searchable === true"
                 size="md"
@@ -79,7 +79,7 @@
                 :model-value="getMultiValue(filter.key)"
                 :name="filter.key"
                 :label="filter.label"
-                :placeholder="props.selectPlaceholder"
+                :placeholder="selectPlaceholder"
                 :options="getOptions(filter)"
                 :searchable="filter.searchable === true"
                 size="md"
@@ -92,7 +92,7 @@
                 :model-value="getBooleanSelectionValue(filter.key, filter)"
                 :name="filter.key"
                 :label="filter.label"
-                :placeholder="props.selectPlaceholder"
+                :placeholder="selectPlaceholder"
                 :options="getBooleanOptions(filter)"
                 size="md"
                 @update:model-value="value => updateBooleanSelectionFilter(filter.key, filter, value)"
@@ -127,7 +127,7 @@
 
           <div class="search-filter-sidebar__footer">
             <CustomButton
-              :label="props.resetLabel"
+              :label="resetLabel"
               :theme="props.theme"
               variant="outlined"
               color="secondary"
@@ -152,10 +152,12 @@ const emptyRangeValue = (): SearchRangeValue => ({
   max: ''
 })
 
+const { t } = useI18n()
+
 const props = defineProps({
   activeFilterCount: { type: Number, required: true },
   activeFilterLabel: { type: String, required: true },
-  closeLabel: { type: String, default: 'Fermer les filtres' },
+  closeLabel: { type: String, default: '' },
   controlsId: { type: String, default: 'search-filters-title' },
   filters: {
     type: Array as PropType<SearchFilterDefinition[]>,
@@ -167,15 +169,20 @@ const props = defineProps({
   },
   idPrefix: { type: String, default: 'search-filters' },
   modelValue: { type: Boolean, default: false },
-  resetLabel: { type: String, default: 'Reinitialiser' },
-  selectPlaceholder: { type: String, default: 'Tous' },
+  resetLabel: { type: String, default: '' },
+  selectPlaceholder: { type: String, default: '' },
   theme: {
     type: String,
     default: 'landing',
     validator: (value: string) => ['landing', 'app'].includes(value)
   },
-  title: { type: String, default: 'Filtres' }
+  title: { type: String, default: '' }
 })
+
+const closeLabel = computed(() => props.closeLabel || t('app.search.filters.closeLabel'))
+const resetLabel = computed(() => props.resetLabel || t('app.search.filters.resetLabel'))
+const selectPlaceholder = computed(() => props.selectPlaceholder || t('app.search.filters.selectPlaceholder'))
+const title = computed(() => props.title || t('app.search.filters.title'))
 
 const emit = defineEmits(['reset', 'update:modelValue', 'update:filterValues'])
 

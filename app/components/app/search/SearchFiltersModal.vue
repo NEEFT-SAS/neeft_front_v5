@@ -1,11 +1,11 @@
 <template>
   <CustomModal
     :model-value="props.modelValue"
-    :title="props.title"
+    :title="title"
     :desc="props.activeFilterLabel"
     icon="lucide:list-checks"
     size="xl"
-    :close-label="props.closeLabel"
+    :close-label="closeLabel"
     :theme="props.theme"
     :title-id="props.controlsId"
     @update:model-value="updateModalVisibility"
@@ -44,7 +44,7 @@
           :model-value="getSingleValue(filter.key)"
           :name="filter.key"
           :label="filter.label"
-          :placeholder="props.selectPlaceholder"
+          :placeholder="selectPlaceholder"
           :options="getOptions(filter)"
           :searchable="filter.searchable === true"
           size="md"
@@ -121,7 +121,7 @@
 
     <template #footer>
       <CustomButton
-        :label="props.resetLabel"
+        :label="resetLabel"
         :theme="props.theme"
         variant="outlined"
         color="secondary"
@@ -142,10 +142,12 @@ const emptyRangeValue = (): SearchRangeValue => ({
   max: ''
 })
 
+const { t } = useI18n()
+
 const props = defineProps({
   activeFilterCount: { type: Number, required: true },
   activeFilterLabel: { type: String, required: true },
-  closeLabel: { type: String, default: 'Fermer les filtres' },
+  closeLabel: { type: String, default: '' },
   controlsId: { type: String, default: 'search-filters-title' },
   filters: {
     type: Array as PropType<SearchFilterDefinition[]>,
@@ -157,15 +159,20 @@ const props = defineProps({
   },
   idPrefix: { type: String, default: 'search-filters' },
   modelValue: { type: Boolean, default: false },
-  resetLabel: { type: String, default: 'Reinitialiser' },
-  selectPlaceholder: { type: String, default: 'Tous' },
+  resetLabel: { type: String, default: '' },
+  selectPlaceholder: { type: String, default: '' },
   theme: {
     type: String,
     default: 'landing',
     validator: (value: string) => ['landing', 'app'].includes(value)
   },
-  title: { type: String, default: 'Cibler la recherche' }
+  title: { type: String, default: '' }
 })
+
+const closeLabel = computed(() => props.closeLabel || t('app.search.filters.closeLabel'))
+const resetLabel = computed(() => props.resetLabel || t('app.search.filters.resetLabel'))
+const selectPlaceholder = computed(() => props.selectPlaceholder || t('app.search.filters.selectPlaceholder'))
+const title = computed(() => props.title || t('app.search.filters.modalTitle'))
 
 const emit = defineEmits(['reset', 'update:modelValue', 'update:filterValues'])
 

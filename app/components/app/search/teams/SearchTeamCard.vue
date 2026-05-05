@@ -79,7 +79,7 @@
       </dl>
 
       <NuxtLinkLocale class="search-team-card__profile-link" :to="props.profilePath">
-        {{ props.profileLabel }}
+        {{ profileLabel }}
       </NuxtLinkLocale>
     </div>
   </article>
@@ -112,7 +112,7 @@ const props = defineProps({
   },
   profileLabel: {
     type: String,
-    default: 'Voir l\'equipe'
+    default: ''
   },
   placeholderItem: {
     type: Object as PropType<SearchTeamCardPlaceholderItem>,
@@ -122,6 +122,10 @@ const props = defineProps({
     })
   }
 })
+
+const { t } = useI18n()
+
+const profileLabel = computed(() => props.profileLabel || t('app.search.cards.viewTeam'))
 
 const isImageSource = (value: string) => {
   return /^(https?:\/\/|\/\/|\/|data:image\/|blob:)/.test(value)

@@ -124,7 +124,7 @@
       </dl>
 
       <NuxtLinkLocale class="search-players-player__profile-link" :to="props.profilePath">
-        {{ props.profileLabel }}
+        {{ profileLabel }}
       </NuxtLinkLocale>
     </div>
   </article>
@@ -191,7 +191,7 @@ const props = defineProps({
   },
   profileLabel: {
     type: String,
-    default: 'Voir le profil'
+    default: ''
   },
   placeholderItem: {
     type: Object as PropType<SearchPlayerCardPlaceholderItem>,
@@ -201,6 +201,10 @@ const props = defineProps({
     })
   }
 })
+
+const { t } = useI18n()
+
+const profileLabel = computed(() => props.profileLabel || t('app.search.cards.viewProfile'))
 
 const nuxtIconPrefixes = new Set(['lucide', 'logos', 'simple-icons'])
 const customIconProvidersByPrefix = new Map([

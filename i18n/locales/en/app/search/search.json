@@ -1,0 +1,42 @@
+{
+  "app": {
+    "search": {
+      "players": {
+        "hero": {
+          "eyebrow": "Player search",
+          "title": "Competitive players",
+          "description": "A readable list, filtered on the left, focused on useful signals for quick recruiting."
+        },
+        "searchLabel": "Player",
+        "searchPlaceholder": "Username, game, role",
+        "resultSingular": "player",
+        "resultPlural": "players",
+        "emptyMessage": "No player matches these filters."
+      },
+      "staffs": {
+        "hero": {
+          "eyebrow": "Staff search",
+          "title": "Competitive staff",
+          "description": "Find the staff you need, filtered by role and game."
+        },
+        "searchLabel": "Staff",
+        "searchPlaceholder": "Username, role, game",
+        "resultSingular": "staff",
+        "resultPlural": "staffs",
+        "emptyMessage": "No staff matches these filters."
+      },
+      "teams": {
+        "hero": {
+          "eyebrow": "Team search",
+          "title": "Competitive teams",
+          "description": "Find teams by game, status and availability."
+        },
+        "searchLabel": "Team",
+        "searchPlaceholder": "Name, game, status",
+        "resultSingular": "team",
+        "resultPlural": "teams",
+        "emptyMessage": "No team matches these filters."
+      }
+    }
+  }
+}

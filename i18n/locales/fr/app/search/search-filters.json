@@ -1,0 +1,13 @@
+{
+  "app": {
+    "search": {
+      "filters": {
+        "title": "Filtres",
+        "closeLabel": "Fermer les filtres",
+        "resetLabel": "Réinitialiser",
+        "selectPlaceholder": "Tous",
+        "modalTitle": "Cibler la recherche"
+      }
+    }
+  }
+}

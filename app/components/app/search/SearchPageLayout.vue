@@ -40,14 +40,14 @@
             <div
               v-if="props.showHeaderSummary"
               class="search-players-results__summary"
-              :aria-label="props.summaryLabel"
+              :aria-label="summaryLabel"
             >
               <span>{{ props.resultsLabel }}</span>
               <span>{{ props.topLabel }}</span>
             </div>
           </header>
 
-          <nav v-if="hasActionsSlot" class="search-players-games" :aria-label="props.actionsLabel">
+          <nav v-if="hasActionsSlot" class="search-players-games" :aria-label="actionsLabel">
             <ul>
               <slot name="actions" />
             </ul>
@@ -56,7 +56,7 @@
           <div class="search-players-results__toolbar">
             <CustomButton
               v-if="props.showFilterButton"
-              :label="props.filterButtonLabel"
+              :label="filterButtonLabel"
               left-icon="lucide:list-checks"
               :theme="props.layoutTheme"
               variant="filled"
@@ -69,11 +69,11 @@
             />
 
             <p v-if="props.showToolbarCount" :id="props.resultsCountId" aria-live="polite">
-              {{ props.resultsLabel }}
+              {{ displayResultsLabel }}
             </p>
 
             <label v-if="props.showSortControl" class="search-players-sort" :for="props.sortSelectId">
-              <span>{{ props.sortLabel }}</span>
+              <span>{{ sortLabel }}</span>
               <select :id="props.sortSelectId" :value="props.sortMode" @change="onSortChange">
                 <option v-for="option in props.sortOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
@@ -84,7 +84,7 @@
             <div
               v-if="props.showToolbarSummary"
               class="search-players-results__summary search-players-results__summary--toolbar"
-              :aria-label="props.summaryLabel"
+              :aria-label="summaryLabel"
             >
               <span>{{ props.resultsLabel }}</span>
               <span>{{ props.topLabel }}</span>
@@ -120,6 +120,8 @@ type SearchSortOption = {
 
 const slots = useSlots()
 
+const { t } = useI18n()
+
 const props = defineProps({
   layoutTheme: {
     type: String,
@@ -140,19 +142,19 @@ const props = defineProps({
   eyebrow: { type: String, default: '' },
   title: { type: String, default: '' },
   description: { type: String, default: '' },
-  summaryLabel: { type: String, default: 'Synthese des resultats' },
-  actionsLabel: { type: String, default: 'Filtres principaux' },
-  resultsLabel: { type: String, default: '' },
-  topLabel: { type: String, default: '' },
+  summaryLabel: { type: String, default: '' },
+  actionsLabel: { type: String, default: '' },
+  resultsLabel: { type: [String, Number], default: '' },
+  topLabel: { type: [String, Number], default: '' },
   showHeaderSummary: { type: Boolean, default: true },
   showToolbarSummary: { type: Boolean, default: false },
   showToolbarCount: { type: Boolean, default: true },
   showFilterButton: { type: Boolean, default: false },
-  filterButtonLabel: { type: String, default: 'Filtres' },
+  filterButtonLabel: { type: String, default: '' },
   filterControlsId: { type: String, default: '' },
   isFilterModalOpen: { type: Boolean, default: false },
   showSortControl: { type: Boolean, default: true },
-  sortLabel: { type: String, default: 'Tri' },
+  sortLabel: { type: String, default: '' },
   sortSelectId: { type: String, default: 'search-sort' },
   sortMode: { type: String, default: '' },
   sortOptions: {
@@ -164,6 +166,11 @@ const props = defineProps({
   resultListDescribedby: { type: String, default: '' },
   emptyMessage: { type: String, default: '' }
 })
+
+const summaryLabel = computed(() => props.summaryLabel || t('app.search.layout.summaryLabel'))
+const actionsLabel = computed(() => props.actionsLabel || t('app.search.layout.actionsLabel'))
+const filterButtonLabel = computed(() => props.filterButtonLabel || t('app.search.layout.filterButtonLabel'))
+const sortLabel = computed(() => props.sortLabel || t('app.search.layout.sortLabel'))
 
 const emit = defineEmits(['update:sortMode', 'open-filters'])
 

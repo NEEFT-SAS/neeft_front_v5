@@ -1,0 +1,12 @@
+{
+  "app": {
+    "search": {
+      "layout": {
+        "summaryLabel": "Results summary",
+        "actionsLabel": "Main filters",
+        "filterButtonLabel": "Filters",
+        "sortLabel": "Sort"
+      }
+    }
+  }
+}

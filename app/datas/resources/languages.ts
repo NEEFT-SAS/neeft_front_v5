@@ -23,7 +23,11 @@ export const appLanguages = [
       'fr/global/resource.json',
       'fr/landing/layout.json',
       'fr/landing/home/home.json',
-      'fr/landing/auth/auth.json'
+      'fr/landing/auth/auth.json',
+      'fr/app/search/search.json',
+      'fr/app/search/search-layout.json',
+      'fr/app/search/search-filters.json',
+      'fr/app/search/search-cards.json'
     ]
   },
   {
@@ -40,7 +44,11 @@ export const appLanguages = [
       'en/global/resource.json',
       'en/landing/layout.json',
       'en/landing/home/home.json',
-      'en/landing/auth/auth.json'
+      'en/landing/auth/auth.json',
+      'en/app/search/search.json',
+      'en/app/search/search-layout.json',
+      'en/app/search/search-filters.json',
+      'en/app/search/search-cards.json'
     ]
   }
 ] as const satisfies readonly AppLanguageResource[]

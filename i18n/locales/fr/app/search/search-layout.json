@@ -1,0 +1,12 @@
+{
+  "app": {
+    "search": {
+      "layout": {
+        "summaryLabel": "Synthèse des résultats",
+        "actionsLabel": "Filtres principaux",
+        "filterButtonLabel": "Filtres",
+        "sortLabel": "Tri"
+      }
+    }
+  }
+}

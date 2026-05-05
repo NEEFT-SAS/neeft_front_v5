@@ -1,0 +1,10 @@
+{
+  "app": {
+    "search": {
+      "cards": {
+        "viewProfile": "Voir le profil",
+        "viewTeam": "Voir l'équipe"
+      }
+    }
+  }
+}
