@@ -52,19 +52,11 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue'
-
 type RouteTabItem = {
   label: string
-  to?: string
-  value?: string
+  to: string
   icon?: string
-  badge?: string
   disabled?: boolean
-  invalid?: boolean
-  invalidLabel?: string
-  exact?: boolean
-  ariaLabel?: string
 }
 
 const props = defineProps({

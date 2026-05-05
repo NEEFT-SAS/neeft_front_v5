@@ -59,19 +59,13 @@ import CustomInputCheckbox from './CustomInputCheckbox.vue'
 type CheckboxOptionValue = string | number
 
 type CheckboxOptionInput = Record<string, unknown> & {
-  value?: CheckboxOptionValue
-  label?: string
-  description?: string
+  label: string
+  value: CheckboxOptionValue
   disabled?: boolean
 }
 
-type CheckboxOption = {
-  value: CheckboxOptionValue
-  label: string
-  description: string
-  disabled: boolean
-  key: string
-  raw: CheckboxOptionInput
+type CheckboxOption = CheckboxOptionInput & {
+  checked?: boolean
 }
 
 const generatedId = useId()

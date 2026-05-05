@@ -59,19 +59,13 @@ import CustomInputRadio from './CustomInputRadio.vue'
 type RadioOptionValue = string | number | boolean
 
 type RadioOptionInput = Record<string, unknown> & {
-  value?: RadioOptionValue
-  label?: string
-  description?: string
+  label: string
+  value: RadioOptionValue
   disabled?: boolean
 }
 
-type RadioOption = {
-  value: RadioOptionValue
-  label: string
-  description: string
-  disabled: boolean
-  key: string
-  raw: RadioOptionInput
+type RadioOption = RadioOptionInput & {
+  checked?: boolean
 }
 
 const generatedId = useId()

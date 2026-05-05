@@ -80,10 +80,7 @@
       </NuxtLink>
     </nav>
 
-    <form class="app-header-modal__search" role="search" @submit.prevent>
-      <label for="app-header-search">Rechercher</label>
-      <input id="app-header-search" type="search" placeholder="Rechercher...">
-    </form>
+    <AppHeaderSearch />
 
     <div class="app-header-modal__actions" aria-label="Actions">
       <CustomLink
@@ -340,41 +337,6 @@ watch(() => props.open, async (isOpen) => {
 
 .app-header-modal__desktop-panel-link:hover,
 .app-header-modal__desktop-panel-link.router-link-active {
-  background-color: var(--app-header-color-panel-hover);
-}
-
-.app-header-modal__search {
-  width: min(100%, var(--app-header-search-width));
-  justify-self: center;
-}
-
-.app-header-modal__search label {
-  position: absolute;
-  width: var(--app-header-border);
-  height: var(--app-header-border);
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
-.app-header-modal__search input {
-  width: 100%;
-  min-height: 2rem;
-  padding: 0 0.5rem;
-  border: 0;
-  border-radius: var(--app-header-radius);
-  background-color: var(--app-header-color-panel);
-  color: var(--app-header-color-text);
-  font: inherit;
-  font-size: 0.875rem;
-  outline: none;
-}
-
-.app-header-modal__search input::placeholder {
-  color: var(--app-header-color-subtle);
-  opacity: 1;
-}
-
-.app-header-modal__search input:hover {
   background-color: var(--app-header-color-panel-hover);
 }
 

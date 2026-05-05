@@ -53,14 +53,9 @@ type AvatarColor = 'primary' | 'secondary' | 'neutral'
 type AvatarGroupOverlap = 'sm' | 'md' | 'lg'
 
 type AvatarGroupItem = {
-  key?: string | number
   src?: string
   alt?: string
-  name?: string
-  initials?: string
-  icon?: string
-  ariaLabel?: string
-  color?: AvatarColor
+  fallback?: string
 }
 
 const DEFAULT_VISIBLE_AVATARS = 4

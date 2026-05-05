@@ -15,7 +15,7 @@
 type HeaderPopupTheme = 'app' | 'landing'
 type HeaderPopupAlign = 'start' | 'end'
 
-defineProps<{
+const { theme = 'app', align = 'end' } = defineProps<{
   id: string
   open: boolean
   theme?: HeaderPopupTheme

@@ -123,22 +123,16 @@
 type SelectionOptionValue = string | number
 
 type SelectionOptionInput = Record<string, unknown> & {
-  value?: SelectionOptionValue
-  label?: string
-  icon?: string
-  disabled?: boolean
-}
-
-type SelectionOption = {
-  value: SelectionOptionValue
   label: string
+  value: SelectionOptionValue
   icon?: string
   disabled?: boolean
-  key: string
-  raw: SelectionOptionInput
 }
 
-const generatedId = useId()
+type SelectionOption = SelectionOptionInput & {
+  count?: number
+}
+
 const { t, te } = useI18n()
 
 const props = defineProps({

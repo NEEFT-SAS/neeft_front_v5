@@ -26,4 +26,11 @@
   --app-color-panel-hover: color-mix(in oklch, var(--color-panel-hover) 76%, var(--color-bg));
   --app-color-strong-bg: oklch(99% 0.004 255);
   --app-color-strong-text: oklch(13% 0.018 255);
+  
+  // Landing color fallbacks for CustomButton compatibility
+  --landing-color-header-strong: var(--app-color-strong-text);
+  --landing-color-header-text: var(--color-text);
+  --landing-color-header-line: var(--app-color-line);
+  --landing-color-header-line-disabled: color-mix(in oklch, var(--app-color-line) 40%, var(--color-transparent));
+  --landing-color-header-inverse: var(--app-color-strong-bg);
 }
