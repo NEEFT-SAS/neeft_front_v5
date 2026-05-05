@@ -1,11 +1,9 @@
 <template>
   <div class="player-profile-overview">
-    <p>Contenu de l'onglet Apercu</p>
+    <UserProfileInformationWidget />
   </div>
 </template>
 
 <style scoped>
-.player-profile-overview {
-  padding: var(--profile-space-4);
-}
+
 </style>
