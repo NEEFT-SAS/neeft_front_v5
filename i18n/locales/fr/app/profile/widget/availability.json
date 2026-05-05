@@ -1,0 +1,121 @@
+{
+  "app": {
+    "profile": {
+      "widget": {
+        "availability": {
+          "player": {
+            "section": {
+              "title": "Disponibilites",
+              "subtitle": "Creneaux de jeu",
+              "editAriaLabel": "Modifier les disponibilites",
+              "ariaLabel": "Disponibilites du joueur"
+            },
+            "states": {
+              "loading": "Chargement des disponibilites.",
+              "error": "Impossible de charger les disponibilites.",
+              "ownerEmpty": "Ajoute tes disponibilites pour guider les contacts.",
+              "visitorEmpty": "Aucune disponibilite renseignee."
+            },
+            "summary": {
+              "single": "creneau ouvert",
+              "plural": "creneaux ouverts"
+            },
+            "status": {
+              "available": "disponible",
+              "unavailable": "indisponible"
+            },
+            "legend": {
+              "available": "Disponible",
+              "closed": "Ferme"
+            },
+            "weekdays": {
+              "monday": {
+                "short": "Lun",
+                "label": "Lundi"
+              },
+              "tuesday": {
+                "short": "Mar",
+                "label": "Mardi"
+              },
+              "wednesday": {
+                "short": "Mer",
+                "label": "Mercredi"
+              },
+              "thursday": {
+                "short": "Jeu",
+                "label": "Jeudi"
+              },
+              "friday": {
+                "short": "Ven",
+                "label": "Vendredi"
+              },
+              "saturday": {
+                "short": "Sam",
+                "label": "Samedi"
+              },
+              "sunday": {
+                "short": "Dim",
+                "label": "Dimanche"
+              }
+            },
+            "slots": {
+              "morning": {
+                "short": "Mat",
+                "label": "Matin",
+                "range": "08:00 - 12:00"
+              },
+              "afternoon": {
+                "short": "Apr",
+                "label": "Apres-midi",
+                "range": "12:00 - 18:00"
+              },
+              "evening": {
+                "short": "Soir",
+                "label": "Soir",
+                "range": "18:00 - 00:00"
+              },
+              "night": {
+                "short": "Nuit",
+                "label": "Nuit",
+                "range": "00:00 - 08:00"
+              }
+            },
+            "matrix": {
+              "slotAriaLabel": "{day} {slot}: {status}"
+            },
+            "modal": {
+              "title": "Modifier les disponibilites",
+              "description": "Garde uniquement les creneaux utiles pour etre contacte au bon moment.",
+              "actions": {
+                "cancel": "Annuler",
+                "submit": "Enregistrer"
+              },
+              "intro": "Selectionne les moments ou le joueur peut etre contacte pour jouer, tester ou discuter.",
+              "selectedCount": "{count} selectionnes",
+              "daySlots": "{selected} / {total} creneaux",
+              "daySwitch": {
+                "ariaLabel": "Activer tous les creneaux {day}",
+                "on": "Tout",
+                "off": "Non"
+              },
+              "errors": {
+                "saveUnavailable": "Enregistrement indisponible.",
+                "saveFailed": "Impossible d enregistrer les disponibilites."
+              },
+              "toast": {
+                "success": {
+                  "title": "Disponibilites mises a jour",
+                  "description": "Les creneaux du profil ont ete enregistres."
+                },
+                "error": {
+                  "title": "Echec de l enregistrement",
+                  "description": "Les disponibilites n ont pas ete mises a jour."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

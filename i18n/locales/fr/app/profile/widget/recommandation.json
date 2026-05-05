@@ -1,0 +1,77 @@
+{
+  "app": {
+    "profile": {
+      "widget": {
+        "recommandation": {
+          "player": {
+            "section": {
+              "eyebrow": "Recommandations",
+              "title": "Retours réseau",
+              "action": "Recommander"
+            },
+            "tabs": {
+              "ariaLabel": "Filtrer les recommandations",
+              "received": "Reçues",
+              "given": "Données"
+            },
+            "states": {
+              "loading": "Chargement des recommandations.",
+              "error": "Impossible de charger les recommandations.",
+              "ownerEmptyReceived": "Tu n'as pas encore reçu de recommandation.",
+              "ownerEmptyGiven": "Tu n'as pas encore donné de recommandation.",
+              "visitorEmptyReceived": "Ce joueur n'a pas encore reçu de recommandation.",
+              "visitorEmptyGiven": "Ce joueur n'a pas encore donné de recommandation."
+            },
+            "fallbacks": {
+              "authorName": "Membre NEEFT",
+              "authorAvatarAlt": "Auteur de la recommandation",
+              "content": "Recommandation sans description.",
+              "relationship": "Relation non renseignée"
+            },
+            "card": {
+              "ratingAriaLabel": "Note de recommandation",
+              "ratingLabel": "{rating} sur {max}",
+              "directions": {
+                "received": "Reçue",
+                "given": "Envoyée"
+              }
+            },
+            "modal": {
+              "title": "Recommander ce joueur",
+              "description": "Partage une recommandation claire avec le contexte de votre relation.",
+              "actions": {
+                "cancel": "Annuler",
+                "submit": "Envoyer"
+              },
+              "fields": {
+                "rating": {
+                  "label": "Note",
+                  "description": "Évaluation globale de la collaboration."
+                },
+                "relationship": {
+                  "label": "Lien avec la personne",
+                  "placeholder": "Sélectionner un lien"
+                },
+                "content": {
+                  "label": "Description",
+                  "description": "Explique le contexte, les points forts et ce que tu recommandes.",
+                  "placeholder": "Décris votre expérience avec ce joueur."
+                }
+              },
+              "errors": {
+                "missingProfile": "Profil joueur introuvable.",
+                "submitFailed": "Envoi impossible pour le moment."
+              }
+            },
+            "toast": {
+              "created": {
+                "title": "Recommandation envoyée",
+                "description": "La recommandation a été prise en compte."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

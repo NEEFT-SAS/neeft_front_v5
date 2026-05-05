@@ -1,0 +1,159 @@
+{
+  "app": {
+    "profile": {
+      "widget": {
+        "information": {
+          "player": {
+            "section": {
+              "eyebrow": "Apercu",
+              "title": "Informations",
+              "editAriaLabel": "Modifier les informations"
+            },
+            "fields": {
+              "gender": "Genre",
+              "age": "Age",
+              "workSector": "Secteur d'activite",
+              "contractType": "Type de contrat",
+              "disabledPlayer": "Situation de handicap",
+              "description": "Description"
+            },
+            "values": {
+              "yes": "Oui",
+              "no": "Non",
+              "age": "{age} ans"
+            },
+            "fallbacks": {
+              "empty": "Non renseigne"
+            },
+            "options": {
+              "gender": {
+                "MAN": "Homme",
+                "WOMAN": "Femme",
+                "OTHER": "Autre"
+              },
+              "workSector": {
+                "information_technology": "Informatique",
+                "video_games": "Jeu video",
+                "e_sport": "Esport",
+                "graphic_design": "Design graphique",
+                "marketing": "Marketing",
+                "education": "Education",
+                "healthcare": "Sante",
+                "finance": "Finance",
+                "entertainment": "Divertissement",
+                "sports": "Sport",
+                "music": "Musique",
+                "film_and_tv": "Film et TV",
+                "literature": "Litterature",
+                "travel_and_tourism": "Voyage et tourisme",
+                "food_and_beverage": "Restauration",
+                "fashion_and_beauty": "Mode et beaute",
+                "automotive": "Automobile",
+                "real_estate": "Immobilier",
+                "environment_and_sustainability": "Environnement",
+                "other": "Autre"
+              },
+              "contractType": {
+                "full_time": "CDI",
+                "part_time": "CDD",
+                "freelance": "Freelance",
+                "internship": "Stage",
+                "apprenticeship": "Alternance",
+                "temporary": "Interim",
+                "unpaid": "Benevolat",
+                "ceo": "Dirigeant",
+                "other": "Autre"
+              }
+            },
+            "modal": {
+              "title": "Modifier les informations",
+              "description": "Mets a jour les donnees publiques du profil.",
+              "actions": {
+                "cancel": "Annuler",
+                "submit": "Enregistrer"
+              },
+              "sections": {
+                "identity": {
+                  "title": "Identite",
+                  "description": "Ces informations sont verrouillees sur ce formulaire."
+                },
+                "public": {
+                  "title": "Profil public",
+                  "description": "Ces donnees structurent l'apercu public du profil."
+                },
+                "presentation": {
+                  "title": "Presentation",
+                  "description": "Garde une description utile et lisible rapidement."
+                }
+              },
+              "placeholders": {
+                "select": "Selectionner"
+              },
+              "fields": {
+                "username": {
+                  "label": "Pseudo"
+                },
+                "email": {
+                  "label": "Email"
+                },
+                "firstName": {
+                  "label": "Prenom"
+                },
+                "lastName": {
+                  "label": "Nom"
+                },
+                "birthDate": {
+                  "label": "Date de naissance"
+                },
+                "phone": {
+                  "label": "Telephone",
+                  "placeholder": "06 00 00 00 00"
+                },
+                "gender": {
+                  "label": "Genre"
+                },
+                "nationality": {
+                  "label": "Nationalite"
+                },
+                "languages": {
+                  "label": "Langues"
+                },
+                "workSector": {
+                  "label": "Secteur d'activite"
+                },
+                "contractType": {
+                  "label": "Type de contrat"
+                },
+                "disabledPlayer": {
+                  "label": "Situation de handicap"
+                },
+                "description": {
+                  "label": "Description",
+                  "placeholder": "Decris ton profil, ton experience et ton objectif."
+                },
+                "citation": {
+                  "label": "Citation",
+                  "placeholder": "Une phrase courte qui te represente."
+                }
+              },
+              "errors": {
+                "saveUnavailable": "Enregistrement indisponible.",
+                "saveFailed": "Impossible d enregistrer les informations."
+              },
+              "toast": {
+                "success": {
+                  "title": "Informations mises a jour",
+                  "description": "Le profil public a ete enregistre."
+                },
+                "error": {
+                  "title": "Echec de l enregistrement",
+                  "description": "Les informations du profil n ont pas ete mises a jour."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

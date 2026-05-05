@@ -1,0 +1,159 @@
+{
+  "app": {
+    "profile": {
+      "widget": {
+        "information": {
+          "player": {
+            "section": {
+              "eyebrow": "Overview",
+              "title": "Information",
+              "editAriaLabel": "Edit information"
+            },
+            "fields": {
+              "gender": "Gender",
+              "age": "Age",
+              "workSector": "Industry",
+              "contractType": "Contract type",
+              "disabledPlayer": "Disability status",
+              "description": "Description"
+            },
+            "values": {
+              "yes": "Yes",
+              "no": "No",
+              "age": "{age} years old"
+            },
+            "fallbacks": {
+              "empty": "Not provided"
+            },
+            "options": {
+              "gender": {
+                "MAN": "Man",
+                "WOMAN": "Woman",
+                "OTHER": "Other"
+              },
+              "workSector": {
+                "information_technology": "Information technology",
+                "video_games": "Video games",
+                "e_sport": "Esport",
+                "graphic_design": "Graphic design",
+                "marketing": "Marketing",
+                "education": "Education",
+                "healthcare": "Healthcare",
+                "finance": "Finance",
+                "entertainment": "Entertainment",
+                "sports": "Sports",
+                "music": "Music",
+                "film_and_tv": "Film and TV",
+                "literature": "Literature",
+                "travel_and_tourism": "Travel and tourism",
+                "food_and_beverage": "Food and beverage",
+                "fashion_and_beauty": "Fashion and beauty",
+                "automotive": "Automotive",
+                "real_estate": "Real estate",
+                "environment_and_sustainability": "Environment",
+                "other": "Other"
+              },
+              "contractType": {
+                "full_time": "Full-time",
+                "part_time": "Part-time",
+                "freelance": "Freelance",
+                "internship": "Internship",
+                "apprenticeship": "Apprenticeship",
+                "temporary": "Temporary",
+                "unpaid": "Volunteer",
+                "ceo": "Executive",
+                "other": "Other"
+              }
+            },
+            "modal": {
+              "title": "Edit information",
+              "description": "Update the public profile data.",
+              "actions": {
+                "cancel": "Cancel",
+                "submit": "Save"
+              },
+              "sections": {
+                "identity": {
+                  "title": "Identity",
+                  "description": "This information is locked in this form."
+                },
+                "public": {
+                  "title": "Public profile",
+                  "description": "This data structures the public profile overview."
+                },
+                "presentation": {
+                  "title": "Presentation",
+                  "description": "Keep the description useful and easy to scan."
+                }
+              },
+              "placeholders": {
+                "select": "Select"
+              },
+              "fields": {
+                "username": {
+                  "label": "Username"
+                },
+                "email": {
+                  "label": "Email"
+                },
+                "firstName": {
+                  "label": "First name"
+                },
+                "lastName": {
+                  "label": "Last name"
+                },
+                "birthDate": {
+                  "label": "Birth date"
+                },
+                "phone": {
+                  "label": "Phone",
+                  "placeholder": "+1 555 000 0000"
+                },
+                "gender": {
+                  "label": "Gender"
+                },
+                "nationality": {
+                  "label": "Nationality"
+                },
+                "languages": {
+                  "label": "Languages"
+                },
+                "workSector": {
+                  "label": "Industry"
+                },
+                "contractType": {
+                  "label": "Contract type"
+                },
+                "disabledPlayer": {
+                  "label": "Disability status"
+                },
+                "description": {
+                  "label": "Description",
+                  "placeholder": "Describe your profile, experience, and goal."
+                },
+                "citation": {
+                  "label": "Quote",
+                  "placeholder": "A short sentence that represents you."
+                }
+              },
+              "errors": {
+                "saveUnavailable": "Saving is unavailable.",
+                "saveFailed": "Unable to save information."
+              },
+              "toast": {
+                "success": {
+                  "title": "Information updated",
+                  "description": "The public profile has been saved."
+                },
+                "error": {
+                  "title": "Save failed",
+                  "description": "The profile information was not updated."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

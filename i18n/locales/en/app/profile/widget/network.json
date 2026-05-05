@@ -1,0 +1,63 @@
+{
+  "app": {
+    "profile": {
+      "widget": {
+        "network": {
+          "player": {
+            "section": {
+              "title": "Networks",
+              "subtitle": "Public profiles",
+              "editAriaLabel": "Edit networks",
+              "ariaLabel": "Player networks"
+            },
+            "states": {
+              "loading": "Loading networks.",
+              "error": "Unable to load networks.",
+              "ownerEmpty": "Add your networks to make contact easier.",
+              "visitorEmpty": "No networks provided."
+            },
+            "modal": {
+              "title": "Edit networks",
+              "description": "Add the public profiles to display on your profile.",
+              "actions": {
+                "cancel": "Cancel",
+                "submit": "Save"
+              },
+              "intro": "Select visible networks, then enter the public account name.",
+              "count": "{enabled} / {total} active",
+              "states": {
+                "loading": "Loading networks.",
+                "error": "Unable to load networks."
+              },
+              "fields": {
+                "enabled": {
+                  "ariaLabel": "Enable {network}",
+                  "on": "Yes",
+                  "off": "No"
+                },
+                "account": {
+                  "label": "{network} account"
+                },
+                "status": "Visible"
+              },
+              "errors": {
+                "saveUnavailable": "Saving is unavailable.",
+                "saveFailed": "Unable to save networks."
+              },
+              "toast": {
+                "success": {
+                  "title": "Networks updated",
+                  "description": "The public profile links have been saved."
+                },
+                "error": {
+                  "title": "Save failed",
+                  "description": "The networks were not updated."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

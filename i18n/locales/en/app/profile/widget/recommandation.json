@@ -1,0 +1,77 @@
+{
+  "app": {
+    "profile": {
+      "widget": {
+        "recommandation": {
+          "player": {
+            "section": {
+              "eyebrow": "Recommendations",
+              "title": "Network feedback",
+              "action": "Recommend"
+            },
+            "tabs": {
+              "ariaLabel": "Filter recommendations",
+              "received": "Received",
+              "given": "Given"
+            },
+            "states": {
+              "loading": "Loading recommendations.",
+              "error": "Unable to load recommendations.",
+              "ownerEmptyReceived": "You have not received any recommendations yet.",
+              "ownerEmptyGiven": "You have not given any recommendations yet.",
+              "visitorEmptyReceived": "This player has not received any recommendations yet.",
+              "visitorEmptyGiven": "This player has not given any recommendations yet."
+            },
+            "fallbacks": {
+              "authorName": "NEEFT member",
+              "authorAvatarAlt": "Recommendation author",
+              "content": "Recommendation without description.",
+              "relationship": "Relationship not provided"
+            },
+            "card": {
+              "ratingAriaLabel": "Recommendation rating",
+              "ratingLabel": "{rating} out of {max}",
+              "directions": {
+                "received": "Received",
+                "given": "Sent"
+              }
+            },
+            "modal": {
+              "title": "Recommend this player",
+              "description": "Share a clear recommendation with the context of your relationship.",
+              "actions": {
+                "cancel": "Cancel",
+                "submit": "Send"
+              },
+              "fields": {
+                "rating": {
+                  "label": "Rating",
+                  "description": "Overall collaboration rating."
+                },
+                "relationship": {
+                  "label": "Relationship with the person",
+                  "placeholder": "Select a relationship"
+                },
+                "content": {
+                  "label": "Description",
+                  "description": "Explain the context, strengths, and what you recommend.",
+                  "placeholder": "Describe your experience with this player."
+                }
+              },
+              "errors": {
+                "missingProfile": "Player profile not found.",
+                "submitFailed": "Unable to send right now."
+              }
+            },
+            "toast": {
+              "created": {
+                "title": "Recommendation sent",
+                "description": "The recommendation has been saved."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

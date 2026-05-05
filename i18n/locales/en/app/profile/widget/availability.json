@@ -1,0 +1,121 @@
+{
+  "app": {
+    "profile": {
+      "widget": {
+        "availability": {
+          "player": {
+            "section": {
+              "title": "Availability",
+              "subtitle": "Play windows",
+              "editAriaLabel": "Edit availability",
+              "ariaLabel": "Player availability"
+            },
+            "states": {
+              "loading": "Loading availability.",
+              "error": "Unable to load availability.",
+              "ownerEmpty": "Add your availability to guide contacts.",
+              "visitorEmpty": "No availability provided."
+            },
+            "summary": {
+              "single": "open slot",
+              "plural": "open slots"
+            },
+            "status": {
+              "available": "available",
+              "unavailable": "unavailable"
+            },
+            "legend": {
+              "available": "Available",
+              "closed": "Closed"
+            },
+            "weekdays": {
+              "monday": {
+                "short": "Mon",
+                "label": "Monday"
+              },
+              "tuesday": {
+                "short": "Tue",
+                "label": "Tuesday"
+              },
+              "wednesday": {
+                "short": "Wed",
+                "label": "Wednesday"
+              },
+              "thursday": {
+                "short": "Thu",
+                "label": "Thursday"
+              },
+              "friday": {
+                "short": "Fri",
+                "label": "Friday"
+              },
+              "saturday": {
+                "short": "Sat",
+                "label": "Saturday"
+              },
+              "sunday": {
+                "short": "Sun",
+                "label": "Sunday"
+              }
+            },
+            "slots": {
+              "morning": {
+                "short": "AM",
+                "label": "Morning",
+                "range": "08:00 - 12:00"
+              },
+              "afternoon": {
+                "short": "PM",
+                "label": "Afternoon",
+                "range": "12:00 - 18:00"
+              },
+              "evening": {
+                "short": "Eve",
+                "label": "Evening",
+                "range": "18:00 - 00:00"
+              },
+              "night": {
+                "short": "Night",
+                "label": "Night",
+                "range": "00:00 - 08:00"
+              }
+            },
+            "matrix": {
+              "slotAriaLabel": "{day} {slot}: {status}"
+            },
+            "modal": {
+              "title": "Edit availability",
+              "description": "Keep only the useful windows for being contacted at the right time.",
+              "actions": {
+                "cancel": "Cancel",
+                "submit": "Save"
+              },
+              "intro": "Select when the player can be contacted to play, try out, or talk.",
+              "selectedCount": "{count} selected",
+              "daySlots": "{selected} / {total} slots",
+              "daySwitch": {
+                "ariaLabel": "Enable all {day} slots",
+                "on": "All",
+                "off": "No"
+              },
+              "errors": {
+                "saveUnavailable": "Saving is unavailable.",
+                "saveFailed": "Unable to save availability."
+              },
+              "toast": {
+                "success": {
+                  "title": "Availability updated",
+                  "description": "The profile availability has been saved."
+                },
+                "error": {
+                  "title": "Save failed",
+                  "description": "The availability was not updated."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

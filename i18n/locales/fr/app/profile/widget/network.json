@@ -1,0 +1,63 @@
+{
+  "app": {
+    "profile": {
+      "widget": {
+        "network": {
+          "player": {
+            "section": {
+              "title": "Reseaux",
+              "subtitle": "Profils publics",
+              "editAriaLabel": "Modifier les reseaux",
+              "ariaLabel": "Reseaux du joueur"
+            },
+            "states": {
+              "loading": "Chargement des reseaux.",
+              "error": "Impossible de charger les reseaux.",
+              "ownerEmpty": "Ajoute tes reseaux pour faciliter le contact.",
+              "visitorEmpty": "Aucun reseau renseigne."
+            },
+            "modal": {
+              "title": "Modifier les reseaux",
+              "description": "Ajoute les profils publics a afficher sur ton profil.",
+              "actions": {
+                "cancel": "Annuler",
+                "submit": "Enregistrer"
+              },
+              "intro": "Selectionne les reseaux visibles, puis renseigne le nom du compte public.",
+              "count": "{enabled} / {total} actifs",
+              "states": {
+                "loading": "Chargement des reseaux.",
+                "error": "Impossible de charger les reseaux."
+              },
+              "fields": {
+                "enabled": {
+                  "ariaLabel": "Activer {network}",
+                  "on": "Oui",
+                  "off": "Non"
+                },
+                "account": {
+                  "label": "Compte {network}"
+                },
+                "status": "Visible"
+              },
+              "errors": {
+                "saveUnavailable": "Enregistrement indisponible.",
+                "saveFailed": "Impossible d enregistrer les reseaux."
+              },
+              "toast": {
+                "success": {
+                  "title": "Reseaux mis a jour",
+                  "description": "Les liens publics du profil ont ete enregistres."
+                },
+                "error": {
+                  "title": "Echec de l enregistrement",
+                  "description": "Les reseaux n ont pas ete mis a jour."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
