@@ -1,0 +1,18 @@
+{
+  "resource": {
+    "genderOptions": {
+      "woman": "Woman",
+      "man": "Man",
+      "non_binary": "Non-binary",
+      "not_shared": "I prefer not to say"
+    },
+    "recommendationRelationships": {
+      "coequipier": "Teammate",
+      "coach": "Coach",
+      "recruteur": "Recruiter",
+      "manager": "Manager",
+      "partenaire": "Partner",
+      "staff": "Staff"
+    }
+  }
+}

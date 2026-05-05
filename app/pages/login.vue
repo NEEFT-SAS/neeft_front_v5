@@ -85,10 +85,9 @@ const { t } = useI18n()
 .login-page__visual {
   position: relative;
   display: grid;
-  grid-template-rows: auto auto;
-  align-content: space-between;
+  align-content: end;
   min-height: var(--auth-viewport-min);
-  padding: var(--auth-top-offset) var(--auth-inline-padding);
+  padding: var(--space-5) var(--auth-inline-padding);
   background:
     linear-gradient(145deg, var(--auth-visual-overlay), var(--color-transparent)),
     radial-gradient(circle at 46% 8%, color-mix(in oklch, var(--color-accent) 46%, var(--color-transparent)), var(--color-transparent) 32%),
@@ -156,6 +155,7 @@ const { t } = useI18n()
   display: grid;
   gap: var(--space-2);
   max-width: var(--landing-copy-max);
+  align-self: end;
 }
 
 .login-page__visual-copy p,

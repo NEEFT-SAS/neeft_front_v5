@@ -2,9 +2,9 @@
   <li class="process-step">
     <Icon class="process-step__icon" :name="icon" aria-hidden="true" />
     <h3 class="process-step__title">
-      {{ t(`landing.home.process.steps.${key}.title`) }}
+      {{ t(`landing.home.process.steps.${translationKey}.title`) }}
     </h3>
-    <p class="process-step__text">{{ t(`landing.home.process.steps.${key}.text`) }}</p>
+    <p class="process-step__text">{{ t(`landing.home.process.steps.${translationKey}.text`) }}</p>
     <Icon v-if="showArrow" class="process-step__arrow" name="lucide:arrow-right" aria-hidden="true" />
   </li>
 </template>
@@ -12,7 +12,7 @@
 <script setup lang="ts">
 interface Props {
   icon: string
-  key: string
+  translationKey: string
   showArrow?: boolean
 }
 

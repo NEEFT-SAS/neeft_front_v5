@@ -1,14 +1,16 @@
 <template>
   <nav class="landing-footer-social">
-    <a v-for="item in items" :key="item.href" :href="item.href" :aria-label="item.label" target="_blank" rel="noopener noreferrer">
+    <a v-for="item in items" :key="item.href" :href="item.href" :aria-label="t(item.labelKey)" target="_blank" rel="noopener noreferrer">
       <Icon :name="item.icon" aria-hidden="true" />
     </a>
   </nav>
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 defineProps({
-  items: { type: Array as () => Array<{ href: string; label: string; icon: string }>, required: true }
+  items: { type: Array as () => Array<{ href: string; labelKey: string; icon: string }>, required: true }
 })
 </script>
 

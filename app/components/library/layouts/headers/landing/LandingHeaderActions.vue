@@ -3,7 +3,7 @@
     <CustomLink
       v-for="item in items"
       :key="item.to"
-      :label="item.label"
+      :label="t(item.labelKey)"
       :to="item.to"
       :variant="item.variant || 'outlined'"
       :color="item.color || 'primary'"
@@ -16,8 +16,10 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 defineProps({
-  items: { type: Array as () => Array<{ to: string; label: string; variant?: 'filled' | 'outlined'; color?: 'primary' | 'secondary' }>, required: true }
+  items: { type: Array as () => Array<{ to: string; labelKey: string; variant?: 'filled' | 'outlined'; color?: 'primary' | 'secondary' }>, required: true }
 })
 
 defineEmits(['closeMobileMenu'])

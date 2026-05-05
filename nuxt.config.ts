@@ -37,5 +37,5 @@ export default defineNuxtConfig({
 
   auth: nuxtAuthConfig,
   icon: nuxtIconConfig,
-  // i18n: nuxtI18nConfig
+  i18n: nuxtI18nConfig
 })

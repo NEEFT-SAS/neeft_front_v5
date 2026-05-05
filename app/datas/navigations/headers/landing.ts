@@ -1,13 +1,13 @@
 export const landingHeaderNav = [
-  { to: '/players', label: 'Players' },
-  { to: '/teams', label: 'Teams' },
-  { to: '/recruitment', label: 'Recruitment' },
-  { to: '/staff', label: 'Staff' },
-  { to: '/maps/teams', label: 'Esport Map' },
-  { to: '/premium', label: 'Pricing' }
+  { to: '/players', labelKey: 'landing.layout.header.navigation.players' },
+  { to: '/teams', labelKey: 'landing.layout.header.navigation.teams' },
+  { to: '/recruitment', labelKey: 'landing.layout.header.navigation.recruitment' },
+  { to: '/staff', labelKey: 'landing.layout.header.navigation.staff' },
+  { to: '/maps/teams', labelKey: 'landing.layout.header.navigation.map' },
+  { to: '/premium', labelKey: 'landing.layout.header.navigation.pricing' }
 ] as const
 
 export const landingHeaderActions = [
-  { to: '/app', label: 'Open App', variant: 'outlined' as const, color: 'primary' as const },
-  { to: '/login', label: 'Login', variant: 'filled' as const, color: 'secondary' as const }
+  { to: '/app', labelKey: 'landing.layout.header.actions.openApp', variant: 'outlined' as const, color: 'primary' as const },
+  { to: '/login', labelKey: 'landing.layout.header.actions.login', variant: 'filled' as const, color: 'secondary' as const }
 ] as const

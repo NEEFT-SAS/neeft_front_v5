@@ -2,11 +2,11 @@
   <article class="launch-card">
     <Icon class="launch-card__icon" :name="icon" aria-hidden="true" />
     <h3 class="launch-card__title">
-      {{ t(`landing.home.launch.cards.${key}.title`) }}
+      {{ t(`landing.home.launch.cards.${translationKey}.title`) }}
     </h3>
-    <p class="launch-card__text">{{ t(`landing.home.launch.cards.${key}.text`) }}</p>
+    <p class="launch-card__text">{{ t(`landing.home.launch.cards.${translationKey}.text`) }}</p>
     <NuxtLink :to="to" class="launch-card__link">
-      {{ t(`landing.home.launch.cards.${key}.link`) }}
+      {{ t(`landing.home.launch.cards.${translationKey}.link`) }}
       <Icon name="lucide:arrow-right" aria-hidden="true" />
     </NuxtLink>
   </article>
@@ -15,7 +15,7 @@
 <script setup lang="ts">
 interface Props {
   icon: string
-  key: string
+  translationKey: string
   to: string
 }
 

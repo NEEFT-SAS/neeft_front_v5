@@ -1,4 +1,4 @@
-import { appLanguages, defaultAppLanguageCode } from '../app/data/resources/languages'
+import { appLanguages, defaultAppLanguageCode } from '../app/datas/resources/languages'
 
 export const nuxtI18nConfig = {
   strategy: 'prefix_except_default',

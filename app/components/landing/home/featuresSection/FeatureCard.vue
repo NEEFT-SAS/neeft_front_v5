@@ -2,16 +2,16 @@
   <article class="feature-card">
     <Icon class="feature-card__icon" :name="icon" aria-hidden="true" />
     <h3 class="feature-card__title">
-      {{ t(`landing.home.features.cards.${key}.title`) }}
+      {{ t(`landing.home.features.cards.${translationKey}.title`) }}
     </h3>
-    <p class="feature-card__text">{{ t(`landing.home.features.cards.${key}.text`) }}</p>
+    <p class="feature-card__text">{{ t(`landing.home.features.cards.${translationKey}.text`) }}</p>
   </article>
 </template>
 
 <script setup lang="ts">
 interface Props {
   icon: string
-  key: string
+  translationKey: string
 }
 
 defineProps<Props>()

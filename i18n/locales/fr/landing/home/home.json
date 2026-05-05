@@ -1,0 +1,105 @@
+{
+  "landing": {
+    "home": {
+      "seo": {
+        "title": "NEEFT - Recrutement esport",
+        "description": "Crée ton profil, gagne en visibilité et trouve les joueurs, staffs ou équipes qui correspondent à ton projet esport."
+      },
+      "hero": {
+        "eyebrow": "Joueurs, staffs et équipes Esports",
+        "title": "La porte d'entrée entre les talents et les équipes qui recrutent",
+        "lead": "NEEFT centralise le recrutement esport pour aider les bons profils à rencontrer les bonnes structures.",
+        "actions": {
+          "primary": "Crée ton profil gratuitement",
+          "secondary": "Voir les talents"
+        },
+        "aria": {
+          "primaryActions": "Actions principales",
+          "showcase": "Aperçu de l'expérience compétitive",
+          "play": "Découvrir l'expérience compétitive",
+          "partners": "Partenaires NEEFT"
+        }
+      },
+      "process": {
+        "eyebrow": "Comment ça marche",
+        "title": "Recrute ou fais-toi repérer en 3 étapes",
+        "steps": {
+          "profile": {
+            "title": "Crée ton profil",
+            "text": "Présente clairement ton parcours, tes rôles, tes jeux, tes objectifs et ce que tu recherches sur NEEFT."
+          },
+          "visibility": {
+            "title": "Gagne en visibilité",
+            "text": "Apparais dans les recherches et donne plus de chances à ton profil d'être vu au bon moment."
+          },
+          "action": {
+            "title": "Passe à l'action",
+            "text": "Prends contact, candidate ou avance dans ton recrutement sans perdre du temps sur plusieurs plateformes."
+          }
+        }
+      },
+      "features": {
+        "title": "Fonctions",
+        "aria": {
+          "grid": "Fonctions disponibles"
+        },
+        "cards": {
+          "profiles": {
+            "title": "Profils complets",
+            "text": "Mets en avant tes jeux, rôles, expériences, disponibilités et objectifs dans un profil pensé pour être compris rapidement."
+          },
+          "search": {
+            "title": "Recherche ciblée",
+            "text": "Filtre par jeu, rôle, niveau, disponibilité ou type de profil pour accéder directement aux joueurs, staffs ou équipes qui t'intéressent."
+          },
+          "recruitment": {
+            "title": "Annonces de recrutement",
+            "text": "Crée une annonce claire, visible et ciblée pour attirer les profils qui correspondent réellement à ton projet."
+          },
+          "applications": {
+            "title": "Candidatures directes",
+            "text": "Repère les structures qui recrutent et envoie ta candidature directement depuis la plateforme."
+          },
+          "messages": {
+            "title": "Messagerie intégrée",
+            "text": "Discute directement avec les bons interlocuteurs pour valider un intérêt, poser des questions ou faire avancer un recrutement."
+          },
+          "visibility": {
+            "title": "Visibilité renforcée",
+            "text": "Augmente ta visibilité dans l'écosystème et donne plus de chances à ton profil ou à ta structure d'être repéré au bon moment."
+          }
+        }
+      },
+      "launch": {
+        "eyebrow": "Commencer",
+        "title": "Tu cherches un joueur, un staff ou une équipe ?",
+        "lead": "NEEFT te permet d'aller directement à l'essentiel et de trouver les bons contacts sans perdre de temps.",
+        "actions": {
+          "primary": "Crée mon profil gratuitement",
+          "secondary": "Voir les talents"
+        },
+        "aria": {
+          "actions": "Actions de démarrage",
+          "cards": "Ressources pour démarrer"
+        },
+        "cards": {
+          "player": {
+            "title": "Trouve un joueur",
+            "text": "Accède à des profils visibles, disponibles et prêts à rejoindre un projet sérieux.",
+            "link": "Rechercher un joueur"
+          },
+          "staff": {
+            "title": "Trouve un staff",
+            "text": "Repère les profils qui peuvent structurer, accompagner et faire progresser ton organisation.",
+            "link": "Rechercher un staff"
+          },
+          "team": {
+            "title": "Trouve une équipe",
+            "text": "Identifie les structures qui recrutent et rejoins un projet aligné avec ton ambition.",
+            "link": "Rechercher une équipe"
+          }
+        }
+      }
+    }
+  }
+}

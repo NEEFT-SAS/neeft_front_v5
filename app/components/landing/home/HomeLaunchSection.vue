@@ -4,8 +4,8 @@
       <LaunchHeader />
 
       <ul class="landing-home-launch__cards" :aria-label="t('landing.home.launch.aria.cards')">
-        <li v-for="card in launchCards" :key="card.key">
-          <LaunchCard :icon="card.icon" :key="card.key" :to="card.to" />
+        <li v-for="card in launchCards" :key="card.translationKey">
+          <LaunchCard :icon="card.icon" :translation-key="card.translationKey" :to="card.to" />
         </li>
       </ul>
     </div>
@@ -18,17 +18,17 @@ const { t } = useI18n()
 const launchCards = [
   {
     icon: 'lucide:list-checks',
-    key: 'player',
+    translationKey: 'player',
     to: '/players'
   },
   {
     icon: 'lucide:code-xml',
-    key: 'staff',
+    translationKey: 'staff',
     to: '/staff'
   },
   {
     icon: 'lucide:flag',
-    key: 'team',
+    translationKey: 'team',
     to: '/teams'
   }
 ]

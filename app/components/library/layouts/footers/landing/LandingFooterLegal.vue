@@ -2,14 +2,16 @@
   <nav class="landing-footer-legal">
     <span>{{ currentYear }} NEEFT</span>
     <NuxtLink v-for="item in items" :key="item.to" :to="item.to">
-      {{ item.label }}
+      {{ t(item.labelKey) }}
     </NuxtLink>
   </nav>
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 defineProps({
-  items: { type: Array as () => Array<{ to: string; label: string }>, required: true }
+  items: { type: Array as () => Array<{ to: string; labelKey: string }>, required: true }
 })
 
 const currentYear = new Date().getFullYear()

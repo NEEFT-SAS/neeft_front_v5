@@ -6,7 +6,7 @@
     <ul>
       <li v-for="item in items" :key="item.to">
         <NuxtLink :to="item.to">
-          {{ item.label }}
+          {{ t(item.labelKey) }}
         </NuxtLink>
       </li>
     </ul>
@@ -14,9 +14,11 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 defineProps({
   titleId: { type: String, required: true },
-  items: { type: Array as () => Array<{ to: string; label: string }>, required: true }
+  items: { type: Array as () => Array<{ to: string; labelKey: string }>, required: true }
 })
 </script>
 

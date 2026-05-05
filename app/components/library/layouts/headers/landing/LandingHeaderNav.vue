@@ -1,20 +1,22 @@
 <template>
   <nav class="landing-header-nav" :aria-label="ariaLabel">
-    <NuxtLink 
-      v-for="item in items" 
+    <NuxtLink
+      v-for="item in items"
       :key="item.to"
       :to="item.to"
       @click="$emit('closeMobileMenu')"
     >
-      {{ item.label }}
+      {{ t(item.labelKey) }}
     </NuxtLink>
   </nav>
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 defineProps({
   ariaLabel: { type: String, default: 'Navigation principale' },
-  items: { type: Array as () => Array<{ to: string; label: string; active?: boolean }>, required: true }
+  items: { type: Array as () => Array<{ to: string; labelKey: string; active?: boolean }>, required: true }
 })
 
 defineEmits(['closeMobileMenu'])

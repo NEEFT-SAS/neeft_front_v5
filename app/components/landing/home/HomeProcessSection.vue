@@ -8,8 +8,9 @@
       <ol class="landing-home-process__steps">
         <ProcessStep
           v-for="(step, index) in integrationSteps"
-          :key="step.key"
+          :key="step.translationKey"
           :icon="step.icon"
+          :translation-key="step.translationKey"
           :show-arrow="index < integrationSteps.length - 1"
         />
       </ol>
@@ -21,15 +22,15 @@
 const integrationSteps = [
   {
     icon: 'lucide:gamepad-2',
-    key: 'profile'
+    translationKey: 'profile'
   },
   {
     icon: 'lucide:code-xml',
-    key: 'visibility'
+    translationKey: 'visibility'
   },
   {
     icon: 'lucide:monitor-smartphone',
-    key: 'action'
+    translationKey: 'action'
   }
 ]
 </script>

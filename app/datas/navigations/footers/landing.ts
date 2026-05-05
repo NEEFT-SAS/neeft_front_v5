@@ -1,39 +1,39 @@
 export const footerSolutions = [
-  { to: '/players', label: 'Players' },
-  { to: '/teams', label: 'Teams' },
-  { to: '/recruitment', label: 'Recruitment' },
-  { to: '/staff', label: 'Staff' },
-  { to: '/maps/teams', label: 'Esport Map' }
+  { to: '/players', labelKey: 'landing.layout.footer.sections.solutions.players' },
+  { to: '/teams', labelKey: 'landing.layout.footer.sections.solutions.teams' },
+  { to: '/recruitment', labelKey: 'landing.layout.footer.sections.solutions.recruitment' },
+  { to: '/staff', labelKey: 'landing.layout.footer.sections.solutions.staff' },
+  { to: '/maps/teams', labelKey: 'landing.layout.footer.sections.solutions.esportMap' }
 ]
 
 export const footerProduct = [
-  { to: '/premium', label: 'Pricing' },
-  { to: '/marketing', label: 'Ads' },
-  { to: '/feed', label: 'Feed' },
-  { to: '/messages', label: 'Messages' }
+  { to: '/premium', labelKey: 'landing.layout.footer.sections.product.pricing' },
+  { to: '/marketing', labelKey: 'landing.layout.footer.sections.product.ads' },
+  { to: '/feed', labelKey: 'landing.layout.footer.sections.product.feed' },
+  { to: '/messages', labelKey: 'landing.layout.footer.sections.product.messages' }
 ]
 
 export const footerCompany = [
-  { to: '/mentions-legales', label: 'Legal Info' },
-  { to: '/cgu', label: 'Terms' },
-  { to: '/cgv', label: 'Sales' },
-  { to: '/marketing/campaigns', label: 'Campaigns' }
+  { to: '/mentions-legales', labelKey: 'landing.layout.footer.sections.company.legalInfo' },
+  { to: '/cgu', labelKey: 'landing.layout.footer.sections.company.terms' },
+  { to: '/cgv', labelKey: 'landing.layout.footer.sections.company.sales' },
+  { to: '/marketing/campaigns', labelKey: 'landing.layout.footer.sections.company.campaigns' }
 ]
 
 export const footerLinks = [
-  { to: '/register', label: 'Register' },
-  { to: '/login', label: 'Login' },
-  { to: '/players', label: 'Explore Profiles' },
-  { to: '/teams', label: 'Discover Teams' }
+  { to: '/register', labelKey: 'landing.layout.footer.sections.usefulLinks.register' },
+  { to: '/login', labelKey: 'landing.layout.footer.sections.usefulLinks.login' },
+  { to: '/players', labelKey: 'landing.layout.footer.sections.usefulLinks.exploreProfiles' },
+  { to: '/teams', labelKey: 'landing.layout.footer.sections.usefulLinks.discoverTeams' }
 ]
 
 export const footerLegal = [
-  { to: '/cgu', label: 'Terms of Use' },
-  { to: '/mentions-legales', label: 'Privacy Policy' },
-  { to: '/cgv', label: 'Sale Terms' }
+  { to: '/cgu', labelKey: 'landing.layout.footer.legal.termsOfUse' },
+  { to: '/mentions-legales', labelKey: 'landing.layout.footer.legal.privacyPolicy' },
+  { to: '/cgv', labelKey: 'landing.layout.footer.legal.saleTerms' }
 ]
 
 export const footerSocial = [
-  { href: 'https://fr.linkedin.com/company/neeft', label: 'LinkedIn', icon: 'simple-icons:linkedin' },
-  { href: 'https://discord.me/neeft', label: 'Discord', icon: 'simple-icons:discord' }
+  { href: 'https://fr.linkedin.com/company/neeft', labelKey: 'landing.layout.footer.social.linkedin', icon: 'simple-icons:linkedin' },
+  { href: 'https://discord.me/neeft', labelKey: 'landing.layout.footer.social.discord', icon: 'simple-icons:discord' }
 ]

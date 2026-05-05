@@ -1,0 +1,79 @@
+{
+  "landing": {
+    "layout": {
+      "header": {
+        "aria": {
+          "brand": "NEEFT home",
+          "navigation": "Main",
+          "accountActions": "Account actions",
+          "menu": "Main menu"
+        },
+        "navigation": {
+          "players": "Players",
+          "teams": "Teams",
+          "recruitment": "Recruitment",
+          "staff": "Staff",
+          "map": "Map",
+          "pricing": "Pricing"
+        },
+        "actions": {
+          "openApp": "Open NEEFT",
+          "login": "Log in"
+        }
+      },
+      "footer": {
+        "aria": {
+          "pageFooter": "Page footer",
+          "brand": "NEEFT home",
+          "legal": "Legal",
+          "legalInformation": "Legal information",
+          "social": "NEEFT social networks",
+          "contact": "Contact NEEFT"
+        },
+        "sections": {
+          "solutions": {
+            "title": "Solutions",
+            "players": "Players",
+            "teams": "Teams",
+            "recruitment": "Recruitment",
+            "staff": "Staff",
+            "esportMap": "Esport map"
+          },
+          "product": {
+            "title": "Product",
+            "pricing": "Pricing",
+            "ads": "Ads",
+            "feed": "News feed",
+            "messages": "Messages",
+            "premium": "Premium"
+          },
+          "company": {
+            "title": "Company",
+            "legalInfo": "Legal info",
+            "terms": "Terms",
+            "sales": "Sales",
+            "campaigns": "Campaigns",
+            "home": "Home"
+          },
+          "usefulLinks": {
+            "title": "Useful links",
+            "register": "Sign up",
+            "login": "Log in",
+            "salesService": "Sales service",
+            "exploreProfiles": "Explore profiles",
+            "discoverTeams": "Discover teams"
+          }
+        },
+        "legal": {
+          "termsOfUse": "Terms of use",
+          "privacyPolicy": "Privacy policy",
+          "saleTerms": "Terms of sale"
+        },
+        "social": {
+          "linkedin": "NEEFT LinkedIn",
+          "discord": "NEEFT Discord"
+        }
+      }
+    }
+  }
+}

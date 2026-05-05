@@ -1,0 +1,105 @@
+{
+  "landing": {
+    "home": {
+      "seo": {
+        "title": "NEEFT - Esport recruitment",
+        "description": "Create your profile, gain visibility, and find the players, staff, or teams that match your esport project."
+      },
+      "hero": {
+        "eyebrow": "Esport players, staff, and teams",
+        "title": "The gateway between talent and recruiting teams",
+        "lead": "NEEFT centralizes esport recruitment to help the right profiles meet the right organizations.",
+        "actions": {
+          "primary": "Create your profile for free",
+          "secondary": "View talent"
+        },
+        "aria": {
+          "primaryActions": "Primary actions",
+          "showcase": "Competitive experience preview",
+          "play": "Discover the competitive experience",
+          "partners": "NEEFT partners"
+        }
+      },
+      "process": {
+        "eyebrow": "How it works",
+        "title": "Recruit or get noticed in 3 steps",
+        "steps": {
+          "profile": {
+            "title": "Create your profile",
+            "text": "Clearly present your background, roles, games, goals, and what you are looking for on NEEFT."
+          },
+          "visibility": {
+            "title": "Gain visibility",
+            "text": "Appear in searches and give your profile a better chance of being seen at the right time."
+          },
+          "action": {
+            "title": "Take action",
+            "text": "Connect, apply, or move forward in your recruitment without wasting time across several platforms."
+          }
+        }
+      },
+      "features": {
+        "title": "Features",
+        "aria": {
+          "grid": "Available features"
+        },
+        "cards": {
+          "profiles": {
+            "title": "Complete profiles",
+            "text": "Highlight your games, roles, experience, availability, and goals in a profile designed to be understood quickly."
+          },
+          "search": {
+            "title": "Targeted search",
+            "text": "Filter by game, role, level, availability, or profile type to directly reach the players, staff, or teams you care about."
+          },
+          "recruitment": {
+            "title": "Recruitment posts",
+            "text": "Create a clear, visible, and targeted post to attract profiles that truly match your project."
+          },
+          "applications": {
+            "title": "Direct applications",
+            "text": "Spot recruiting organizations and send your application directly from the platform."
+          },
+          "messages": {
+            "title": "Integrated messaging",
+            "text": "Talk directly with the right contacts to validate interest, ask questions, or move recruitment forward."
+          },
+          "visibility": {
+            "title": "Stronger visibility",
+            "text": "Increase your visibility in the ecosystem and give your profile or organization a better chance of being noticed at the right time."
+          }
+        }
+      },
+      "launch": {
+        "eyebrow": "Start",
+        "title": "Looking for a player, staff member, or team?",
+        "lead": "NEEFT lets you get straight to what matters and find the right contacts without wasting time.",
+        "actions": {
+          "primary": "Create my profile for free",
+          "secondary": "View talent"
+        },
+        "aria": {
+          "actions": "Start actions",
+          "cards": "Resources to get started"
+        },
+        "cards": {
+          "player": {
+            "title": "Find a player",
+            "text": "Access visible, available profiles ready to join a serious project.",
+            "link": "Search for a player"
+          },
+          "staff": {
+            "title": "Find staff",
+            "text": "Find profiles that can structure, support, and help your organization progress.",
+            "link": "Search for staff"
+          },
+          "team": {
+            "title": "Find a team",
+            "text": "Identify recruiting organizations and join a project aligned with your ambition.",
+            "link": "Search for a team"
+          }
+        }
+      }
+    }
+  }
+}

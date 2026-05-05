@@ -1,11 +1,11 @@
 <template>
   <header class="landing-header" :class="{ 'landing-header--pinned': isPinned, 'landing-header--open': isMobileMenuOpen }" data-theme="landing" @keydown.escape="closeMobileMenu">
     <LandingHeaderBrand />
-    <button class="landing-header__menu-button" type="button" :aria-label="'Menu'" :aria-expanded="isMobileMenuOpen" :aria-controls="mobileMenuId" @click="toggleMobileMenu">
+    <button class="landing-header__menu-button" type="button" :aria-label="t('landing.layout.header.aria.menu')" :aria-expanded="isMobileMenuOpen" :aria-controls="mobileMenuId" @click="toggleMobileMenu">
       <Icon :name="isMobileMenuOpen ? 'lucide:x' : 'lucide:menu'" aria-hidden="true" />
     </button>
     <div :id="mobileMenuId" class="landing-header__menu" :data-menu-open="isMobileMenuOpen">
-      <LandingHeaderNav :items="navItems" aria-label="Navigation principale" @close-mobile-menu="closeMobileMenu" />
+      <LandingHeaderNav :items="navItems" :aria-label="t('landing.layout.header.aria.navigation')" @close-mobile-menu="closeMobileMenu" />
       <div class="landing-header__actions">
         <HeaderLanguageSelector theme="landing" align="end" />
         <LandingHeaderActions :items="actionItems" @close-mobile-menu="closeMobileMenu" />
@@ -17,6 +17,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const route = useRoute()
 const isPinned = ref(false)
 const isMobileMenuOpen = ref(false)

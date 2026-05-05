@@ -6,8 +6,8 @@
       </h2>
 
       <ul class="landing-home-features__grid" :aria-label="t('landing.home.features.aria.grid')">
-        <li v-for="feature in featureCards" :key="feature.key">
-          <FeatureCard :icon="feature.icon" :key="feature.key" />
+        <li v-for="feature in featureCards" :key="feature.translationKey">
+          <FeatureCard :icon="feature.icon" :translation-key="feature.translationKey" />
         </li>
       </ul>
     </div>
@@ -20,27 +20,27 @@ const { t } = useI18n()
 const featureCards = [
   {
     icon: 'lucide:life-buoy',
-    key: 'profiles'
+    translationKey: 'profiles'
   },
   {
     icon: 'lucide:coins',
-    key: 'search'
+    translationKey: 'search'
   },
   {
     icon: 'lucide:messages-square',
-    key: 'recruitment'
+    translationKey: 'recruitment'
   },
   {
     icon: 'lucide:list',
-    key: 'applications'
+    translationKey: 'applications'
   },
   {
     icon: 'lucide:crown',
-    key: 'messages'
+    translationKey: 'messages'
   },
   {
     icon: 'lucide:trending-up',
-    key: 'visibility'
+    translationKey: 'visibility'
   }
 ]
 </script>

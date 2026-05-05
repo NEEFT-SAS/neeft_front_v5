@@ -1,0 +1,79 @@
+{
+  "landing": {
+    "layout": {
+      "header": {
+        "aria": {
+          "brand": "Accueil NEEFT",
+          "navigation": "Principale",
+          "accountActions": "Actions de compte",
+          "menu": "Menu principal"
+        },
+        "navigation": {
+          "players": "Joueurs",
+          "teams": "Équipes",
+          "recruitment": "Recrutement",
+          "staff": "Staff",
+          "map": "Carte",
+          "pricing": "Tarification"
+        },
+        "actions": {
+          "openApp": "Ouvrir NEEFT",
+          "login": "Se connecter"
+        }
+      },
+      "footer": {
+        "aria": {
+          "pageFooter": "Pied de page",
+          "brand": "Accueil NEEFT",
+          "legal": "Légal",
+          "legalInformation": "Informations légales",
+          "social": "Réseaux sociaux NEEFT",
+          "contact": "Contacter NEEFT"
+        },
+        "sections": {
+          "solutions": {
+            "title": "Solutions",
+            "players": "Joueurs",
+            "teams": "Équipes",
+            "recruitment": "Recrutement",
+            "staff": "Staff",
+            "esportMap": "Carte esport"
+          },
+          "product": {
+            "title": "Produit",
+            "pricing": "Tarification",
+            "ads": "Publicités",
+            "feed": "Fil d'actualité",
+            "messages": "Messages",
+            "premium": "Premium"
+          },
+          "company": {
+            "title": "Société",
+            "legalInfo": "Infos légales",
+            "terms": "Conditions",
+            "sales": "Vente",
+            "campaigns": "Campagnes",
+            "home": "Accueil"
+          },
+          "usefulLinks": {
+            "title": "Liens utiles",
+            "register": "S'inscrire",
+            "login": "Se connecter",
+            "salesService": "Service des ventes",
+            "exploreProfiles": "Explorer les profils",
+            "discoverTeams": "Découvrir les équipes"
+          }
+        },
+        "legal": {
+          "termsOfUse": "Conditions d'utilisation",
+          "privacyPolicy": "Politique de confidentialité",
+          "saleTerms": "Conditions de vente"
+        },
+        "social": {
+          "linkedin": "LinkedIn NEEFT",
+          "discord": "Discord NEEFT"
+        }
+      }
+    }
+  }
+}

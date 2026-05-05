@@ -3,10 +3,18 @@
     <div class="landing-footer__inner">
       <section class="landing-footer__top">
         <LandingFooterBrand />
-        <LandingFooterColumn titleId="footer-solutions" :items="footerSolutions" />
-        <LandingFooterColumn titleId="footer-product" :items="footerProduct" />
-        <LandingFooterColumn titleId="footer-company" :items="footerCompany" />
-        <LandingFooterColumn titleId="footer-links" :items="footerLinks" />
+        <LandingFooterColumn titleId="footer-solutions" :items="footerSolutions">
+          <template #title>{{ t('landing.layout.footer.sections.solutions.title') }}</template>
+        </LandingFooterColumn>
+        <LandingFooterColumn titleId="footer-product" :items="footerProduct">
+          <template #title>{{ t('landing.layout.footer.sections.product.title') }}</template>
+        </LandingFooterColumn>
+        <LandingFooterColumn titleId="footer-company" :items="footerCompany">
+          <template #title>{{ t('landing.layout.footer.sections.company.title') }}</template>
+        </LandingFooterColumn>
+        <LandingFooterColumn titleId="footer-links" :items="footerLinks">
+          <template #title>{{ t('landing.layout.footer.sections.usefulLinks.title') }}</template>
+        </LandingFooterColumn>
       </section>
 
       <div class="landing-footer__separator" aria-hidden="true" />
@@ -20,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { footerSolutions, footerProduct, footerCompany, footerLinks, footerLegal, footerSocial } from '~/datas/navigations/footers/landing'
 </script>
 
