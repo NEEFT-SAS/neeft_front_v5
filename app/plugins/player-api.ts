@@ -148,7 +148,7 @@ export default defineNuxtPlugin(() => {
       }
     },
 
-    staffRoles: {
+    staffs: {
       list: async <TItem = PlayerStaffRolePresenter>(slug: string) => {
         return await withData(api<TItem[]>(`/players/${encodeURIComponent(slug)}/staff-roles`, { cache: 'no-store' }))
       },

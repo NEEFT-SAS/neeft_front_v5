@@ -1,4 +1,4 @@
-import type { PlayerProfilePresenter } from '@neeft-sas/shared'
+import type { PlayerProfilePresenter, UserGamePresenter, PlayerStaffRolePresenter, RecommendationPresenter } from '@neeft-sas/shared'
 
 type SlugValue = string | string[] | null | undefined
 type RefValue<T> = { value: T }
@@ -108,6 +108,143 @@ const resolvePageContext = (slugRef?: () => SlugValue): ViewedUserProfilePageCtx
 export function useViewedUserProfile(slugRef?: () => SlugValue) {
   const ctx = resolvePageContext(slugRef)
 
+  const useGameSection = () => {
+    const { $playerAPI } = useNuxtApp()
+    const cacheKey = `viewed-user-profile:games:${ctx.slug.value}`
+
+    const { data, pending, error, refresh } = useAsyncData<UserGamePresenter[]>(
+      cacheKey,
+      async () => {
+        if (!ctx.slug.value) return []
+        try {
+          const response = await $playerAPI.games.list(ctx.slug.value)
+          return response.data
+        } catch (err) {
+          if ((err as { statusCode?: unknown }).statusCode === 404) return []
+          throw err
+        }
+      },
+      {
+        default: () => [],
+        watch: [ctx.slug]
+      }
+    )
+
+    return {
+      items: data,
+      pending,
+      error,
+      refresh
+    }
+  }
+
+  const useStaffSection = () => {
+    const { $playerAPI } = useNuxtApp()
+    const cacheKey = `viewed-user-profile:staff:${ctx.slug.value}`
+
+    const { data, pending, error, refresh } = useAsyncData<PlayerStaffRolePresenter[]>(
+      cacheKey,
+      async () => {
+        if (!ctx.slug.value) return []
+        try {
+          const response = await $playerAPI.staffs.list(ctx.slug.value)
+          return response.data
+        } catch (err) {
+          if ((err as { statusCode?: unknown }).statusCode === 404) return []
+          throw err
+        }
+      },
+      {
+        default: () => [],
+        watch: [ctx.slug]
+      }
+    )
+
+    return {
+      items: data,
+      pending,
+      error,
+      refresh
+    }
+  }
+
+  const useRecommendationsSection = () => {
+    const { $playerAPI } = useNuxtApp()
+    const cacheKey = `viewed-user-profile:recommendations:${ctx.slug.value}`
+
+    const { data, pending, error, refresh } = useAsyncData<RecommendationPresenter[]>(
+      cacheKey,
+      async () => {
+        if (!ctx.slug.value) return []
+        try {
+          const response = await $playerAPI.recommendations.received(ctx.slug.value)
+          return response.data
+        } catch (err) {
+          if ((err as { statusCode?: unknown }).statusCode === 404) return []
+          throw err
+        }
+      },
+      {
+        default: () => [],
+        watch: [ctx.slug]
+      }
+    )
+
+    return {
+      items: data,
+      pending,
+      error,
+      refresh
+    }
+  }
+
+  const useExperienceSection = (
+    key: string,
+    fetchItems: (slug: string) => Promise<{ data: Record<string, unknown>[] }>
+  ) => {
+    const cacheKey = `viewed-user-profile:${key}:${ctx.slug.value}`
+
+    const { data, pending, error, refresh } = useAsyncData<Record<string, unknown>[]>(
+      cacheKey,
+      async () => {
+        if (!ctx.slug.value) return []
+        try {
+          const response = await fetchItems(ctx.slug.value)
+          return response.data
+        } catch (err) {
+          if ((err as { statusCode?: unknown }).statusCode === 404) return []
+          throw err
+        }
+      },
+      {
+        default: () => [],
+        watch: [ctx.slug]
+      }
+    )
+
+    return {
+      items: data,
+      pending,
+      error,
+      refresh
+    }
+  }
+
+  const useEsportExperienceSection = () => {
+    const { $playerAPI } = useNuxtApp()
+    return useExperienceSection('esport-experiences', slug => $playerAPI.esportExperiences.list(slug))
+  }
+
+  const useEducationExperienceSection = () => {
+    const { $playerAPI } = useNuxtApp()
+    return useExperienceSection('education-experiences', slug => $playerAPI.educationExperiences.list(slug))
+  }
+
+  const useProfessionalExperienceSection = () => {
+    const { $playerAPI } = useNuxtApp()
+    return useExperienceSection('professional-experiences', slug => $playerAPI.professionalExperiences.list(slug))
+  }
+
   return {
     profile: ctx.profile,
     slug: ctx.slug,
@@ -115,6 +252,12 @@ export function useViewedUserProfile(slugRef?: () => SlugValue) {
     pending: ctx.pending,
     error: ctx.error,
     refresh: ctx.refresh,
-    isOwner: ctx.isOwner
+    isOwner: ctx.isOwner,
+    useGameSection,
+    useStaffSection,
+    useRecommendationsSection,
+    useEsportExperienceSection,
+    useEducationExperienceSection,
+    useProfessionalExperienceSection
   }
 }

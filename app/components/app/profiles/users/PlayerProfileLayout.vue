@@ -78,9 +78,9 @@ defineProps<{
   --profile-line-title: var(--line-title);
   --profile-line-body: var(--line-base);
   --profile-color-bg: var(--color-bg);
-  --profile-color-bg-soft: color-mix(in oklch, var(--app-color-panel) 62%, var(--color-bg));
-  --profile-color-panel: var(--app-color-panel);
-  --profile-color-panel-strong: color-mix(in oklch, var(--app-color-panel) 82%, var(--color-bg));
+  --profile-color-panel: var(--color-surface);
+  --profile-color-bg-soft: color-mix(in oklch, var(--profile-color-panel) 62%, var(--profile-color-bg));
+  --profile-color-panel-strong: color-mix(in oklch, var(--profile-color-panel) 82%, var(--profile-color-bg));
   --profile-color-border: var(--app-color-line);
   --profile-color-text: var(--color-text);
   --profile-color-muted: var(--app-color-muted);
@@ -91,11 +91,67 @@ defineProps<{
   --profile-color-shadow: var(--color-shadow);
   --profile-color-transparent: var(--color-transparent);
   --profile-color-overlay-mid: oklch(0% 0 0 / 0.36);
+  --profile-game-grid-columns: 2;
+  --profile-game-grid-max-gaps: calc((var(--profile-game-grid-columns) - 1) * var(--profile-space-3));
+  --profile-game-card-min: calc(var(--profile-unit) * 31);
+  --profile-game-card-max-basis: calc((100% - var(--profile-game-grid-max-gaps)) / var(--profile-game-grid-columns));
+  --profile-experience-grid-columns: var(--profile-game-grid-columns);
+  --profile-experience-grid-max-gaps: calc((var(--profile-experience-grid-columns) - 1) * var(--profile-space-3));
+  --profile-experience-card-min: var(--profile-game-card-min);
+  --profile-experience-card-max-basis: calc((100% - var(--profile-experience-grid-max-gaps)) / var(--profile-experience-grid-columns));
+  --profile-game-visual-height: calc(var(--profile-unit) * 20);
+  --profile-game-logo-size: calc(var(--profile-unit) * 7);
+  --profile-game-icon-shell-size: calc(var(--profile-unit) * 5);
+  --profile-game-fact-icon-size: calc(var(--profile-unit) * 3.5);
+  --profile-game-rank-icon-size: calc(var(--profile-unit) * 4.5);
+  --profile-game-content-min-height: calc(var(--profile-game-icon-shell-size) + var(--profile-hit-size) + var(--profile-space-1) + var(--profile-space-2) + var(--profile-space-3));
+  --profile-game-mode-min: calc(var(--profile-unit) * 11);
+  --profile-game-meta-group-min: calc(var(--profile-unit) * 8);
+  --profile-staff-logo-size: calc(var(--profile-unit) * 7);
+  --profile-staff-icon-size: calc(var(--profile-unit) * 5);
+  --profile-hit-size: calc(var(--profile-unit) * 5);
+  --profile-rank-icon-size: calc(var(--profile-unit) * 4);
+  --profile-fact-icon-size: calc(var(--profile-unit) * 3);
   min-height: calc(100vh - var(--app-header-height));
   background-color: var(--profile-color-bg);
   color: var(--profile-color-text);
   font-family: var(--font-ui, ui-sans-serif, system-ui, sans-serif);
   letter-spacing: 0;
+}
+
+.player-profile-shell {
+  width: min(calc(100% - (var(--profile-space-fluid) * 2)), var(--profile-content-max));
+  margin: 0 auto;
+}
+
+.player-profile-list,
+.player-profile-card-grid,
+.player-profile-experience-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.player-profile-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--profile-unit) * 28), 1fr));
+  gap: var(--profile-space-3);
+}
+
+.player-profile-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(var(--profile-game-card-min), var(--profile-game-card-max-basis))), 1fr));
+  gap: var(--profile-space-3);
+}
+
+.player-profile-experience-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(var(--profile-experience-card-min), var(--profile-experience-card-max-basis))), 1fr));
+  gap: var(--profile-space-3);
+}
+
+.player-profile-staff-list {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .player-profile-page *,
