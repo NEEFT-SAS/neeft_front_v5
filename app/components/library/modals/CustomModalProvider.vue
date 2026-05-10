@@ -1,8 +1,9 @@
 <template>
   <component
     :is="activeModal?.component"
-    v-if="activeModal && activeModal.presentation === 'component' && activeModal.component"
+    v-if="activeModal && activeModal.presentation === 'component' && activeModal.component && standaloneComponentProps"
     v-bind="standaloneComponentProps"
+    :key="activeModal.id"
   />
 
   <CustomModal

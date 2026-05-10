@@ -112,6 +112,7 @@
         theme="app"
         variant="outlined"
         color="secondary"
+        size="sm"
         @click="closeModal"
       />
       <CustomButton
@@ -120,6 +121,7 @@
         variant="filled"
         color="primary"
         type="submit"
+        size="sm"
         :form="formId"
       />
     </template>

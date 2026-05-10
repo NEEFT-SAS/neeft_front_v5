@@ -249,7 +249,29 @@ export function useViewedUserProfile(slugRef?: () => SlugValue) {
 
   const useEsportExperienceSection = () => {
     const { $playerAPI } = useNuxtApp()
-    return useExperienceSection('esport-experiences', slug => $playerAPI.esportExperiences.list(slug))
+    const section = useExperienceSection('esport-experiences', slug => $playerAPI.esportExperiences.list(slug))
+
+    const createEsportExperience = async (input: any) => {
+      if (!slug.value || !section.items.value) return
+
+      const response = await $playerAPI.esportExperiences.create(slug.value, input)
+      section.items.value = [...section.items.value, response.data]
+    }
+
+    const updateEsportExperience = async (experienceId: string, input: any) => {
+      if (!slug.value || !section.items.value) return
+
+      const response = await $playerAPI.esportExperiences.patch(slug.value, experienceId, input)
+      section.items.value = section.items.value.map(exp =>
+        String(exp.id) === String(experienceId) ? response.data : exp
+      )
+    }
+
+    return {
+      ...section,
+      createEsportExperience,
+      updateEsportExperience
+    }
   }
 
   const useEducationExperienceSection = () => {

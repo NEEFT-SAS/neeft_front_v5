@@ -1,15 +1,17 @@
 <template>
   <BaseProfileSection
-    title="Anciennes equipes"
-    eyebrow="Equipes"
+    title="Anciennes équipes"
+    eyebrow="Esport"
     surface="plain"
-    :data="experiences.length > 0"
-    :pending="pending"
-    :error="error"
-    loading-message="Chargement des anciennes equipes."
-    error-message="Impossible de charger les anciennes equipes."
-    empty-message="Aucune ancienne equipe ajoutee."
+    :show-btn="canEdit || true"
+    btn-label=""
+    btn-icon="lucide:pen-line"
+    btn-variant="ghost"
+    btn-shape="circle"
+    btn-aria-label="Modifier les équipes"
+    @action="openModal"
   >
+
     <ul class="player-profile-experience-grid">
       <li v-for="experience in experiences" :key="String(experience.id)">
         <UserProfileEsportExperienceCard :experience="experience" />
@@ -19,6 +21,22 @@
 </template>
 
 <script setup>
-const { useEsportExperienceSection } = useViewedUserProfile()
-const { items: experiences, pending, error } = useEsportExperienceSection()
+import UserProfileEsportExperienceModal from './UserProfileEsportExperienceModal.vue'
+
+const { useEsportExperienceSection, canEdit, slug } = useViewedUserProfile()
+const { items: experiences, pending, error, refresh, createEsportExperience, updateEsportExperience } = useEsportExperienceSection()
+const modalStore = useModalStore()
+
+const openModal = (experience = null) => {
+  modalStore.add({
+    presentation: 'component',
+    component: UserProfileEsportExperienceModal,
+    componentProps: {
+      slug: slug.value,
+      experience,
+      createEsportExperience,
+      updateEsportExperience
+    }
+  })
+}
 </script>
