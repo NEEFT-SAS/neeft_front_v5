@@ -3,6 +3,13 @@
     title="Experiences professionnelles"
     eyebrow="Professionnel"
     surface="plain"
+    :show-btn="canEdit || true"
+    btn-label=""
+    btn-icon="lucide:pen-line"
+    btn-variant="ghost"
+    btn-shape="circle"
+    btn-aria-label="Modifier les expériences professionnelles"
+    @action="openModal"
     :data="experiences.length > 0"
     :pending="pending"
     :error="error"
@@ -19,6 +26,22 @@
 </template>
 
 <script setup>
-const { useProfessionalExperienceSection } = useViewedUserProfile()
-const { items: experiences, pending, error } = useProfessionalExperienceSection()
+import UserProfileProfessionalExperienceModal from './UserProfileProfessionalExperienceModal.vue'
+
+const { useProfessionalExperienceSection, canEdit, slug } = useViewedUserProfile()
+const { items: experiences, pending, error, refresh, createProfessionalExperience, updateProfessionalExperience } = useProfessionalExperienceSection()
+const modalStore = useModalStore()
+
+const openModal = (experience = null) => {
+  modalStore.add({
+    presentation: 'component',
+    component: UserProfileProfessionalExperienceModal,
+    componentProps: {
+      slug: slug.value,
+      experience,
+      createProfessionalExperience,
+      updateProfessionalExperience
+    }
+  })
+}
 </script>

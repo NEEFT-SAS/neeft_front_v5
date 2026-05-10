@@ -3,6 +3,13 @@
     title="Formations"
     eyebrow="Scolaire"
     surface="plain"
+    :show-btn="canEdit || true"
+    btn-label=""
+    btn-icon="lucide:pen-line"
+    btn-variant="ghost"
+    btn-shape="circle"
+    btn-aria-label="Modifier les formations"
+    @action="openModal"
     :data="experiences.length > 0"
     :pending="pending"
     :error="error"
@@ -19,6 +26,22 @@
 </template>
 
 <script setup>
-const { useEducationExperienceSection } = useViewedUserProfile()
-const { items: experiences, pending, error } = useEducationExperienceSection()
+import UserProfileEducationExperienceModal from './UserProfileEducationExperienceModal.vue'
+
+const { useEducationExperienceSection, canEdit, slug } = useViewedUserProfile()
+const { items: experiences, pending, error, refresh, createEducationExperience, updateEducationExperience } = useEducationExperienceSection()
+const modalStore = useModalStore()
+
+const openModal = (experience = null) => {
+  modalStore.add({
+    presentation: 'component',
+    component: UserProfileEducationExperienceModal,
+    componentProps: {
+      slug: slug.value,
+      experience,
+      createEducationExperience,
+      updateEducationExperience
+    }
+  })
+}
 </script>

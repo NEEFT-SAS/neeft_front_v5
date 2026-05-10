@@ -276,12 +276,56 @@ export function useViewedUserProfile(slugRef?: () => SlugValue) {
 
   const useEducationExperienceSection = () => {
     const { $playerAPI } = useNuxtApp()
-    return useExperienceSection('education-experiences', slug => $playerAPI.educationExperiences.list(slug))
+    const section = useExperienceSection('education-experiences', slug => $playerAPI.educationExperiences.list(slug))
+
+    const createEducationExperience = async (input: any) => {
+      if (!slug.value || !section.items.value) return
+
+      const response = await $playerAPI.educationExperiences.create(slug.value, input)
+      section.items.value = [...section.items.value, response.data]
+    }
+
+    const updateEducationExperience = async (experienceId: string, input: any) => {
+      if (!slug.value || !section.items.value) return
+
+      const response = await $playerAPI.educationExperiences.patch(slug.value, experienceId, input)
+      section.items.value = section.items.value.map(exp =>
+        String(exp.id) === String(experienceId) ? response.data : exp
+      )
+    }
+
+    return {
+      ...section,
+      createEducationExperience,
+      updateEducationExperience
+    }
   }
 
   const useProfessionalExperienceSection = () => {
     const { $playerAPI } = useNuxtApp()
-    return useExperienceSection('professional-experiences', slug => $playerAPI.professionalExperiences.list(slug))
+    const section = useExperienceSection('professional-experiences', slug => $playerAPI.professionalExperiences.list(slug))
+
+    const createProfessionalExperience = async (input: any) => {
+      if (!slug.value || !section.items.value) return
+
+      const response = await $playerAPI.professionalExperiences.create(slug.value, input)
+      section.items.value = [...section.items.value, response.data]
+    }
+
+    const updateProfessionalExperience = async (experienceId: string, input: any) => {
+      if (!slug.value || !section.items.value) return
+
+      const response = await $playerAPI.professionalExperiences.patch(slug.value, experienceId, input)
+      section.items.value = section.items.value.map(exp =>
+        String(exp.id) === String(experienceId) ? response.data : exp
+      )
+    }
+
+    return {
+      ...section,
+      createProfessionalExperience,
+      updateProfessionalExperience
+    }
   }
 
   return {
