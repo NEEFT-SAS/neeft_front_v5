@@ -265,7 +265,6 @@ onBeforeUnmount(() => {
   --modal-control-hover-bg: color-mix(in oklch, var(--color-bg-soft-hover) 88%, var(--color-accent));
   width: min(100%, var(--modal-width));
   max-height: var(--modal-max-height);
-  grid-template-rows: auto minmax(0, 1fr) auto;
   border: var(--border) solid var(--modal-border);
   border-radius: var(--radius);
   background-color: var(--modal-bg);
@@ -273,7 +272,7 @@ onBeforeUnmount(() => {
   color: var(--color-text);
   outline: none;
 
-  @apply grid overflow-hidden;
+  @apply flex flex-col overflow-hidden;
 }
 
 .cus-modal[data-size='sm'] {
@@ -360,6 +359,7 @@ onBeforeUnmount(() => {
 }
 
 .cus-modal__body {
+  flex: 1;
   min-height: 0;
   padding: var(--modal-padding);
   color: var(--color-muted);

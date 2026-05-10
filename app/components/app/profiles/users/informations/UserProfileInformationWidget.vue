@@ -3,12 +3,13 @@
     title="Informations"
     eyebrow="Profil"
     surface="plain"
-    :show-btn="canEdit"
+    :show-btn="canEdit || true"
     btn-label=""
     btn-icon="lucide:pen-line"
     btn-variant="ghost"
     btn-shape="circle"
     btn-aria-label="Modifier les informations"
+    @action="openModal"
   >
     <div class="profile-information-widget">
 
@@ -40,8 +41,21 @@
 </template>
 
 <script setup lang="ts">
+import UserProfileInformationModal from './UserProfileInformationModal.vue'
 
-const { profile, canEdit } = useViewedUserProfile()
+const { profile, canEdit, updatePlayerProfile } = useViewedUserProfile()
+const modalStore = useModalStore()
+
+const openModal = () => {
+  modalStore.add({
+    presentation: 'component',
+    component: UserProfileInformationModal,
+    componentProps: {
+      profile: profile.value,
+      updatePlayerProfile
+    }
+  })
+}
 </script>
 
 <style scoped>

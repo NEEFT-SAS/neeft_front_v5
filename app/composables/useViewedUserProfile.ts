@@ -9,6 +9,8 @@ type ViewedUserProfilePageCtx = {
   pending: RefValue<boolean>
   error: RefValue<unknown>
   refresh: () => Promise<void>
+  updateProfile: (updates: Partial<PlayerProfilePresenter>) => void
+  updatePlayerProfile: (updates: Partial<PlayerProfilePresenter>) => Promise<void>
   isOwner: RefValue<boolean>
   canEdit: RefValue<boolean>
 }
@@ -85,6 +87,19 @@ const resolvePageContext = (slugRef?: () => SlugValue): ViewedUserProfilePageCtx
     return false
   })
 
+  const updateProfile = (updates: Partial<PlayerProfilePresenter>) => {
+    if (data.value) {
+      data.value = { ...data.value, ...updates }
+    }
+  }
+
+  const updatePlayerProfile = async (updates: Partial<PlayerProfilePresenter>) => {
+    if (!slug.value || !data.value) return
+
+    await $playerAPI.profile.update(slug.value, updates)
+    data.value = { ...data.value, ...updates }
+  }
+
   onBeforeUnmount(() => {
     if (!import.meta.client) return
     clearNuxtData(cacheKey)
@@ -96,6 +111,8 @@ const resolvePageContext = (slugRef?: () => SlugValue): ViewedUserProfilePageCtx
     pending,
     error,
     refresh,
+    updateProfile,
+    updatePlayerProfile,
     isOwner,
     canEdit
   }
@@ -252,6 +269,8 @@ export function useViewedUserProfile(slugRef?: () => SlugValue) {
     pending: ctx.pending,
     error: ctx.error,
     refresh: ctx.refresh,
+    updateProfile: ctx.updateProfile,
+    updatePlayerProfile: ctx.updatePlayerProfile,
     isOwner: ctx.isOwner,
     useGameSection,
     useStaffSection,

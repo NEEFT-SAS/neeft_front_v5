@@ -178,6 +178,7 @@ const activeIndex = ref(-1)
 const searchQuery = ref('')
 const popupPlacement = ref('bottom')
 const listMaxHeight = ref('')
+const generatedId = useId()
 
 const triggerId = computed(() => props.id || `cus-input-selection-${generatedId}`)
 const labelId = computed(() => `${triggerId.value}-label`)

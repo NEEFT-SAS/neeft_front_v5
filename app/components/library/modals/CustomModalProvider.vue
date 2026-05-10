@@ -1,6 +1,12 @@
 <template>
+  <component
+    :is="activeModal?.component"
+    v-if="activeModal && activeModal.presentation === 'component' && activeModal.component"
+    v-bind="standaloneComponentProps"
+  />
+
   <CustomModal
-    v-if="activeModal"
+    v-else-if="activeModal"
     :model-value="true"
     :title="activeModal.title"
     :desc="activeModal.desc"
@@ -21,42 +27,26 @@
         :is="activeModal.component"
         v-if="activeModal.component"
         v-bind="activeModal.componentProps"
-        :modal-id="activeModal.id"
-        @close="modal.close(activeModal.id, 'action')"
       />
     </div>
-
-    <template v-if="activeModal.actions.length" #footer>
-      <CustomButton
-        v-for="action in activeModal.actions"
-        :key="action.label"
-        :label="action.label"
-        :left-icon="action.leftIcon || ''"
-        :right-icon="action.rightIcon || ''"
-        :variant="action.variant || 'filled'"
-        :color="action.color || 'primary'"
-        :type="action.type || 'button'"
-        :form="action.form || ''"
-        :disabled="action.disabled || false"
-        @click="handleAction(action)"
-      />
-    </template>
   </CustomModal>
 </template>
 
 <script setup lang="ts">
-import type { ModalAction, ModalCloseReason, UpdateModalOptions } from '~/composables/useModal'
+import type { ModalCloseReason } from '~/stores/modal.store'
 
-const modal = useModal()
-const activeModal = modal.active
+const modalStore = useModalStore()
+const { activeModal } = storeToRefs(modalStore)
 
-const getActionContext = (modalId: number, modalItem: NonNullable<typeof activeModal.value>) => ({
-  id: modalId,
-  modal: modalItem,
-  close: () => modal.close(modalId, 'action'),
-  remove: () => modal.remove(modalId),
-  update: (options: UpdateModalOptions) => modal.update(modalId, options),
-  clear: () => modal.clear()
+const standaloneComponentProps = computed(() => {
+  if (!activeModal.value) {
+    return {}
+  }
+
+  return {
+    ...activeModal.value.componentProps,
+    modalId: activeModal.value.id
+  }
 })
 
 const handleClose = (reason: ModalCloseReason) => {
@@ -64,21 +54,7 @@ const handleClose = (reason: ModalCloseReason) => {
     return
   }
 
-  modal.close(activeModal.value.id, reason)
-}
-
-const handleAction = async (action: ModalAction) => {
-  if (!activeModal.value || action.disabled) {
-    return
-  }
-
-  const modalItem = activeModal.value
-  const result = await action.onClick?.(getActionContext(modalItem.id, modalItem))
-  const shouldClose = action.close ?? action.type !== 'submit'
-
-  if (shouldClose && result !== false) {
-    modal.close(modalItem.id, 'action')
-  }
+  modalStore.close(activeModal.value.id, reason)
 }
 </script>
 

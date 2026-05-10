@@ -27,7 +27,7 @@ export default defineNuxtPlugin(() => {
     try {
       await auth.signIn(
         { email: data.email, password: data.password },
-        { redirect: false, callGetSession: false }
+        { redirect: false }
       )
     } catch (error: any) {
       throw error?.data ?? error?.response?._data ?? error

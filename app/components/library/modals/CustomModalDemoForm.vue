@@ -29,7 +29,7 @@ const props = defineProps({
   formId: { type: String, default: '' }
 })
 
-const modal = useModal()
+const modalStore = useModalStore()
 const toast = useToast()
 const nameValue = ref('')
 const emailValue = ref('')
@@ -55,7 +55,7 @@ const submitForm = () => {
     icon: 'lucide:circle-check',
     position: 'top-right'
   })
-  modal.close(props.modalId, 'action')
+  modalStore.close(props.modalId)
 }
 </script>
 
