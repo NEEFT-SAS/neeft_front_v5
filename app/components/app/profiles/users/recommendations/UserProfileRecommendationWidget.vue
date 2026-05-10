@@ -3,7 +3,13 @@
     title="Recommandations"
     eyebrow="Recommandations"
     surface="plain"
-    :show-btn="false"
+    :show-btn="!isOwner"
+    btn-label="Recommander"
+    btn-icon="lucide:star"
+    btn-variant="ghost"
+    btn-shape="circle"
+    btn-aria-label="Ajouter une recommandation"
+    @action="openModal"
     :loading="false"
     :error="null"
     :data="true"
@@ -38,6 +44,11 @@
 </template>
 
 <script setup lang="ts">
+import UserProfileRecommendationModal from './UserProfileRecommendationModal.vue'
+
+const { useRecommendationsSection, isOwner, slug } = useViewedUserProfile()
+const { createRecommendation } = useRecommendationsSection()
+const modalStore = useModalStore()
 
 const activeTab = ref('received')
 
@@ -53,4 +64,15 @@ const tabItems = [
     badge: 2
   }
 ]
+
+const openModal = () => {
+  modalStore.add({
+    presentation: 'component',
+    component: UserProfileRecommendationModal,
+    componentProps: {
+      slug: slug.value,
+      createRecommendation
+    }
+  })
+}
 </script>

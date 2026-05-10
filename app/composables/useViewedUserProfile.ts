@@ -207,11 +207,20 @@ export function useViewedUserProfile(slugRef?: () => SlugValue) {
       }
     )
 
+    const createRecommendation = async (input: any) => {
+      if (!ctx.slug.value) return
+
+      await $playerAPI.recommendations.create(ctx.slug.value, input)
+      // Refresh recommendations after creating one
+      await refresh()
+    }
+
     return {
       items: data,
       pending,
       error,
-      refresh
+      refresh,
+      createRecommendation
     }
   }
 
