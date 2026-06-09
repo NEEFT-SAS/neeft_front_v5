@@ -171,6 +171,7 @@ const summaryLabel = computed(() => props.summaryLabel || t('app.search.layout.s
 const actionsLabel = computed(() => props.actionsLabel || t('app.search.layout.actionsLabel'))
 const filterButtonLabel = computed(() => props.filterButtonLabel || t('app.search.layout.filterButtonLabel'))
 const sortLabel = computed(() => props.sortLabel || t('app.search.layout.sortLabel'))
+const displayResultsLabel = computed(() => props.resultsLabel)
 
 const emit = defineEmits(['update:sortMode', 'open-filters'])
 
