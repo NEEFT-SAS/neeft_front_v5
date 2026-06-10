@@ -51,20 +51,11 @@ const navigationMenus: NavigationMenu[] = [
       { label: 'Rechercher une equipe', to: '/search/teams', icon: 'lucide:users-round' },
       { label: 'Rechercher un staff', to: '/search/staffs', icon: 'lucide:user-round-cog' }
     ]
-  },
-  {
-    key: 'marketplace',
-    label: 'Marketplace',
-    icon: 'lucide:store',
-    items: [
-      { label: 'Services', to: '/marketplace', icon: 'lucide:store' },
-      { label: 'Workflow client', to: '/marketplace/orders', icon: 'lucide:receipt-text' },
-      { label: 'Workflow vendeur', to: '/marketplace/seller/orders', icon: 'lucide:badge-euro' }
-    ]
   }
 ]
 
 const navigationLinks: NavigationItem[] = [
+  { label: 'Marketplace', to: '/marketplace', icon: 'lucide:store' },
   { label: 'Feed', to: '/feed', icon: 'lucide:newspaper' },
   { label: 'Offres de recrutement', to: '/recruitment', icon: 'lucide:briefcase-business' }
 ]

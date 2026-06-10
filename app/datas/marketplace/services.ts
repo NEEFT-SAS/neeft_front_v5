@@ -1,11 +1,28 @@
 export type MarketplaceServiceCategory = 'community' | 'coaching' | 'management' | 'creative' | 'growth' | 'analysis'
 
+export type MarketplaceServiceOffer = {
+  id: string
+  title: string
+  description: string
+  price: number
+}
+
 export type MarketplaceServiceStep = {
   title: string
   description: string
 }
 
+export type MarketplaceServiceReview = {
+  id: string
+  author: string
+  role: string
+  rating: number
+  date: string
+  comment: string
+}
+
 export type MarketplaceService = {
+  id?: string
   slug: string
   title: string
   category: MarketplaceServiceCategory
@@ -18,6 +35,7 @@ export type MarketplaceService = {
   billingLabel: string
   rating: number
   reviewCount: number
+  reviews: MarketplaceServiceReview[]
   responseTime: string
   duration: string
   levelLabel: string
@@ -29,6 +47,7 @@ export type MarketplaceService = {
   deliverables: string[]
   process: MarketplaceServiceStep[]
   tags: string[]
+  offers?: MarketplaceServiceOffer[]
 }
 
 export const marketplaceCategories = [
@@ -42,6 +61,135 @@ export const marketplaceCategories = [
 ] as const
 
 export type MarketplaceCategoryFilter = (typeof marketplaceCategories)[number]['value']
+
+const marketplaceServiceReviews: Record<string, MarketplaceServiceReview[]> = {
+  'community-manager-esport': [
+    {
+      id: 'community-manager-esport-review-1',
+      author: 'Nina V.',
+      role: 'Manager roster Valorant',
+      rating: 5,
+      date: '9 juin 2026',
+      comment: 'Le calendrier est clair, les posts sortent au bon moment et le Discord est enfin suivi sans relance.'
+    },
+    {
+      id: 'community-manager-esport-review-2',
+      author: 'Owen R.',
+      role: 'Fondateur club',
+      rating: 5,
+      date: '2 juin 2026',
+      comment: 'Tres bon cadrage editorial. On garde une presence propre sans devoir micro-manager chaque publication.'
+    }
+  ],
+  'coach-performance-competitive': [
+    {
+      id: 'coach-performance-competitive-review-1',
+      author: 'Yanis M.',
+      role: 'Joueur dueliste',
+      rating: 5,
+      date: '8 juin 2026',
+      comment: 'Review directe, pas de blabla. Je suis reparti avec trois priorites simples a travailler en ranked.'
+    },
+    {
+      id: 'coach-performance-competitive-review-2',
+      author: 'Malo T.',
+      role: 'IGL amateur',
+      rating: 4,
+      date: '31 mai 2026',
+      comment: 'La session a rendu mes erreurs de placement beaucoup plus visibles. Le plan de travail est facile a suivre.'
+    }
+  ],
+  'manager-equipe-tournois': [
+    {
+      id: 'manager-equipe-tournois-review-1',
+      author: 'Lena P.',
+      role: 'Team owner',
+      rating: 5,
+      date: '6 juin 2026',
+      comment: 'On a gagne en rigueur sur les inscriptions et les disponibilites. Tout le monde sait quoi faire.'
+    },
+    {
+      id: 'manager-equipe-tournois-review-2',
+      author: 'Hugo R.',
+      role: 'Coach Rocket League',
+      rating: 4,
+      date: '28 mai 2026',
+      comment: 'Tres utile pour garder le planning propre pendant les semaines chargees de scrims et de tournois.'
+    }
+  ],
+  'agent-manager-joueur': [
+    {
+      id: 'agent-manager-joueur-review-1',
+      author: 'Alex B.',
+      role: 'Joueur flex',
+      rating: 5,
+      date: '5 juin 2026',
+      comment: 'Mon profil est devenu beaucoup plus lisible. Les messages de candidature font plus pro et plus courts.'
+    },
+    {
+      id: 'agent-manager-joueur-review-2',
+      author: 'Samir K.',
+      role: 'Joueur LFT',
+      rating: 4,
+      date: '24 mai 2026',
+      comment: 'Bon accompagnement pour cibler les bonnes equipes et eviter les candidatures trop generales.'
+    }
+  ],
+  'montage-video-highlights': [
+    {
+      id: 'montage-video-highlights-review-1',
+      author: 'Kenan D.',
+      role: 'Joueur Valorant',
+      rating: 5,
+      date: '9 juin 2026',
+      comment: 'Montage lisible, rythme propre et pas surcharge. Le rendu est exploitable directement pour recruteurs.'
+    },
+    {
+      id: 'montage-video-highlights-review-2',
+      author: 'Nora S.',
+      role: 'Content lead',
+      rating: 5,
+      date: '1 juin 2026',
+      comment: 'Les clips gardent la lecture du gameplay tout en etant assez dynamiques pour les reseaux.'
+    }
+  ],
+  'partenariats-sponsoring-equipe': [
+    {
+      id: 'partenariats-sponsoring-equipe-review-1',
+      author: 'Owen R.',
+      role: 'Fondateur club',
+      rating: 5,
+      date: '7 juin 2026',
+      comment: 'Le deck est plus clair et nos offres sont enfin faciles a presenter a un partenaire potentiel.'
+    },
+    {
+      id: 'partenariats-sponsoring-equipe-review-2',
+      author: 'Emma C.',
+      role: 'Responsable structure',
+      rating: 4,
+      date: '26 mai 2026',
+      comment: 'Bonne priorisation des prospects et des contreparties. On a une base commerciale plus credible.'
+    }
+  ],
+  'analyste-data-matchs': [
+    {
+      id: 'analyste-data-matchs-review-1',
+      author: 'Noah F.',
+      role: 'Assistant coach',
+      rating: 5,
+      date: '4 juin 2026',
+      comment: 'Le rapport fait ressortir les patterns recurrents sans noyer le staff dans les chiffres.'
+    },
+    {
+      id: 'analyste-data-matchs-review-2',
+      author: 'Elise G.',
+      role: 'Coach collectif',
+      rating: 4,
+      date: '27 mai 2026',
+      comment: 'Les axes d entrainement sont clairs et directement utilisables pour preparer les prochaines sessions.'
+    }
+  ]
+}
 
 export const marketplaceServices: MarketplaceService[] = [
   {
@@ -57,6 +205,7 @@ export const marketplaceServices: MarketplaceService[] = [
     billingLabel: 'par mois',
     rating: 4.9,
     reviewCount: 128,
+    reviews: marketplaceServiceReviews['community-manager-esport'],
     responseTime: 'Reponse sous 2 h',
     duration: 'Engagement 30 jours',
     levelLabel: 'Equipe semi-pro et pro',
@@ -89,6 +238,7 @@ export const marketplaceServices: MarketplaceService[] = [
     billingLabel: 'par session',
     rating: 4.8,
     reviewCount: 96,
+    reviews: marketplaceServiceReviews['coach-performance-competitive'],
     responseTime: 'Reponse sous 4 h',
     duration: 'Session 90 min',
     levelLabel: 'Joueurs ambitieux',
@@ -121,6 +271,7 @@ export const marketplaceServices: MarketplaceService[] = [
     billingLabel: 'par mois',
     rating: 4.7,
     reviewCount: 74,
+    reviews: marketplaceServiceReviews['manager-equipe-tournois'],
     responseTime: 'Reponse sous 1 h',
     duration: 'Engagement 30 jours',
     levelLabel: 'Rosters actifs',
@@ -153,6 +304,7 @@ export const marketplaceServices: MarketplaceService[] = [
     billingLabel: 'par mission',
     rating: 4.8,
     reviewCount: 63,
+    reviews: marketplaceServiceReviews['agent-manager-joueur'],
     responseTime: 'Reponse sous 6 h',
     duration: 'Mission 10 jours',
     levelLabel: 'Joueurs en recherche',
@@ -185,6 +337,7 @@ export const marketplaceServices: MarketplaceService[] = [
     billingLabel: 'par video',
     rating: 4.9,
     reviewCount: 142,
+    reviews: marketplaceServiceReviews['montage-video-highlights'],
     responseTime: 'Reponse sous 3 h',
     duration: 'Livraison 72 h',
     levelLabel: 'Joueurs et equipes',
@@ -217,6 +370,7 @@ export const marketplaceServices: MarketplaceService[] = [
     billingLabel: 'par mission',
     rating: 4.6,
     reviewCount: 51,
+    reviews: marketplaceServiceReviews['partenariats-sponsoring-equipe'],
     responseTime: 'Reponse sous 8 h',
     duration: 'Mission 14 jours',
     levelLabel: 'Clubs et collectifs',
@@ -249,6 +403,7 @@ export const marketplaceServices: MarketplaceService[] = [
     billingLabel: 'par rapport',
     rating: 4.7,
     reviewCount: 69,
+    reviews: marketplaceServiceReviews['analyste-data-matchs'],
     responseTime: 'Reponse sous 5 h',
     duration: 'Livraison 5 jours',
     levelLabel: 'Staffs competitifs',

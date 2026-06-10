@@ -17,11 +17,24 @@ export const REFERRAL_QUERY_KEYS = ['referredCode', 'referralCode', 'referral'] 
 
 type SessionState = {
   status: SessionStatusEnum
-  me: UserSessionPresenter | null
+  me: SessionPayload | null
   myTeams: UserTeamPresenter[]
   myTeamsLoaded: boolean
   lastError: string | null
   referralCode: string | null
+}
+
+type SessionPlayer = {
+  slug?: string | null
+  username?: string | null
+  profilePicture?: string | null
+}
+
+type SessionPayload = Partial<UserSessionPresenter> & {
+  player?: SessionPlayer | null
+  data?: {
+    player?: SessionPlayer | null
+  } | null
 }
 
 let bootstrapPromise: Promise<void> | null = null
@@ -48,8 +61,20 @@ const getAuthToken = () => {
   return String(auth.token.value ?? '')
 }
 
-const getSessionSlug = (session: UserSessionPresenter | null) => {
-  return session?.slug || null
+const getSessionPlayer = (session: SessionPayload | null) => {
+  return session?.player ?? session?.data?.player ?? null
+}
+
+const getSessionSlug = (session: SessionPayload | null) => {
+  return getSessionPlayer(session)?.slug || session?.slug || null
+}
+
+const getSessionUsername = (session: SessionPayload | null) => {
+  return getSessionPlayer(session)?.username || session?.username || null
+}
+
+const getSessionAvatar = (session: SessionPayload | null) => {
+  return getSessionPlayer(session)?.profilePicture || null
 }
 
 export const useSessionStore = defineStore('session', {
@@ -65,6 +90,8 @@ export const useSessionStore = defineStore('session', {
   getters: {
     isLoggedIn: (state) => state.status === SessionStatusEnum.AUTHENTICATED,
     mySlug: (state) => getSessionSlug(state.me),
+    myUsername: (state) => getSessionUsername(state.me),
+    myAvatar: (state) => getSessionAvatar(state.me),
     myTeamSlugs: (state) => state.myTeams.map(team => team.slug),
     isMemberOfTeam: (state) => (slug: string) => state.myTeams.some(team => team.slug === slug)
   },
@@ -79,7 +106,7 @@ export const useSessionStore = defineStore('session', {
       bootstrapPromise = null
     },
 
-    setAuthenticatedSession(me: UserSessionPresenter) {
+    setAuthenticatedSession(me: SessionPayload) {
       this.status = SessionStatusEnum.AUTHENTICATED
       this.me = me
       this.myTeamsLoaded = false
@@ -95,6 +122,11 @@ export const useSessionStore = defineStore('session', {
 
       if (this.status === SessionStatusEnum.ANONYMOUS && import.meta.client && getAuthToken()) {
         this.status = SessionStatusEnum.UNKNOWN
+      }
+
+      if (import.meta.client && !getAuthToken()) {
+        this.resetAuthState()
+        return Promise.resolve()
       }
 
       if (this.status !== SessionStatusEnum.UNKNOWN) return Promise.resolve()

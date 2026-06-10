@@ -8,7 +8,7 @@
       <LandingHeaderNav :items="navItems" :aria-label="t('landing.layout.header.aria.navigation')" @close-mobile-menu="closeMobileMenu" />
       <div class="landing-header__actions">
         <HeaderLanguageSelector theme="landing" align="end" />
-        <LandingHeaderActions :items="actionItems" @close-mobile-menu="closeMobileMenu" />
+        <LandingHeaderActions v-if="showGuestActions" :items="actionItems" @close-mobile-menu="closeMobileMenu" />
         <HeaderUserActions theme="landing" size="lg" />
       </div>
     </div>
@@ -19,10 +19,12 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const route = useRoute()
+const sessionStore = useSessionStore()
 const isPinned = ref(false)
 const isMobileMenuOpen = ref(false)
 const mobileMenuId = `landing-header-menu-${useId()}`
 let scrollFrame = 0
+const showGuestActions = computed(() => !sessionStore.isLoggedIn)
 
 defineProps({
   navItems: { type: Array as () => Array<{ to: string; label: string; active?: boolean }>, required: true },

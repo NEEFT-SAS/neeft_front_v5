@@ -4,9 +4,10 @@
       <div class="marketplace-service-profile-shell">
         <div class="marketplace-service-profile-hero__banner">
           <NuxtImg
+            v-if="service.bannerUrl"
             class="marketplace-service-profile-hero__image"
-            :src="service.coverImage"
-            :alt="`Banniere du service ${service.title}`"
+            :src="service.bannerUrl"
+            :alt="`Banniere du service ${service.name}`"
             width="1440"
             height="360"
             format="webp"
@@ -14,6 +15,9 @@
             decoding="async"
             preload
           />
+          <div v-else class="marketplace-service-profile-hero__image marketplace-service-profile-hero__image--empty" aria-hidden="true">
+            <Icon name="lucide:image" />
+          </div>
 
           <div class="marketplace-service-profile-hero__back">
             <CustomLink
@@ -27,31 +31,38 @@
             />
           </div>
 
+          <div v-if="serviceGames.length" class="marketplace-service-profile-hero__games" aria-label="Jeux concernes">
+            <span v-for="game in serviceGames" :key="game.id" class="marketplace-service-profile-hero__game">
+              <Icon v-if="game.icon" :name="game.icon" aria-hidden="true" />
+              {{ game.shortName || game.name }}
+            </span>
+          </div>
+
           <div class="marketplace-service-profile-hero__identity">
             <span class="marketplace-service-profile-hero__logo" aria-hidden="true">
-              <Icon :name="service.icon" />
+              <Icon name="lucide:store" />
             </span>
 
             <div class="marketplace-service-profile-hero__copy">
               <p class="marketplace-service-profile-eyebrow">
-                {{ service.categoryLabel }}
+                Marketplace
               </p>
               <h1 id="marketplace-service-title">
-                {{ service.title }}
+                {{ service.name }}
               </h1>
-              <p>{{ service.shortDescription }}</p>
+              <p>{{ serviceShortDescription }}</p>
 
               <ul class="marketplace-service-profile-hero__meta" aria-label="Informations du service">
                 <li>
                   <MarketplaceRating
-                    :rating="service.rating"
-                    :review-count="service.reviewCount"
+                    :rating="service.ratingAvg"
+                    :review-count="service.ratingCount"
                     :show-reviews="false"
                   />
-                  <span>{{ service.reviewCount }} avis</span>
+                  <span>{{ service.ratingCount }} avis</span>
                 </li>
-                <li>{{ service.responseTime }}</li>
-                <li>{{ service.duration }}</li>
+                <li>{{ getStatusLabel(service.status) }}</li>
+                <li>{{ serviceOfferCountLabel }}</li>
               </ul>
             </div>
 
@@ -93,23 +104,24 @@
           id="marketplace-service-description"
         >
           <div class="marketplace-service-profile-copy">
-            <p v-for="paragraph in service.description" :key="paragraph">
+            <p v-for="paragraph in descriptionParagraphs" :key="paragraph">
               {{ paragraph }}
             </p>
           </div>
         </BaseProfileSection>
 
         <BaseProfileSection
+          v-if="service.images.length"
           title="Images"
           eyebrow="Portfolio"
           surface="plain"
           id="marketplace-service-gallery"
         >
           <ul class="marketplace-service-profile-gallery" aria-label="Images du service">
-            <li v-for="image in service.galleryImages" :key="image">
+            <li v-for="image in service.images" :key="image">
               <NuxtImg
                 :src="image"
-                :alt="`Image du service ${service.title}`"
+                :alt="`Image du service ${service.name}`"
                 width="520"
                 height="320"
                 format="webp"
@@ -118,37 +130,6 @@
               />
             </li>
           </ul>
-        </BaseProfileSection>
-
-        <BaseProfileSection
-          title="Livrables"
-          eyebrow="Mission"
-          surface="plain"
-          id="marketplace-service-deliverables"
-        >
-          <ul class="marketplace-service-profile-deliverables">
-            <li v-for="deliverable in service.deliverables" :key="deliverable">
-              <Icon name="lucide:check" aria-hidden="true" />
-              <span>{{ deliverable }}</span>
-            </li>
-          </ul>
-        </BaseProfileSection>
-
-        <BaseProfileSection
-          title="Deroule"
-          eyebrow="Process"
-          surface="plain"
-          id="marketplace-service-process"
-        >
-          <ol class="marketplace-service-profile-process">
-            <li v-for="(step, index) in service.process" :key="step.title">
-              <span>{{ index + 1 }}</span>
-              <div>
-                <h3>{{ step.title }}</h3>
-                <p>{{ step.description }}</p>
-              </div>
-            </li>
-          </ol>
         </BaseProfileSection>
 
         <BaseProfileSection
@@ -166,7 +147,8 @@
                 :aria-label="`Voir le service ${relatedService.title}`"
               >
                 <NuxtImg
-                  :src="relatedService.coverImage"
+                  v-if="relatedService.coverImageUrl"
+                  :src="relatedService.coverImageUrl"
                   :alt="`Banniere du service ${relatedService.title}`"
                   width="320"
                   height="160"
@@ -174,15 +156,19 @@
                   loading="lazy"
                   decoding="async"
                 />
+                <div v-else class="marketplace-service-profile-related__empty" aria-hidden="true">
+                  <Icon name="lucide:image" />
+                </div>
                 <span>
-                  <small>{{ relatedService.categoryLabel }}</small>
+                  <small v-if="getRelatedServiceCategoryLabel(relatedService)">{{ getRelatedServiceCategoryLabel(relatedService) }}</small>
                   <strong>{{ relatedService.title }}</strong>
                 </span>
-                <em>{{ formatMarketplacePrice(relatedService.price) }}</em>
+                <em v-if="getRelatedServicePriceLabel(relatedService)">{{ getRelatedServicePriceLabel(relatedService) }}</em>
               </NuxtLinkLocale>
             </li>
           </ul>
         </BaseProfileSection>
+
       </div>
 
       <aside class="marketplace-service-profile-sidebar" aria-label="Resume du service">
@@ -192,7 +178,7 @@
               <p class="marketplace-service-profile-eyebrow">Commande</p>
               <h2>Choisir une offre</h2>
             </div>
-            <strong>{{ priceLabel }}</strong>
+            <strong v-if="priceLabel">{{ priceLabel }}</strong>
           </header>
 
           <div class="marketplace-service-profile-offers__list" role="radiogroup" aria-label="Offres disponibles">
@@ -212,7 +198,7 @@
                 <Icon v-if="offer.id === selectedOfferId" name="lucide:check" />
               </span>
               <span class="marketplace-service-profile-offer__body">
-                <strong>{{ offer.title }}</strong>
+                <strong>{{ offer.name }}</strong>
                 <span>{{ offer.description }}</span>
               </span>
               <strong class="marketplace-service-profile-offer__price">
@@ -228,32 +214,34 @@
             variant="filled"
             color="primary"
             size="lg"
-            @click="requestQuote"
+            :disabled="!selectedOffer"
+            @click="openOrderModal"
           />
         </section>
 
-        <section class="marketplace-service-profile-panel">
-          <header class="marketplace-service-profile-panel__header">
-            <div>
-              <p class="marketplace-service-profile-eyebrow">Vendeur</p>
-              <h2>{{ service.provider }}</h2>
-            </div>
+        <section class="marketplace-service-profile-panel marketplace-service-profile-seller-card">
+          <header class="marketplace-service-profile-seller-card__header">
             <CustomAvatar
-              :name="service.provider"
-              :alt="`Avatar de ${service.provider}`"
-              size="lg"
+              :name="sellerName"
+              :alt="`Avatar de ${sellerName}`"
+              size="xl"
               shape="square"
               theme="app"
-              color="neutral"
+              color="primary"
             />
+            <div class="marketplace-service-profile-seller-card__identity">
+              <p class="marketplace-service-profile-eyebrow">Vendeur</p>
+              <h2>{{ sellerName }}</h2>
+              <span>Vendeur marketplace</span>
+            </div>
           </header>
 
-          <p class="marketplace-service-profile-seller-role">
-            {{ service.providerRole }}
+          <p class="marketplace-service-profile-seller-card__summary">
+            {{ sellerSummary }}
           </p>
 
-          <dl class="marketplace-service-profile-facts">
-            <div v-for="fact in serviceFacts" :key="fact.label">
+          <dl class="marketplace-service-profile-seller-facts">
+            <div v-for="fact in sellerFacts" :key="fact.label">
               <dt>
                 <Icon :name="fact.icon" aria-hidden="true" />
                 {{ fact.label }}
@@ -261,41 +249,31 @@
               <dd>{{ fact.value }}</dd>
             </div>
           </dl>
-        </section>
 
-        <section class="marketplace-service-profile-panel">
-          <header class="marketplace-service-profile-panel__header">
-            <div>
-              <p class="marketplace-service-profile-eyebrow">Compatibilite</p>
-              <h2>Jeux et tags</h2>
-            </div>
-          </header>
-
-          <ul class="marketplace-service-profile-games" aria-label="Jeux concernes">
-            <li v-for="game in gameIcons" :key="game.label" :aria-label="game.label">
-              <Icon :name="game.icon" aria-hidden="true" />
-              <span class="sr-only">{{ game.label }}</span>
-            </li>
-          </ul>
-
-          <ul class="marketplace-service-profile-tags">
-            <li v-for="tag in service.tags" :key="tag">
-              {{ tag }}
-            </li>
-          </ul>
+          <CustomButton
+            label="Contacter"
+            left-icon="lucide:message-circle"
+            theme="app"
+            variant="outlined"
+            color="secondary"
+            size="md"
+            @click="requestQuote"
+          />
         </section>
       </aside>
     </div>
+
+    <MarketplaceOrderModal
+      v-if="selectedOffer"
+      v-model="isOrderModalOpen"
+      :service="service"
+      :offer="selectedOffer"
+    />
   </main>
 </template>
 
 <script setup lang="ts">
-import { searchGameOptions } from '~/datas/searchs'
-import {
-  formatMarketplacePrice,
-  getMarketplaceServiceBySlug,
-  marketplaceServices
-} from '~/datas/marketplace/services'
+import type { MarketplaceServiceLinePresenter, MarketplaceServiceListItemPresenter, MarketplaceServicePresenter, MarketplaceServiceStatus } from '~/plugins/marketplace-api'
 
 definePageMeta({
   layout: 'app'
@@ -303,75 +281,116 @@ definePageMeta({
 
 const route = useRoute()
 const toast = useToast()
-const routeSlug = Array.isArray(route.params.slug) ? route.params.slug[0] : route.params.slug
-const foundService = getMarketplaceServiceBySlug(String(routeSlug || ''))
+const { $marketplaceAPI } = useNuxtApp()
+const routeSlug = String(Array.isArray(route.params.slug) ? route.params.slug[0] || '' : route.params.slug || '')
 
-if (!foundService) {
+const statusLabels: Record<MarketplaceServiceStatus, string> = {
+  DRAFT: 'Brouillon',
+  PUBLISHED: 'Publie',
+  ARCHIVED: 'Archive'
+}
+
+const formatMarketplacePrice = (price: number) => {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0
+  }).format(price)
+}
+
+const getDescriptionParagraphs = (description: string) => {
+  return description.split(/\n{2,}/).map(paragraph => paragraph.trim()).filter(Boolean)
+}
+
+const getShortDescription = (description: string) => {
+  const normalized = description.replace(/\s+/g, ' ').trim()
+  if (normalized.length <= 180) return normalized
+  return `${normalized.slice(0, 177).trim()}...`
+}
+
+const getStatusLabel = (status: MarketplaceServiceStatus) => statusLabels[status]
+
+if (!routeSlug) {
   throw createError({ statusCode: 404, statusMessage: 'Service marketplace introuvable' })
 }
 
-const service = foundService
-const selectedOfferId = ref('starter')
-const gameIconFallback = 'lucide:gamepad-2'
+const { data: apiService, error: serviceError } = await useAsyncData(`marketplace-service-${routeSlug}`, () => $marketplaceAPI.services.get(routeSlug))
 
-const roundOfferPrice = (price: number) => Math.round(price / 10) * 10
+if (serviceError.value || !apiService.value) {
+  const statusCode = Number((serviceError.value as { statusCode?: unknown } | null)?.statusCode || 404)
+  throw createError({ statusCode, statusMessage: 'Service marketplace introuvable' })
+}
 
-const serviceOffers = computed(() => [
-  {
-    id: 'starter',
-    title: 'Essentiel',
-    description: service.highlights.slice(0, 2).join(' + ') || service.deliverables[0],
-    price: service.price
-  },
-  {
-    id: 'advanced',
-    title: 'Avance',
-    description: service.deliverables.slice(0, 3).join(' | '),
-    price: roundOfferPrice(service.price * 1.8)
-  },
-  {
-    id: 'premium',
-    title: 'Premium',
-    description: service.deliverables.slice(0, 4).join(' | '),
-    price: roundOfferPrice(service.price * 2.6)
+const { data: relatedServiceData } = await useAsyncData(`marketplace-service-related-${routeSlug}`, async () => {
+  const response = await $marketplaceAPI.services.search({ limit: 12 })
+  return response.data
+})
+
+const service = computed(() => apiService.value as MarketplaceServicePresenter)
+const selectedOfferId = ref('')
+const isOrderModalOpen = ref(false)
+
+const serviceOffers = computed(() => service.value.services || [])
+
+watch(serviceOffers, (offers) => {
+  if (!offers.length) return
+  if (!offers.some(offer => offer.id === selectedOfferId.value)) {
+    selectedOfferId.value = offers[0].id
   }
-])
+}, { immediate: true })
 
-const selectedOffer = computed(() => {
+const selectedOffer = computed<MarketplaceServiceLinePresenter | undefined>(() => {
   return serviceOffers.value.find(offer => offer.id === selectedOfferId.value) || serviceOffers.value[0]
 })
 
-const priceLabel = computed(() => formatMarketplacePrice(selectedOffer.value.price))
-const startingPriceLabel = computed(() => formatMarketplacePrice(service.price))
-const relatedServices = marketplaceServices
-  .filter(item => item.category === service.category && item.slug !== service.slug)
-  .slice(0, 3)
+const formattedRating = computed(() => Number(service.value.ratingAvg || 0).toFixed(1).replace('.', ','))
+const priceLabel = computed(() => selectedOffer.value ? formatMarketplacePrice(Number(selectedOffer.value.price) || 0) : '')
+const descriptionParagraphs = computed(() => getDescriptionParagraphs(service.value.description))
+const serviceShortDescription = computed(() => getShortDescription(service.value.description))
+const sellerName = computed(() => service.value.seller?.username || 'Vendeur marketplace')
+const serviceGames = computed(() => service.value.rscGames || [])
+const serviceOfferCountLabel = computed(() => {
+  const count = serviceOffers.value.length
+  return `${count} prestation${count > 1 ? 's' : ''}`
+})
+const relatedServices = computed(() => (relatedServiceData.value || [])
+  .filter(item => item.slug !== service.value.slug)
+  .slice(0, 3))
 
-const gameIcons = computed(() => {
-  return service.games.map((game) => {
-    const gameOption = searchGameOptions.find(option => option.label === game)
+const getRelatedServiceCategoryLabel = (relatedService: MarketplaceServiceListItemPresenter) => {
+  return relatedService.rscCategories?.[0]?.label || ''
+}
 
-    return {
-      label: game,
-      icon: gameOption?.icon || gameIconFallback
-    }
-  })
+const getRelatedServicePriceLabel = (relatedService: MarketplaceServiceListItemPresenter) => {
+  const prices = (relatedService.offers || [])
+    .map(offer => Number(offer.price))
+    .filter(price => Number.isFinite(price))
+
+  return prices.length ? formatMarketplacePrice(Math.min(...prices)) : ''
+}
+
+const sellerSummary = computed(() => {
+  return `${sellerName.value} propose ${serviceOfferCountLabel.value.toLocaleLowerCase('fr-FR')} sur la marketplace.`
 })
 
-const serviceFacts = computed(() => [
-  { label: 'Prix de depart', value: `${startingPriceLabel.value} ${service.billingLabel}`, icon: 'lucide:badge-euro' },
-  { label: 'Delai', value: service.duration, icon: 'lucide:calendar-clock' },
-  { label: 'Reponse', value: service.responseTime, icon: 'lucide:message-circle' },
-  { label: 'Niveau', value: service.levelLabel, icon: 'lucide:signal' }
+const sellerFacts = computed(() => [
+  { label: 'Commandes', value: String(service.value.ordersCount), icon: 'lucide:shopping-bag' },
+  { label: 'Statut', value: getStatusLabel(service.value.status), icon: 'lucide:badge-check' },
+  { label: 'Note', value: `${formattedRating.value}/5 - ${service.value.ratingCount} avis`, icon: 'lucide:star' }
 ])
 
 const requestQuote = () => {
   toast.add({
-    title: 'Commande marketplace',
-    desc: `${service.title} - ${selectedOffer.value.title} a ete ajoute a ton intention de commande.`,
-    icon: 'lucide:shopping-bag',
+    title: 'Demande de contact envoyee',
+    desc: `${sellerName.value} pourra te repondre a propos de ${service.value.name}.`,
+    icon: 'lucide:message-circle',
     variant: 'success'
   })
+}
+
+const openOrderModal = () => {
+  if (!selectedOffer.value) return
+  isOrderModalOpen.value = true
 }
 
 const shareService = async () => {
@@ -382,8 +401,8 @@ const shareService = async () => {
   try {
     if (navigator.share) {
       await navigator.share({
-        title: service.title,
-        text: service.shortDescription,
+        title: service.value.name,
+        text: serviceShortDescription.value,
         url
       })
       return
@@ -410,13 +429,13 @@ const shareService = async () => {
 }
 
 useSeoMeta({
-  title: service.title,
-  description: service.shortDescription,
-  ogTitle: service.title,
-  ogDescription: service.shortDescription,
-  ogImage: service.coverImage,
+  title: () => service.value.name,
+  description: () => serviceShortDescription.value,
+  ogTitle: () => service.value.name,
+  ogDescription: () => serviceShortDescription.value,
+  ogImage: () => service.value.bannerUrl || undefined,
   twitterCard: 'summary_large_image',
-  twitterImage: service.coverImage
+  twitterImage: () => service.value.bannerUrl || undefined
 })
 </script>
 
@@ -519,11 +538,59 @@ useSeoMeta({
   object-fit: cover;
 }
 
+.marketplace-service-profile-hero__image--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--profile-color-subtle);
+  background-color: var(--profile-color-panel-strong);
+}
+
+.marketplace-service-profile-hero__image--empty svg {
+  width: calc(var(--profile-unit) * 8);
+  height: calc(var(--profile-unit) * 8);
+}
+
 .marketplace-service-profile-hero__back {
   position: absolute;
   top: var(--profile-space-3);
   left: var(--profile-space-3);
   z-index: 3;
+}
+
+.marketplace-service-profile-hero__games {
+  position: absolute;
+  top: var(--profile-space-3);
+  right: var(--profile-space-3);
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--profile-space-1);
+  justify-content: end;
+  max-width: min(62%, calc(var(--profile-unit) * 58));
+}
+
+.marketplace-service-profile-hero__game {
+  display: inline-flex;
+  min-height: calc(var(--profile-unit) * 4.5);
+  align-items: center;
+  gap: var(--profile-space-1);
+  padding: 0 var(--profile-space-2);
+  border: var(--profile-border) solid color-mix(in oklch, var(--profile-color-border) 72%, var(--profile-color-transparent));
+  border-radius: var(--profile-radius-round);
+  background-color: color-mix(in oklch, var(--profile-color-panel) 72%, var(--profile-color-transparent));
+  color: var(--profile-color-text);
+  font-size: var(--profile-font-label);
+  font-weight: 800;
+  line-height: var(--profile-line-tight);
+  box-shadow: 0 var(--profile-space-2) var(--profile-space-5) var(--profile-color-shadow);
+  backdrop-filter: blur(calc(var(--profile-unit) * 1.5));
+}
+
+.marketplace-service-profile-hero__game svg {
+  width: calc(var(--profile-unit) * 2);
+  height: calc(var(--profile-unit) * 2);
+  color: var(--profile-color-accent);
 }
 
 .marketplace-service-profile-hero__identity {
@@ -576,8 +643,13 @@ useSeoMeta({
 .marketplace-service-profile-panel dl,
 .marketplace-service-profile-panel dt,
 .marketplace-service-profile-panel dd,
-.marketplace-service-profile-process h3,
-.marketplace-service-profile-process p {
+.marketplace-service-profile-review h3,
+.marketplace-service-profile-review p,
+.marketplace-service-profile-review span,
+.marketplace-service-profile-reviews-summary p,
+.marketplace-service-profile-reviews-score strong,
+.marketplace-service-profile-reviews-score span,
+.marketplace-service-profile-seller-card__identity span {
   margin: 0;
 }
 
@@ -656,7 +728,9 @@ useSeoMeta({
 }
 
 .marketplace-service-profile-copy p,
-.marketplace-service-profile-process p {
+.marketplace-service-profile-reviews-summary p,
+.marketplace-service-profile-review p,
+.marketplace-service-profile-seller-card__summary {
   color: var(--profile-color-text);
   font-size: var(--profile-font-body);
   line-height: var(--profile-line-body);
@@ -664,11 +738,8 @@ useSeoMeta({
 }
 
 .marketplace-service-profile-gallery,
-.marketplace-service-profile-deliverables,
-.marketplace-service-profile-process,
 .marketplace-service-profile-related,
-.marketplace-service-profile-games,
-.marketplace-service-profile-tags {
+.marketplace-service-profile-reviews {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -692,75 +763,6 @@ useSeoMeta({
   width: 100%;
   height: calc(var(--profile-unit) * 24);
   object-fit: cover;
-}
-
-.marketplace-service-profile-deliverables {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--profile-unit) * 28)), 1fr));
-  gap: var(--profile-space-2);
-}
-
-.marketplace-service-profile-deliverables li {
-  display: grid;
-  grid-template-columns: calc(var(--profile-unit) * 4) minmax(0, 1fr);
-  align-items: center;
-  min-height: calc(var(--profile-unit) * 7);
-  gap: var(--profile-space-2);
-  padding: var(--profile-space-2);
-  border: var(--profile-border) solid var(--profile-color-border);
-  border-radius: var(--profile-radius);
-  background-color: var(--profile-color-panel-strong);
-  color: var(--profile-color-muted);
-  font-size: var(--profile-font-small);
-  line-height: var(--profile-line-body);
-}
-
-.marketplace-service-profile-deliverables svg {
-  width: calc(var(--profile-unit) * 2.25);
-  height: calc(var(--profile-unit) * 2.25);
-  justify-self: center;
-  color: var(--profile-color-accent);
-}
-
-.marketplace-service-profile-process {
-  display: grid;
-  gap: var(--profile-space-3);
-}
-
-.marketplace-service-profile-process li {
-  display: grid;
-  grid-template-columns: calc(var(--profile-unit) * 5) minmax(0, 1fr);
-  gap: var(--profile-space-3);
-}
-
-.marketplace-service-profile-process li > span {
-  display: inline-flex;
-  width: calc(var(--profile-unit) * 5);
-  height: calc(var(--profile-unit) * 5);
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--profile-radius-round);
-  background: var(--gradient-action);
-  color: var(--profile-color-text);
-  font-size: var(--profile-font-small);
-  font-weight: 800;
-  line-height: var(--profile-line-tight);
-}
-
-.marketplace-service-profile-process div {
-  display: grid;
-  gap: var(--profile-space-1);
-}
-
-.marketplace-service-profile-process h3 {
-  color: var(--profile-color-text);
-  font-size: calc(var(--profile-unit) * 2.25);
-  font-weight: 800;
-  line-height: var(--profile-line-title);
-}
-
-.marketplace-service-profile-process p {
-  color: var(--profile-color-muted);
 }
 
 .marketplace-service-profile-panel {
@@ -896,23 +898,48 @@ useSeoMeta({
   white-space: nowrap;
 }
 
-.marketplace-service-profile-seller-role {
-  color: var(--profile-color-muted);
-  font-size: var(--profile-font-small);
+.marketplace-service-profile-seller-card {
+  overflow: hidden;
+  border-color: color-mix(in oklch, var(--profile-color-accent) 22%, var(--profile-color-border));
+}
+
+.marketplace-service-profile-seller-card__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--profile-space-3);
+  align-items: center;
+}
+
+.marketplace-service-profile-seller-card__identity {
+  display: grid;
+  gap: calc(var(--profile-unit) * 0.5);
+}
+
+.marketplace-service-profile-seller-card__identity span,
+.marketplace-service-profile-review span,
+.marketplace-service-profile-reviews-score span {
+  color: var(--profile-color-subtle);
+  font-size: var(--profile-font-label);
   line-height: var(--profile-line-body);
 }
 
-.marketplace-service-profile-facts {
-  display: grid;
-  gap: var(--profile-space-2);
+.marketplace-service-profile-seller-card__summary {
+  color: var(--profile-color-muted);
 }
 
-.marketplace-service-profile-facts div {
+.marketplace-service-profile-seller-facts {
+  display: grid;
+  gap: var(--profile-space-2);
+  padding-top: var(--profile-space-3);
+  border-top: var(--profile-border) solid var(--profile-color-border);
+}
+
+.marketplace-service-profile-seller-facts div {
   display: grid;
   gap: var(--profile-space-1);
 }
 
-.marketplace-service-profile-facts dt {
+.marketplace-service-profile-seller-facts dt {
   display: inline-flex;
   align-items: center;
   gap: var(--profile-space-1);
@@ -922,60 +949,17 @@ useSeoMeta({
   line-height: var(--profile-line-body);
 }
 
-.marketplace-service-profile-facts dt svg {
+.marketplace-service-profile-seller-facts dt svg {
   width: calc(var(--profile-unit) * 2);
   height: calc(var(--profile-unit) * 2);
   color: var(--profile-color-accent);
 }
 
-.marketplace-service-profile-facts dd {
+.marketplace-service-profile-seller-facts dd {
   color: var(--profile-color-text);
   font-size: var(--profile-font-small);
   font-weight: 800;
   line-height: var(--profile-line-title);
-}
-
-.marketplace-service-profile-games {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--profile-space-1);
-}
-
-.marketplace-service-profile-games li {
-  display: inline-flex;
-  width: var(--profile-hit-size);
-  height: var(--profile-hit-size);
-  align-items: center;
-  justify-content: center;
-  border: var(--profile-border) solid var(--profile-color-border);
-  border-radius: var(--profile-radius);
-  background-color: var(--profile-color-panel-strong);
-  color: var(--profile-color-accent);
-}
-
-.marketplace-service-profile-games svg {
-  width: calc(var(--profile-unit) * 2.5);
-  height: calc(var(--profile-unit) * 2.5);
-}
-
-.marketplace-service-profile-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--profile-space-1);
-}
-
-.marketplace-service-profile-tags li {
-  display: inline-flex;
-  align-items: center;
-  min-height: calc(var(--profile-unit) * 3.5);
-  padding: 0 var(--profile-space-2);
-  border: var(--profile-border) solid color-mix(in oklch, var(--profile-color-accent) 34%, var(--profile-color-border));
-  border-radius: var(--profile-radius-round);
-  background-color: color-mix(in oklch, var(--profile-color-accent) 12%, var(--profile-color-panel));
-  color: var(--profile-color-muted);
-  font-size: var(--profile-font-label);
-  font-weight: 800;
-  line-height: var(--profile-line-tight);
 }
 
 .marketplace-service-profile-related {
@@ -1012,6 +996,21 @@ useSeoMeta({
   object-fit: cover;
 }
 
+.marketplace-service-profile-related__empty {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: var(--profile-color-subtle);
+  background-color: var(--profile-color-panel);
+}
+
+.marketplace-service-profile-related__empty svg {
+  width: calc(var(--profile-unit) * 5);
+  height: calc(var(--profile-unit) * 5);
+}
+
 .marketplace-service-profile-related__link span {
   display: grid;
   gap: var(--profile-space-1);
@@ -1043,16 +1042,75 @@ useSeoMeta({
   line-height: var(--profile-line-tight);
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+.marketplace-service-profile-reviews-summary {
+  display: grid;
+  grid-template-columns: minmax(calc(var(--profile-unit) * 18), calc(var(--profile-unit) * 24)) minmax(0, 1fr);
+  gap: var(--profile-space-4);
+  align-items: center;
+  padding-bottom: var(--profile-space-4);
+  border-bottom: var(--profile-border) solid var(--profile-color-border);
+}
+
+.marketplace-service-profile-reviews-score {
+  display: grid;
+  gap: var(--profile-space-1);
+}
+
+.marketplace-service-profile-reviews-score strong {
+  color: var(--profile-color-text);
+  font-size: calc(var(--profile-unit) * 6);
+  font-weight: 900;
+  line-height: var(--profile-line-tight);
+}
+
+.marketplace-service-profile-reviews-summary p {
+  max-width: calc(var(--profile-unit) * 80);
+  color: var(--profile-color-muted);
+}
+
+.marketplace-service-profile-reviews {
+  display: grid;
+}
+
+.marketplace-service-profile-review {
+  display: grid;
+  gap: var(--profile-space-3);
+  padding: var(--profile-space-4) 0;
+  border-bottom: var(--profile-border) solid var(--profile-color-border);
+}
+
+.marketplace-service-profile-review:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.marketplace-service-profile-review__header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--profile-space-2);
+  align-items: center;
+}
+
+.marketplace-service-profile-review__header > div {
+  display: grid;
+  gap: calc(var(--profile-unit) * 0.5);
+}
+
+.marketplace-service-profile-review__header :deep(.marketplace-rating) {
+  justify-self: end;
+}
+
+.marketplace-service-profile-review h3 {
+  color: var(--profile-color-text);
+  font-size: var(--profile-font-body);
+  font-weight: 800;
+  line-height: var(--profile-line-title);
+  overflow-wrap: anywhere;
+}
+
+.marketplace-service-profile-review p {
+  max-width: calc(var(--profile-unit) * 92);
+  color: var(--profile-color-muted);
 }
 
 @media (max-width: 62rem) {
@@ -1072,12 +1130,28 @@ useSeoMeta({
   .marketplace-service-profile-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .marketplace-service-profile-reviews-summary {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 40rem) {
   .marketplace-service-profile-hero__identity,
   .marketplace-service-profile-panel {
     padding: var(--profile-space-3);
+  }
+
+  .marketplace-service-profile-hero__games {
+    top: calc(var(--profile-space-8) + var(--profile-space-1));
+    right: var(--profile-space-3);
+    left: var(--profile-space-3);
+    justify-content: start;
+    max-width: none;
+  }
+
+  .marketplace-service-profile-hero__game {
+    min-height: calc(var(--profile-unit) * 4);
   }
 
   .marketplace-service-profile-hero__logo {
@@ -1087,8 +1161,13 @@ useSeoMeta({
   }
 
   .marketplace-service-profile-gallery,
-  .marketplace-service-profile-related {
+  .marketplace-service-profile-related,
+  .marketplace-service-profile-review__header {
     grid-template-columns: 1fr;
+  }
+
+  .marketplace-service-profile-review__header :deep(.marketplace-rating) {
+    justify-self: start;
   }
 
   .marketplace-service-profile-offer {

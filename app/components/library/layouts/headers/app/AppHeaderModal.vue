@@ -92,24 +92,27 @@
         size="sm"
       />
       <HeaderLanguageSelector theme="app" align="end" @open="closeNavigationMenu" />
-      <CustomLink
-        label="Se connecter"
-        to="/login"
-        theme="app"
-        variant="outlined"
-        color="secondary"
-        size="sm"
-        @click="closeAllMenus"
-      />
-      <CustomLink
-        label="S'inscrire"
-        to="/register"
-        theme="app"
-        variant="filled"
-        color="secondary"
-        size="sm"
-        @click="closeAllMenus"
-      />
+      <HeaderUserActions v-if="sessionStore.isLoggedIn" theme="app" size="md" />
+      <template v-else>
+        <CustomLink
+          label="Se connecter"
+          to="/login"
+          theme="app"
+          variant="outlined"
+          color="secondary"
+          size="sm"
+          @click="closeAllMenus"
+        />
+        <CustomLink
+          label="S'inscrire"
+          to="/register"
+          theme="app"
+          variant="filled"
+          color="secondary"
+          size="sm"
+          @click="closeAllMenus"
+        />
+      </template>
     </div>
   </div>
 </template>
@@ -128,6 +131,7 @@ const props = defineProps<{
 const emit = defineEmits<{ close: [] }>()
 
 const route = useRoute()
+const sessionStore = useSessionStore()
 const generatedId = useId()
 const mobileTitleId = `app-header-modal-title-${generatedId}`
 const mobileElement = ref<HTMLElement | null>(null)

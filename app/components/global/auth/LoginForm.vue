@@ -52,11 +52,13 @@
 import { useField, useForm } from 'vee-validate'
 import { UserLoginDto } from '@neeft-sas/shared'
 import { useToast } from '~/composables/useToast'
+import { useSessionStore } from '~/stores/session.store'
 
 const { t } = useI18n()
 const localePath = useLocalePath()
 const { $authAPI } = useNuxtApp()
 const toast = useToast()
+const sessionStore = useSessionStore()
 
 const { handleSubmit, meta, isSubmitting } = useForm<UserLoginDto>({
   initialValues: {
@@ -80,6 +82,7 @@ const togglePasswordVisibility = () => {
 const onSubmit = handleSubmit(async (values) => {
   try {
     await $authAPI.login({ email: values.email, password: values.password })
+    await sessionStore.refresh()
     return await navigateTo(localePath('/'), { replace: true })
   } catch (error: any) {
     setEmailErrors(error.fields?.email || [])

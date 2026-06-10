@@ -7,8 +7,9 @@
     >
       <div class="marketplace-service-card__visual">
         <NuxtImg
+          v-if="props.service.coverImageUrl"
           class="marketplace-service-card__banner"
-          :src="props.service.coverImage"
+          :src="props.service.coverImageUrl"
           :alt="`Banniere du service ${props.service.title}`"
           width="320"
           height="180"
@@ -16,16 +17,19 @@
           loading="lazy"
           decoding="async"
         />
+        <div v-else class="marketplace-service-card__banner marketplace-service-card__banner--empty" aria-hidden="true">
+          <Icon name="lucide:image" />
+        </div>
 
         <div class="marketplace-service-card__visual-meta">
-          <span class="marketplace-service-card__category">
-            <Icon :name="props.service.icon" aria-hidden="true" />
-            {{ props.service.categoryLabel }}
+          <span v-if="primaryCategory" class="marketplace-service-card__category">
+            <Icon v-if="primaryCategory.icon" :name="primaryCategory.icon" aria-hidden="true" />
+            {{ primaryCategory.label }}
           </span>
 
-          <div class="marketplace-service-card__games" aria-label="Jeux concernes">
-            <span v-for="game in gameIcons" :key="game.label" :aria-label="game.label">
-              <Icon :name="game.icon" aria-hidden="true" />
+          <div v-if="gameBadges.length" class="marketplace-service-card__games" aria-label="Jeux concernes">
+            <span v-for="game in gameBadges" :key="game">
+              {{ game }}
             </span>
           </div>
         </div>
@@ -45,15 +49,15 @@
           {{ props.service.shortDescription }}
         </p>
 
-        <footer class="marketplace-service-card__footer">
-          <div class="marketplace-service-card__seller">
+        <footer v-if="sellerName || priceLabel" class="marketplace-service-card__footer">
+          <div v-if="sellerName" class="marketplace-service-card__seller">
             <span class="marketplace-service-card__seller-icon" aria-hidden="true">
               <Icon name="lucide:user-round" />
             </span>
-            <span>{{ props.service.provider }}</span>
+            <span>{{ sellerName }}</span>
           </div>
 
-          <span class="marketplace-service-card__price">
+          <span v-if="priceLabel" class="marketplace-service-card__price">
             {{ priceLabel }}
           </span>
         </footer>
@@ -63,27 +67,37 @@
 </template>
 
 <script setup lang="ts">
-import type { MarketplaceService } from '~/datas/marketplace/services'
-import { formatMarketplacePrice } from '~/datas/marketplace/services'
-import { searchGameOptions } from '~/datas/searchs'
+import type { MarketplaceServiceListItemPresenter } from '~/plugins/marketplace-api'
 
 const props = defineProps<{
-  service: MarketplaceService
+  service: MarketplaceServiceListItemPresenter
 }>()
 
+const formatMarketplacePrice = (price: number) => {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0
+  }).format(price)
+}
+
 const servicePath = computed(() => `/marketplace/${props.service.slug}`)
-const priceLabel = computed(() => formatMarketplacePrice(props.service.price))
-const gameIconFallback = 'lucide:gamepad-2'
+const primaryCategory = computed(() => props.service.rscCategories?.[0] || null)
+const sellerName = computed(() => props.service.seller?.username || '')
 
-const gameIcons = computed(() => {
-  return props.service.games.map((game) => {
-    const gameOption = searchGameOptions.find(option => option.label === game)
+const priceLabel = computed(() => {
+  const prices = (props.service.offers || [])
+    .map(offer => Number(offer.price))
+    .filter(price => Number.isFinite(price))
 
-    return {
-      label: game,
-      icon: gameOption?.icon || gameIconFallback
-    }
-  })
+  return prices.length ? formatMarketplacePrice(Math.min(...prices)) : ''
+})
+
+const gameBadges = computed(() => {
+  return (props.service.rscGames || [])
+    .map(game => game.shortName || game.name || game.slug)
+    .filter(Boolean)
+    .slice(0, 3)
 })
 </script>
 
@@ -131,6 +145,18 @@ const gameIcons = computed(() => {
   transition: transform 0.28s ease;
 }
 
+.marketplace-service-card__banner--empty {
+  color: var(--search-color-subtle);
+  background-color: var(--search-color-panel-soft);
+
+  @apply flex items-center justify-center;
+}
+
+.marketplace-service-card__banner--empty svg {
+  width: calc(var(--search-unit) * 5);
+  height: calc(var(--search-unit) * 5);
+}
+
 .marketplace-service-card:hover .marketplace-service-card__banner {
   transform: scale(1.035);
 }
@@ -173,24 +199,24 @@ const gameIcons = computed(() => {
 
 .marketplace-service-card__games {
   gap: calc(var(--search-unit) * 0.75);
+  margin-left: auto;
 
   @apply flex shrink-0 flex-wrap items-center justify-end;
 }
 
 .marketplace-service-card__games span {
-  width: calc(var(--search-font-small) * 1.1);
-  min-width: calc(var(--search-font-small) * 1.1);
-  height: calc(var(--search-font-small) * 1.1);
-  color: var(--search-color-accent);
-  line-height: 0;
-  filter: drop-shadow(0 var(--search-border) var(--search-space-2) var(--search-color-shadow));
+  min-height: calc(var(--search-unit) * 3);
+  padding: 0 calc(var(--search-unit) * 0.9);
+  border: var(--search-border) solid color-mix(in oklch, var(--search-color-text) 20%, var(--search-color-transparent));
+  border-radius: var(--search-radius);
+  background-color: color-mix(in oklch, var(--search-color-panel) 74%, var(--search-color-transparent));
+  color: var(--search-color-text);
+  font-size: calc(var(--search-font-small) * 0.86);
+  line-height: var(--search-line-tight);
+  text-shadow: 0 var(--search-border) var(--search-space-2) var(--search-color-shadow);
+  backdrop-filter: blur(calc(var(--search-unit) * 1.2));
 
-  @apply inline-flex items-center justify-center;
-}
-
-.marketplace-service-card__games svg {
-  width: var(--search-font-small);
-  height: var(--search-font-small);
+  @apply inline-flex items-center justify-center font-semibold;
 }
 
 .marketplace-service-card__title,

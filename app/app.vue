@@ -10,8 +10,10 @@
 
 <script setup lang="ts">
 const resources = useResourcesStore()
+const session = useSessionStore()
 
 if (import.meta.client) {
+  void callOnce('session:bootstrap', () => session.bootstrap())
   void callOnce('resources:bootstrap', () => resources.bootstrap())
 }
 

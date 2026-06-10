@@ -19,7 +19,7 @@
     filter-controls-id="marketplace-filters-title"
     :is-filter-modal-open="isFilterModalOpen"
     :show-sort-control="false"
-    :has-results="visibleServices.length > 0"
+    :has-results="hasMarketplaceResults"
     result-list-describedby=""
     :empty-message="emptySearchMessage"
     @open-filters="openFilterModal"
@@ -48,7 +48,7 @@
 
           <div class="profile-search-page__action-buttons">
             <CustomButton
-              v-for="category in marketplaceCategories"
+              v-for="category in marketplaceCategoryActionOptions"
               :key="category.value"
               :label="category.label"
               :left-icon="category.icon"
@@ -62,13 +62,60 @@
             />
           </div>
         </div>
+
+        <div class="profile-search-page__action-group">
+          <p class="profile-search-page__action-label">
+            Suivi
+          </p>
+
+          <div class="profile-search-page__action-buttons">
+            <CustomLink
+              label="Mes achats"
+              to="/marketplace/orders"
+              left-icon="lucide:shopping-bag"
+              theme="app"
+              variant="outlined"
+              color="secondary"
+              size="lg"
+            />
+            <CustomLink
+              label="Mes ventes"
+              to="/marketplace/sales"
+              left-icon="lucide:inbox"
+              theme="app"
+              variant="outlined"
+              color="secondary"
+              size="lg"
+            />
+            <CustomLink
+              label="Mes services"
+              to="/marketplace/services"
+              left-icon="lucide:store"
+              theme="app"
+              variant="outlined"
+              color="secondary"
+              size="lg"
+            />
+          </div>
+        </div>
       </li>
     </template>
 
     <template #results>
-      <li v-for="service in visibleServices" :key="service.slug">
-        <MarketplaceServiceCard :service="service" />
+      <li v-if="isServicesPending" class="marketplace-page-state" aria-live="polite">
+        <Icon name="lucide:loader-circle" aria-hidden="true" />
+        <span>Chargement des services...</span>
       </li>
+      <li v-else-if="servicesError" class="marketplace-page-state marketplace-page-state--error" aria-live="polite">
+        <Icon name="lucide:circle-alert" aria-hidden="true" />
+        <span>Impossible de charger les services marketplace.</span>
+        <CustomButton label="Reessayer" theme="app" variant="outlined" color="secondary" size="sm" @click="refreshMarketplaceServices" />
+      </li>
+      <template v-else>
+        <li v-for="service in visibleServices" :key="service.slug">
+          <MarketplaceServiceCard :service="service" />
+        </li>
+      </template>
     </template>
 
     <template #empty>
@@ -78,19 +125,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  marketplaceCategories,
-  marketplaceServices,
-  type MarketplaceService
-} from '~/datas/marketplace/services'
-import type {
-  SearchFilterDefinition,
-  SearchFilterOption,
-  SearchFilterOptionValue,
-  SearchFilterState,
-  SearchFilterValue,
-  SearchRangeValue
-} from '~/datas/searchs'
+import type { MarketplaceServiceListItemPresenter } from '~/plugins/marketplace-api'
+import type { SearchFilterDefinition, SearchFilterOption, SearchFilterOptionValue, SearchFilterState, SearchFilterValue, SearchRangeValue } from '~/datas/searchs'
 
 definePageMeta({
   layout: 'app'
@@ -105,6 +141,15 @@ useSeoMeta({
   twitterCard: 'summary_large_image',
   twitterImage: '/images/landing/competition-arena.jpg'
 })
+
+const { $marketplaceAPI } = useNuxtApp()
+const { data: marketplaceServiceData, pending: isServicesPending, error: servicesError, refresh } = await useAsyncData('marketplace-services', async () => {
+  const response = await $marketplaceAPI.services.search({ limit: 100 })
+  return response.data
+})
+
+const marketplaceServiceList = computed(() => marketplaceServiceData.value || [])
+const refreshMarketplaceServices = () => refresh()
 
 const emptyRangeValue = (): SearchRangeValue => ({
   min: '',
@@ -131,32 +176,62 @@ const ratingOptions = buildNumberOptions(
   value => `${value.toFixed(1).replace('.', ',')}/5`
 )
 
-const marketplaceCategoryOptions: SearchFilterOption[] = marketplaceCategories
-  .filter(category => category.value !== 'all')
-  .map(category => ({
-    label: category.label,
-    value: category.value,
-    icon: category.icon
-  }))
+const getCategoryValue = (category: MarketplaceServiceListItemPresenter['rscCategories'][number]) => {
+  return category.slug || category.id || category.label
+}
 
-const activeFilters: SearchFilterDefinition[] = [
-  {
+const getServiceCategoryValues = (service: MarketplaceServiceListItemPresenter) => {
+  return (service.rscCategories || [])
+    .map(getCategoryValue)
+    .filter(Boolean)
+}
+
+const marketplaceCategoryOptions = computed<SearchFilterOption[]>(() => {
+  const categoryOptions = new Map<string, SearchFilterOption>()
+
+  marketplaceServiceList.value.forEach((service) => {
+    service.rscCategories?.forEach((category) => {
+      const value = getCategoryValue(category)
+      if (!value || categoryOptions.has(value)) return
+
+      categoryOptions.set(value, {
+        label: category.label,
+        value,
+        icon: category.icon || undefined
+      })
+    })
+  })
+
+  return [...categoryOptions.values()].sort((left, right) => String(left.label).localeCompare(String(right.label), 'fr-FR'))
+})
+
+const marketplaceCategoryActionOptions = computed<SearchFilterOption[]>(() => [
+  { label: 'Tous les services', value: 'all', icon: 'lucide:layout-grid' },
+  ...marketplaceCategoryOptions.value
+])
+
+const activeFilters = computed<SearchFilterDefinition[]>(() => {
+  const filters: SearchFilterDefinition[] = [{
     key: 'query',
     type: 'text',
     label: 'Service',
     field: 'query',
     icon: 'lucide:search',
     placeholder: 'Coach, manager, video...'
-  },
-  {
-    key: 'categories',
-    type: 'multiFacet',
-    label: 'Categories',
-    field: 'category',
-    icon: 'lucide:layout-grid',
-    options: marketplaceCategoryOptions
-  },
-  {
+  }]
+
+  if (marketplaceCategoryOptions.value.length) {
+    filters.push({
+      key: 'categories',
+      type: 'multiFacet',
+      label: 'Categories',
+      field: 'rscCategories',
+      icon: 'lucide:layout-grid',
+      options: marketplaceCategoryOptions.value
+    })
+  }
+
+  filters.push({
     key: 'price',
     type: 'range',
     label: 'Prix',
@@ -167,8 +242,9 @@ const activeFilters: SearchFilterDefinition[] = [
     minPlaceholder: 'Min',
     maxPlaceholder: 'Max',
     options: priceOptions
-  },
-  {
+  })
+
+  filters.push({
     key: 'rating',
     type: 'range',
     label: 'Note',
@@ -179,8 +255,10 @@ const activeFilters: SearchFilterDefinition[] = [
     minPlaceholder: 'Min',
     maxPlaceholder: 'Max',
     options: ratingOptions
-  }
-]
+  })
+
+  return filters
+})
 
 const selectedFilters = reactive<SearchFilterState>({})
 const isFilterModalOpen = ref(false)
@@ -228,18 +306,18 @@ const getAllowedFilterValue = (
 }
 
 const alignFilterStateWithSchema = () => {
-  const validKeys = new Set(activeFilters.map(filter => filter.key))
+  const validKeys = new Set(activeFilters.value.map(filter => filter.key))
 
   Object.keys(selectedFilters).forEach((key) => {
     if (!validKeys.has(key)) delete selectedFilters[key]
   })
 
-  activeFilters.forEach((filter) => {
+  activeFilters.value.forEach((filter) => {
     selectedFilters[filter.key] = getAllowedFilterValue(filter, selectedFilters[filter.key])
   })
 }
 
-alignFilterStateWithSchema()
+watch(activeFilters, () => alignFilterStateWithSchema(), { immediate: true })
 
 const getActiveFilterWeight = (filter: SearchFilterDefinition) => {
   const value = selectedFilters[filter.key]
@@ -257,7 +335,7 @@ const getActiveFilterWeight = (filter: SearchFilterDefinition) => {
 }
 
 const activeFilterCount = computed(() => {
-  return activeFilters.reduce((total, filter) => total + getActiveFilterWeight(filter), 0)
+  return activeFilters.value.reduce((total, filter) => total + getActiveFilterWeight(filter), 0)
 })
 
 const activeFilterLabel = computed(() => {
@@ -271,11 +349,11 @@ const filterButtonLabel = computed(() => {
 })
 
 const getFacetCount = (value: SearchFilterOptionValue) => {
-  return marketplaceServices.filter(service => String(service.category) === String(value)).length
+  return marketplaceServiceList.value.filter(service => getServiceCategoryValues(service).includes(String(value))).length
 }
 
 const filtersWithCounts = computed<SearchFilterDefinition[]>(() => {
-  return activeFilters.map((filter) => {
+  return activeFilters.value.map((filter) => {
     if (filter.type !== 'multiFacet') return filter
 
     return {
@@ -323,7 +401,7 @@ const activeCategoryLabel = computed(() => {
     return `${selectedCategoryValues.value.length} categories`
   }
 
-  return marketplaceCategories.find(category => String(category.value) === selectedCategoryValues.value[0])?.label || 'Categorie'
+  return marketplaceCategoryOptions.value.find(category => String(category.value) === selectedCategoryValues.value[0])?.label || 'Categorie'
 })
 
 const normalizeSearch = (value: string) => value
@@ -331,18 +409,24 @@ const normalizeSearch = (value: string) => value
   .normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '')
 
-const serviceMatchesSearch = (service: MarketplaceService, query: string) => {
+const getServiceMinPrice = (service: MarketplaceServiceListItemPresenter) => {
+  const prices = (service.offers || [])
+    .map(offer => Number(offer.price))
+    .filter(price => Number.isFinite(price))
+
+  return prices.length ? Math.min(...prices) : 0
+}
+
+const serviceMatchesSearch = (service: MarketplaceServiceListItemPresenter, query: string) => {
   if (!query) return true
 
   const serviceIndex = normalizeSearch([
     service.title,
-    service.categoryLabel,
-    service.provider,
-    service.providerRole,
     service.shortDescription,
-    ...service.games,
-    ...service.tags,
-    ...service.highlights
+    service.seller?.username || '',
+    ...service.rscCategories.flatMap(category => [category.label, category.slug || '']),
+    ...service.rscGames.flatMap(game => [game.name, game.shortName || '', game.slug]),
+    ...service.offers.flatMap(offer => [offer.title, offer.description])
   ].join(' '))
 
   return serviceIndex.includes(query)
@@ -357,12 +441,12 @@ const serviceMatchesRange = (serviceValue: number, range: SearchRangeValue) => {
   return true
 }
 
-const sortServices = (services: MarketplaceService[]) => {
+const sortServices = (services: MarketplaceServiceListItemPresenter[]) => {
   return [...services].sort((left, right) => {
     const leftScore = left.rating * left.reviewCount
     const rightScore = right.rating * right.reviewCount
 
-    return rightScore - leftScore || right.rating - left.rating || left.price - right.price
+    return rightScore - leftScore || right.rating - left.rating || getServiceMinPrice(left) - getServiceMinPrice(right)
   })
 }
 
@@ -372,10 +456,11 @@ const visibleServices = computed(() => {
   const priceRange = getRangeFilterValue('price')
   const ratingRange = getRangeFilterValue('rating')
 
-  const filteredServices = marketplaceServices.filter((service) => {
-    const matchesCategory = selectedCategoryValues.value.length === 0 || selectedCategoryValues.value.includes(service.category)
+  const filteredServices = marketplaceServiceList.value.filter((service) => {
+    const serviceCategoryValues = getServiceCategoryValues(service)
+    const matchesCategory = selectedCategoryValues.value.length === 0 || selectedCategoryValues.value.some(value => serviceCategoryValues.includes(value))
     const matchesSearch = serviceMatchesSearch(service, query)
-    const matchesPrice = serviceMatchesRange(service.price, priceRange)
+    const matchesPrice = serviceMatchesRange(getServiceMinPrice(service), priceRange)
     const matchesRating = serviceMatchesRange(service.rating, ratingRange)
 
     return matchesCategory && matchesSearch && matchesPrice && matchesRating
@@ -390,7 +475,8 @@ const resultsLabel = computed(() => {
 })
 
 const topLabel = computed(() => activeCategoryLabel.value)
-const emptySearchMessage = 'Aucun service ne correspond a cette recherche.'
+const hasMarketplaceResults = computed(() => isServicesPending.value || Boolean(servicesError.value) || visibleServices.value.length > 0)
+const emptySearchMessage = computed(() => isServicesPending.value ? 'Chargement des services...' : servicesError.value ? 'Impossible de charger les services marketplace.' : 'Aucun service ne correspond a cette recherche.')
 
 const toggleCategoryFilter = (value: string) => {
   if (value === 'all') {
@@ -403,7 +489,7 @@ const toggleCategoryFilter = (value: string) => {
 
 const resetFilters = () => {
   Object.keys(selectedFilters).forEach(key => delete selectedFilters[key])
-  activeFilters.forEach((filter) => {
+  activeFilters.value.forEach((filter) => {
     selectedFilters[filter.key] = getDefaultFilterValue(filter)
   })
 }
@@ -449,5 +535,25 @@ const openFilterModal = () => {
   gap: var(--search-space-2);
 
   @apply flex flex-wrap;
+}
+
+.marketplace-page-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--search-space-2);
+  padding: var(--search-space-6, 48px) var(--search-space-3, 24px);
+  color: var(--search-color-muted);
+  text-align: center;
+  list-style: none;
+}
+
+.marketplace-page-state svg {
+  width: calc(var(--search-unit, 8px) * 5);
+  height: calc(var(--search-unit, 8px) * 5);
+  color: var(--search-color-subtle);
+}
+
+.marketplace-page-state--error svg {
+  color: var(--color-danger);
 }
 </style>
