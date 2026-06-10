@@ -290,8 +290,8 @@ const cropZoom = ref(MIN_CROP_ZOOM)
 const cropX = ref(0)
 const cropY = ref(0)
 const localError = ref('')
-const ownedUrls = new Set<string>()
 const lastEmittedValue = shallowRef<UploadValue | null>(null)
+const syncVersion = ref(0)
 
 const inputId = computed(() => props.id || `cus-input-upload-${generatedId}`)
 const descriptionId = computed(() => `${inputId.value}-description`)
@@ -331,21 +331,13 @@ const describedBy = computed(() => {
   return ids.length > 0 ? ids.join(' ') : undefined
 })
 
-const revokeOwnedUrl = (url: string) => {
-  if (!url || !ownedUrls.has(url)) return
-  URL.revokeObjectURL(url)
-  ownedUrls.delete(url)
-}
-
-const revokeAllOwnedUrls = () => {
-  ownedUrls.forEach(url => URL.revokeObjectURL(url))
-  ownedUrls.clear()
-}
-
 const createPreviewUrl = (nextFile: File) => {
-  const url = URL.createObjectURL(nextFile)
-  ownedUrls.add(url)
-  return url
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
+    reader.onerror = () => reject(new Error(props.cropErrorMessage))
+    reader.readAsDataURL(nextFile)
+  })
 }
 
 const resetCropControls = () => {
@@ -381,7 +373,7 @@ const emitValue = () => {
 }
 
 const clearLocalState = () => {
-  revokeAllOwnedUrls()
+  syncVersion.value += 1
   file.value = null
   croppedFile.value = null
   sourcePreviewUrl.value = ''
@@ -425,7 +417,7 @@ const validateFile = (nextFile: File) => {
   return ''
 }
 
-const selectFile = (nextFile: File) => {
+const selectFile = async (nextFile: File) => {
   const validationError = validateFile(nextFile)
 
   if (validationError) {
@@ -435,8 +427,19 @@ const selectFile = (nextFile: File) => {
   }
 
   clearLocalState()
+  const currentSyncVersion = syncVersion.value
   file.value = nextFile
-  sourcePreviewUrl.value = createPreviewUrl(nextFile)
+
+  try {
+    sourcePreviewUrl.value = await createPreviewUrl(nextFile)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : props.cropErrorMessage
+    localError.value = message
+    emit('error', message)
+    return
+  }
+
+  if (currentSyncVersion !== syncVersion.value) return
   cropOpen.value = props.cropOnSelect && canCrop.value
   emitValue()
 }
@@ -451,7 +454,7 @@ const onInputChange = (event: Event) => {
   const [nextFile] = Array.from(target.files ?? [])
 
   if (nextFile) {
-    selectFile(nextFile)
+    void selectFile(nextFile)
   }
 
   target.value = ''
@@ -473,7 +476,7 @@ const onDrop = (event: DragEvent) => {
   const [nextFile] = Array.from(event.dataTransfer?.files ?? [])
   if (!nextFile) return
 
-  selectFile(nextFile)
+  void selectFile(nextFile)
 }
 
 const removeFile = () => {
@@ -611,9 +614,8 @@ const applyCrop = async () => {
       type: props.cropMimeType,
       lastModified: Date.now()
     })
-    const nextCroppedPreviewUrl = createPreviewUrl(nextCroppedFile)
+    const nextCroppedPreviewUrl = await createPreviewUrl(nextCroppedFile)
 
-    revokeOwnedUrl(croppedPreviewUrl.value)
     croppedFile.value = nextCroppedFile
     croppedPreviewUrl.value = nextCroppedPreviewUrl
     cropOpen.value = false
@@ -630,7 +632,7 @@ const applyCrop = async () => {
 
 watch(
   () => props.modelValue,
-  (value) => {
+  async (value) => {
     if (value === lastEmittedValue.value) return
 
     if (!value) {
@@ -639,11 +641,24 @@ watch(
     }
 
     clearLocalState()
+    const currentSyncVersion = syncVersion.value
     file.value = value.file
     croppedFile.value = value.croppedFile
-    sourcePreviewUrl.value = value.file ? value.previewUrl || createPreviewUrl(value.file) : ''
-    croppedPreviewUrl.value = value.croppedFile ? value.croppedPreviewUrl || createPreviewUrl(value.croppedFile) : value.croppedPreviewUrl
+    sourcePreviewUrl.value = value.file ? value.previewUrl || '' : ''
+    croppedPreviewUrl.value = value.croppedFile ? value.croppedPreviewUrl || '' : value.croppedPreviewUrl || ''
     externalPreviewUrl.value = value.file ? '' : value.croppedPreviewUrl || value.previewUrl || ''
+
+    if (value.file && !sourcePreviewUrl.value) {
+      const previewUrl = await createPreviewUrl(value.file).catch(() => '')
+      if (currentSyncVersion !== syncVersion.value) return
+      sourcePreviewUrl.value = previewUrl
+    }
+
+    if (value.croppedFile && !croppedPreviewUrl.value) {
+      const previewUrl = await createPreviewUrl(value.croppedFile).catch(() => '')
+      if (currentSyncVersion !== syncVersion.value) return
+      croppedPreviewUrl.value = previewUrl
+    }
 
     if (value.crop) {
       cropX.value = value.crop.x
@@ -655,7 +670,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
-  revokeAllOwnedUrls()
+  syncVersion.value += 1
 })
 </script>
 

@@ -6,20 +6,16 @@
       :aria-label="`Voir le service ${props.service.title}`"
     >
       <div class="marketplace-service-card__visual">
-        <NuxtImg
-          v-if="props.service.coverImageUrl"
+        <MarketplaceSafeImage
           class="marketplace-service-card__banner"
+          empty-class="marketplace-service-card__banner--empty"
           :src="props.service.coverImageUrl"
           :alt="`Banniere du service ${props.service.title}`"
           width="320"
           height="180"
-          format="webp"
           loading="lazy"
           decoding="async"
         />
-        <div v-else class="marketplace-service-card__banner marketplace-service-card__banner--empty" aria-hidden="true">
-          <Icon name="lucide:image" />
-        </div>
 
         <div class="marketplace-service-card__visual-meta">
           <span v-if="primaryCategory" class="marketplace-service-card__category">

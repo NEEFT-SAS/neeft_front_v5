@@ -12,33 +12,7 @@
           <p>{{ content.description }}</p>
         </div>
 
-        <nav class="marketplace-orders__role-tabs" aria-label="Vues du suivi marketplace">
-          <NuxtLink
-            class="marketplace-orders__role-tab"
-            :class="{ 'marketplace-orders__role-tab--active': props.role === 'buyer' }"
-            to="/marketplace/orders"
-            :aria-current="props.role === 'buyer' ? 'page' : undefined"
-          >
-            <Icon name="lucide:shopping-bag" aria-hidden="true" />
-            <span>Achats</span>
-          </NuxtLink>
-          <NuxtLink
-            class="marketplace-orders__role-tab"
-            :class="{ 'marketplace-orders__role-tab--active': props.role === 'seller' }"
-            to="/marketplace/sales"
-            :aria-current="props.role === 'seller' ? 'page' : undefined"
-          >
-            <Icon name="lucide:inbox" aria-hidden="true" />
-            <span>Ventes</span>
-          </NuxtLink>
-          <NuxtLink
-            class="marketplace-orders__role-tab"
-            to="/marketplace/services"
-          >
-            <Icon name="lucide:store" aria-hidden="true" />
-            <span>Services</span>
-          </NuxtLink>
-        </nav>
+        <MarketplaceTrackingTabs :active="props.role === 'buyer' ? 'orders' : 'sales'" />
       </div>
     </section>
 
@@ -89,63 +63,12 @@
 
             <ul v-if="visibleOrders.length" class="marketplace-orders__list marketplace-orders__list--grid" aria-live="polite">
               <li v-for="order in visibleOrders" :key="order.id">
-                <NuxtLink
-                  class="marketplace-orders__card"
-                  :to="getOrderDetailPath(order)"
-                  :data-urgent="getAction(order).urgent ? 'true' : 'false'"
-                  :aria-label="`Voir le detail de ${order.id}, ${order.serviceTitle}`"
-                >
-                  <span class="marketplace-orders__card-main">
-                    <span class="marketplace-orders__service-icon" aria-hidden="true">
-                      <Icon :name="order.serviceIcon" />
-                    </span>
-
-                    <span class="marketplace-orders__card-content">
-                      <span class="marketplace-orders__card-heading">
-                        <span class="marketplace-orders__card-title">
-                          <strong>{{ order.serviceTitle }}</strong>
-                          <span>{{ order.id }} - {{ content.counterpartLabel }} {{ getCounterpart(order).name }}</span>
-                        </span>
-                        <span v-if="hasUnread(order)" class="marketplace-orders__unread" aria-label="Message non lu" />
-                      </span>
-
-                      <span class="marketplace-orders__card-action">
-                        <Icon :name="getAction(order).icon" aria-hidden="true" />
-                        <span>
-                          <small>Prochaine action</small>
-                          <strong>{{ getAction(order).title }}</strong>
-                        </span>
-                      </span>
-
-                      <span class="marketplace-orders__card-progress-head">
-                        <span>{{ order.nextCheckpoint }}</span>
-                        <strong>{{ order.progress }}%</strong>
-                      </span>
-
-                      <span
-                        class="marketplace-orders__progress"
-                        role="progressbar"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                        :aria-valuenow="order.progress"
-                        :aria-label="`Progression ${order.progress}%`"
-                        :style="{ '--marketplace-order-progress': `${order.progress}%` }"
-                      >
-                        <span />
-                      </span>
-                    </span>
-                  </span>
-
-                  <span class="marketplace-orders__card-side">
-                    <MarketplaceOrderStatus :status="order.status" />
-                    <strong>{{ getMarketplaceOrderAmountLabel(order) }}</strong>
-                    <span class="marketplace-orders__card-due">
-                      <Icon name="lucide:calendar-clock" aria-hidden="true" />
-                      <span>{{ order.dueAt }}</span>
-                    </span>
-                    <Icon name="lucide:chevron-right" aria-hidden="true" />
-                  </span>
-                </NuxtLink>
+                <MarketplaceOrderListCard
+                  :order="order"
+                  :role="props.role"
+                  :detail-path="getOrderDetailPath(order)"
+                  :counterpart-label="content.counterpartLabel"
+                />
               </li>
             </ul>
 
@@ -200,12 +123,12 @@
 
         <section v-else-if="selectedOrder" class="marketplace-orders__detail marketplace-orders__detail--standalone" :aria-labelledby="detailTitleId">
           <div class="marketplace-orders__detail-cover">
-            <NuxtImg
+            <MarketplaceSafeImage
               :src="selectedOrder.serviceCoverImage"
               :alt="`Image du service ${selectedOrder.serviceTitle}`"
+              empty-class="marketplace-orders__detail-cover-empty"
               width="920"
               height="300"
-              format="webp"
               loading="lazy"
               decoding="async"
             />
@@ -225,162 +148,20 @@
             <MarketplaceOrderStatus :status="selectedOrder.status" size="lg" />
           </header>
 
-          <section class="marketplace-orders__next-action" :data-urgent="getAction(selectedOrder).urgent ? 'true' : 'false'">
-            <span class="marketplace-orders__next-action-icon" aria-hidden="true">
-              <Icon :name="getAction(selectedOrder).icon" />
-            </span>
-            <div>
-              <p class="marketplace-orders__eyebrow">
-                Prochaine action
-              </p>
-              <h3>{{ getAction(selectedOrder).title }}</h3>
-              <p>{{ getAction(selectedOrder).description }}</p>
-            </div>
-            <CustomButton
-              :label="actionOrderId === selectedOrder.id ? 'Mise a jour...' : getAction(selectedOrder).ctaLabel"
-              :left-icon="getAction(selectedOrder).icon"
-              theme="app"
-              variant="filled"
-              color="primary"
-              size="sm"
-              :disabled="getAction(selectedOrder).disabled || actionOrderId === selectedOrder.id"
-              @click="runPrimaryAction(selectedOrder)"
-            />
-          </section>
+          <MarketplaceOrderNextActionCard
+            :order="selectedOrder"
+            :role="props.role"
+            :action-order-id="actionOrderId"
+            @run="runPrimaryAction"
+          />
 
           <div class="marketplace-orders__detail-grid">
-            <section class="marketplace-orders__panel marketplace-orders__panel--timeline" aria-labelledby="marketplace-orders-timeline-title">
-              <header class="marketplace-orders__panel-header">
-                <div>
-                  <p class="marketplace-orders__eyebrow">
-                    Timeline
-                  </p>
-                  <h3 id="marketplace-orders-timeline-title">
-                    Avancement
-                  </h3>
-                </div>
-                <span>{{ selectedOrder.progress }}%</span>
-              </header>
-
-              <ol class="marketplace-orders__timeline">
-                <li v-for="milestone in selectedOrder.milestones" :key="`${selectedOrder.id}-${milestone.title}`" :data-state="milestone.state">
-                  <span class="marketplace-orders__timeline-marker" aria-hidden="true">
-                    <Icon :name="getMilestoneIcon(milestone.state)" />
-                  </span>
-                  <div>
-                    <span>{{ milestone.date }}</span>
-                    <h4>{{ milestone.title }}</h4>
-                    <p>{{ milestone.description }}</p>
-                  </div>
-                </li>
-              </ol>
-            </section>
-
-            <section class="marketplace-orders__panel" aria-labelledby="marketplace-orders-context-title">
-              <header class="marketplace-orders__panel-header">
-                <div>
-                  <p class="marketplace-orders__eyebrow">
-                    {{ content.counterpartLabel }}
-                  </p>
-                  <h3 id="marketplace-orders-context-title">
-                    {{ getCounterpart(selectedOrder).name }}
-                  </h3>
-                </div>
-                <span class="marketplace-orders__avatar" aria-hidden="true">
-                  {{ getInitials(getCounterpart(selectedOrder).name) }}
-                </span>
-              </header>
-
-              <dl class="marketplace-orders__facts">
-                <div>
-                  <dt>Role</dt>
-                  <dd>{{ getCounterpart(selectedOrder).role }}</dd>
-                </div>
-                <div>
-                  <dt>Commande</dt>
-                  <dd>{{ selectedOrder.orderedAt }}</dd>
-                </div>
-                <div>
-                  <dt>Echeance</dt>
-                  <dd>{{ selectedOrder.dueAt }}</dd>
-                </div>
-                <div>
-                  <dt>Mise a jour</dt>
-                  <dd>{{ selectedOrder.updatedAt }}</dd>
-                </div>
-              </dl>
-
-              <CustomLink
-                label="Voir le service"
-                :to="`/marketplace/${selectedOrder.serviceSlug}`"
-                left-icon="lucide:external-link"
-                theme="app"
-                variant="outlined"
-                color="secondary"
-                size="sm"
-              />
-            </section>
+            <MarketplaceOrderTimelineCard :order="selectedOrder" />
+            <MarketplaceOrderCounterpartCard :order="selectedOrder" :role="props.role" :counterpart-label="content.counterpartLabel" />
           </div>
 
-          <section class="marketplace-orders__panel" aria-labelledby="marketplace-orders-deliverables-title">
-            <header class="marketplace-orders__panel-header">
-              <div>
-                <p class="marketplace-orders__eyebrow">
-                  Mission
-                </p>
-                <h3 id="marketplace-orders-deliverables-title">
-                  Livrables
-                </h3>
-              </div>
-              <span>{{ selectedOrder.nextCheckpoint }}</span>
-            </header>
-
-            <ul class="marketplace-orders__deliverables">
-              <li v-for="deliverable in selectedOrder.deliverables" :key="deliverable.title" :data-status="deliverable.status">
-                <Icon :name="getDeliverableIcon(deliverable.status)" aria-hidden="true" />
-                <span>
-                  <strong>{{ deliverable.title }}</strong>
-                  <small>{{ deliverable.description }}</small>
-                </span>
-                <em>{{ getDeliverableLabel(deliverable.status) }}</em>
-              </li>
-            </ul>
-          </section>
-
-          <section class="marketplace-orders__panel" aria-labelledby="marketplace-orders-messages-title">
-            <header class="marketplace-orders__panel-header">
-              <div>
-                <p class="marketplace-orders__eyebrow">
-                  Conversation
-                </p>
-                <h3 id="marketplace-orders-messages-title">
-                  Derniers messages
-                </h3>
-              </div>
-              <CustomButton
-                label="Ouvrir"
-                left-icon="lucide:message-circle"
-                theme="app"
-                variant="outlined"
-                color="secondary"
-                size="sm"
-                @click="openMessages(selectedOrder)"
-              />
-            </header>
-
-            <ul class="marketplace-orders__messages">
-              <li v-for="message in selectedOrder.messages" :key="`${message.author}-${message.date}-${message.excerpt}`">
-                <span class="marketplace-orders__message-icon" aria-hidden="true">
-                  <Icon :name="message.role === 'system' ? 'lucide:bot' : 'lucide:user-round'" />
-                </span>
-                <span>
-                  <strong>{{ message.author }}</strong>
-                  <small>{{ message.date }}</small>
-                  <p>{{ message.excerpt }}</p>
-                </span>
-              </li>
-            </ul>
-          </section>
+          <MarketplaceOrderDeliverablesCard :order="selectedOrder" />
+          <MarketplaceOrderMessagesCard :order="selectedOrder" @open="openMessages" />
         </section>
 
         <section v-else class="marketplace-orders__empty marketplace-orders__empty--standalone" aria-live="polite">
@@ -404,7 +185,7 @@
 
 <script setup lang="ts">
 import type { MarketplaceOrderStatus as MarketplaceApiOrderStatus } from '~/plugins/marketplace-api'
-import { getMarketplaceOrderAmountLabel, marketplaceOrderRoleContent, marketplaceOrderStatusFilters, marketplaceOrderStatusMeta, toMarketplaceOrder, toMarketplaceOrders, type MarketplaceDeliverableStatus, type MarketplaceOrder, type MarketplaceOrderRole, type MarketplaceOrderStatus, type MarketplaceOrderStatusFilter, type MarketplaceTimelineState } from '~/datas/marketplace/orders'
+import { getMarketplaceOrderAmountLabel, marketplaceOrderRoleContent, marketplaceOrderStatusFilters, marketplaceOrderStatusMeta, toMarketplaceOrder, toMarketplaceOrders, type MarketplaceOrder, type MarketplaceOrderRole, type MarketplaceOrderStatus, type MarketplaceOrderStatusFilter } from '~/datas/marketplace/orders'
 
 const props = withDefaults(defineProps<{
   role: MarketplaceOrderRole
@@ -493,41 +274,8 @@ const getStatusCount = (status: MarketplaceOrderStatusFilter) => {
   return orders.value.filter(order => order.status === status).length
 }
 
-const hasUnread = (order: MarketplaceOrder) => {
-  return order.messages.some(message => message.unreadFor?.includes(props.role))
-}
-
 const getOrderDetailPath = (order: MarketplaceOrder) => {
   return props.role === 'buyer' ? `/marketplace/orders/${order.id}` : `/marketplace/sales/${order.id}`
-}
-
-const getInitials = (value: string) => {
-  const words = value.trim().split(/\s+/).filter(Boolean)
-  if (!words.length) return ''
-
-  return words
-    .slice(0, 2)
-    .map(word => Array.from(word)[0])
-    .join('')
-    .toUpperCase()
-}
-
-const getMilestoneIcon = (state: MarketplaceTimelineState) => {
-  if (state === 'done') return 'lucide:check'
-  if (state === 'current') return 'lucide:radio'
-  return 'lucide:circle'
-}
-
-const getDeliverableIcon = (status: MarketplaceDeliverableStatus) => {
-  if (status === 'approved') return 'lucide:circle-check'
-  if (status === 'ready') return 'lucide:file-check-2'
-  return 'lucide:file-clock'
-}
-
-const getDeliverableLabel = (status: MarketplaceDeliverableStatus) => {
-  if (status === 'approved') return 'Valide'
-  if (status === 'ready') return 'Pret'
-  return 'A venir'
 }
 
 const getNextMarketplaceStatus = (order: MarketplaceOrder): MarketplaceApiOrderStatus | null => {
@@ -708,88 +456,17 @@ const openMessages = (order: MarketplaceOrder) => {
 }
 
 .marketplace-orders__hero-copy > p,
-.marketplace-orders__detail-heading > p,
-.marketplace-orders__next-action p,
-.marketplace-orders__timeline p,
-.marketplace-orders__messages p {
+.marketplace-orders__detail-heading > p {
   color: var(--orders-color-muted);
   font-size: var(--orders-font-body);
   line-height: var(--orders-line-body);
   text-wrap: pretty;
 }
 
-.marketplace-orders__role-tabs {
-  display: inline-grid;
-  grid-template-columns: repeat(3, minmax(calc(var(--orders-unit) * 13), 1fr));
-  gap: var(--orders-space-1);
-  padding: var(--orders-space-1);
-  border: var(--orders-border) solid var(--orders-color-line);
-  border-radius: var(--orders-radius-round);
-  background-color: var(--orders-color-bg);
-}
-
-.marketplace-orders__role-tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--orders-hit-size);
-  gap: var(--orders-space-1);
-  padding: 0 var(--orders-space-2);
-  border-radius: var(--orders-radius-round);
-  color: var(--orders-color-muted);
-  font-size: var(--orders-font-small);
-  font-weight: 600;
-  line-height: var(--orders-line-tight);
-  text-decoration: none;
-}
-
-.marketplace-orders__role-tab:hover,
-.marketplace-orders__role-tab--active {
-  background-color: color-mix(in oklch, var(--orders-color-accent) 14%, var(--orders-color-bg));
-  color: var(--orders-color-text);
-}
-
-.marketplace-orders__role-tab:focus-visible,
-.marketplace-orders__card:focus-visible {
-  outline: calc(var(--orders-border) * 3) solid var(--orders-color-accent);
-  outline-offset: calc(var(--orders-border) * 3);
-}
-
 .marketplace-orders__body {
   display: grid;
   gap: var(--orders-space-5);
   padding: var(--orders-space-5) 0 var(--orders-space-10);
-}
-
-.marketplace-orders__service-icon,
-.marketplace-orders__next-action-icon,
-.marketplace-orders__message-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(var(--orders-hit-size) * 0.82);
-  height: calc(var(--orders-hit-size) * 0.82);
-  min-width: calc(var(--orders-hit-size) * 0.82);
-  border-radius: var(--orders-radius-round);
-  background-color: color-mix(in oklch, var(--orders-color-accent) 10%, var(--orders-color-panel));
-  color: var(--orders-color-accent);
-}
-
-.marketplace-orders__role-tab svg,
-.marketplace-orders__service-icon svg,
-.marketplace-orders__next-action-icon svg,
-.marketplace-orders__message-icon svg {
-  width: var(--orders-icon-size);
-  height: var(--orders-icon-size);
-}
-
-.marketplace-orders__facts dt,
-.marketplace-orders__deliverables small,
-.marketplace-orders__messages small {
-  color: var(--orders-color-subtle);
-  font-size: var(--orders-font-label);
-  font-weight: 600;
-  line-height: var(--orders-line-body);
 }
 
 .marketplace-orders__workspace--list {
@@ -815,9 +492,7 @@ const openMessages = (order: MarketplaceOrder) => {
 }
 
 .marketplace-orders__toolbar h2,
-.marketplace-orders__detail-header h2,
-.marketplace-orders__panel h3,
-.marketplace-orders__next-action h3 {
+.marketplace-orders__detail-header h2 {
   color: var(--orders-color-text);
   font-size: var(--orders-font-section);
   font-weight: 600;
@@ -834,10 +509,7 @@ const openMessages = (order: MarketplaceOrder) => {
   min-width: auto;
 }
 
-.marketplace-orders__list,
-.marketplace-orders__timeline,
-.marketplace-orders__deliverables,
-.marketplace-orders__messages {
+.marketplace-orders__list {
   display: grid;
   gap: var(--orders-space-1);
   margin: 0;
@@ -849,180 +521,6 @@ const openMessages = (order: MarketplaceOrder) => {
   grid-template-columns: 1fr;
   gap: 0;
   border-top: var(--orders-border) solid var(--orders-color-line);
-}
-
-.marketplace-orders__card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  width: 100%;
-  min-height: 100%;
-  gap: var(--orders-space-4);
-  padding: var(--orders-space-4) 0;
-  border-bottom: var(--orders-border) solid var(--orders-color-line);
-  background-color: var(--orders-color-transparent);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  text-decoration: none;
-  transition-duration: var(--motion-fast);
-}
-
-.marketplace-orders__card:hover {
-  background-color: color-mix(in oklch, var(--orders-color-panel) 38%, var(--orders-color-transparent));
-}
-
-.marketplace-orders__card[data-urgent='true'] {
-  border-color: color-mix(in oklch, var(--orders-color-warning) 34%, var(--orders-color-line));
-}
-
-.marketplace-orders__card-main {
-  display: grid;
-  grid-template-columns: var(--orders-hit-size) minmax(0, 1fr);
-  gap: var(--orders-space-3);
-  align-items: start;
-}
-
-.marketplace-orders__card-content {
-  display: grid;
-  gap: var(--orders-space-2);
-}
-
-.marketplace-orders__card-heading {
-  display: flex;
-  gap: var(--orders-space-2);
-  align-items: start;
-  justify-content: space-between;
-}
-
-.marketplace-orders__card-title {
-  display: grid;
-  gap: calc(var(--orders-unit) * 0.5);
-}
-
-.marketplace-orders__card-title strong,
-.marketplace-orders__deliverables strong,
-.marketplace-orders__messages strong {
-  color: var(--orders-color-text);
-  font-size: var(--orders-font-small);
-  font-weight: 600;
-  line-height: var(--orders-line-title);
-  overflow-wrap: anywhere;
-}
-
-.marketplace-orders__card-title span,
-.marketplace-orders__card-action,
-.marketplace-orders__card-progress-head,
-.marketplace-orders__card-due,
-.marketplace-orders__facts dd {
-  color: var(--orders-color-muted);
-  font-size: var(--orders-font-small);
-  line-height: var(--orders-line-body);
-}
-
-.marketplace-orders__unread {
-  width: calc(var(--orders-unit) * 1.25);
-  height: calc(var(--orders-unit) * 1.25);
-  border-radius: var(--orders-radius-round);
-  background-color: var(--orders-color-danger);
-}
-
-.marketplace-orders__card-action {
-  display: inline-grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  justify-self: start;
-  gap: var(--orders-space-1);
-  font-weight: 600;
-}
-
-.marketplace-orders__card-action small {
-  display: block;
-  color: var(--orders-color-subtle);
-  font-size: var(--orders-font-label);
-  font-weight: 600;
-  line-height: var(--orders-line-tight);
-}
-
-.marketplace-orders__card-action strong {
-  display: block;
-  color: var(--orders-color-text);
-  font-size: var(--orders-font-small);
-  font-weight: 600;
-  line-height: var(--orders-line-title);
-}
-
-.marketplace-orders__card-action svg {
-  width: var(--orders-icon-size);
-  height: var(--orders-icon-size);
-  color: var(--orders-color-accent);
-}
-
-.marketplace-orders__card-progress-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--orders-space-2);
-  align-items: center;
-}
-
-.marketplace-orders__card-progress-head span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.marketplace-orders__card-progress-head strong {
-  color: var(--orders-color-text);
-  font-size: var(--orders-font-label);
-  font-weight: 600;
-  line-height: var(--orders-line-tight);
-}
-
-.marketplace-orders__card-side {
-  display: grid;
-  min-width: calc(var(--orders-unit) * 24);
-  gap: var(--orders-space-1);
-  justify-items: end;
-}
-
-.marketplace-orders__card-side > strong {
-  color: var(--orders-color-text);
-  font-size: var(--orders-font-section);
-  font-weight: 600;
-  line-height: var(--orders-line-tight);
-}
-
-.marketplace-orders__card-due {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--orders-space-1);
-}
-
-.marketplace-orders__card-due svg,
-.marketplace-orders__card-side > svg {
-  width: var(--orders-icon-size);
-  height: var(--orders-icon-size);
-}
-
-.marketplace-orders__card-side > svg {
-  margin-top: var(--orders-space-1);
-  color: var(--orders-color-subtle);
-}
-
-.marketplace-orders__progress {
-  display: block;
-  height: calc(var(--orders-border) * 4);
-  overflow: hidden;
-  border-radius: var(--orders-radius-round);
-  background-color: color-mix(in oklch, var(--orders-color-line) 72%, var(--orders-color-transparent));
-}
-
-.marketplace-orders__progress span {
-  display: block;
-  width: var(--marketplace-order-progress);
-  height: 100%;
-  border-radius: inherit;
-  background: var(--gradient-action);
 }
 
 .marketplace-orders__empty {
@@ -1098,9 +596,21 @@ const openMessages = (order: MarketplaceOrder) => {
   object-fit: cover;
 }
 
-.marketplace-orders__detail-header,
-.marketplace-orders__panel-header,
-.marketplace-orders__next-action {
+.marketplace-orders__detail-cover-empty {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: var(--orders-color-subtle);
+}
+
+.marketplace-orders__detail-cover-empty svg {
+  width: calc(var(--orders-unit) * 6);
+  height: calc(var(--orders-unit) * 6);
+}
+
+.marketplace-orders__detail-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--orders-space-3);
@@ -1112,187 +622,11 @@ const openMessages = (order: MarketplaceOrder) => {
   gap: var(--orders-space-1);
 }
 
-.marketplace-orders__next-action {
-  grid-template-columns: var(--orders-hit-size) minmax(0, 1fr) auto;
-  padding: var(--orders-space-3);
-  border: var(--orders-border) solid color-mix(in oklch, var(--orders-color-accent) 28%, var(--orders-color-line));
-  border-radius: var(--orders-radius);
-  background-color: color-mix(in oklch, var(--orders-color-accent) 7%, var(--orders-color-bg));
-}
-
-.marketplace-orders__next-action[data-urgent='true'] {
-  border-color: color-mix(in oklch, var(--orders-color-warning) 72%, var(--orders-color-line));
-  background-color: color-mix(in oklch, var(--orders-color-warning) 8%, var(--orders-color-bg));
-}
-
 .marketplace-orders__detail-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
   gap: var(--orders-space-4);
   align-items: start;
-}
-
-.marketplace-orders__panel {
-  display: grid;
-  gap: var(--orders-space-3);
-  padding: var(--orders-space-3) 0 0;
-  border-top: var(--orders-border) solid var(--orders-color-line);
-}
-
-.marketplace-orders__panel-header > span {
-  max-width: calc(var(--orders-unit) * 36);
-  color: var(--orders-color-muted);
-  font-size: var(--orders-font-small);
-  font-weight: 600;
-  line-height: var(--orders-line-body);
-  text-align: right;
-}
-
-.marketplace-orders__timeline li {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--orders-hit-size) minmax(0, 1fr);
-  gap: var(--orders-space-2);
-}
-
-.marketplace-orders__timeline li::before {
-  position: absolute;
-  top: var(--orders-hit-size);
-  bottom: calc(var(--orders-space-2) * -1);
-  left: calc(var(--orders-hit-size) / 2);
-  width: var(--orders-border);
-  background-color: var(--orders-color-line);
-  content: "";
-}
-
-.marketplace-orders__timeline li:last-child::before {
-  display: none;
-}
-
-.marketplace-orders__timeline-marker {
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--orders-hit-size);
-  height: var(--orders-hit-size);
-  border: var(--orders-border) solid var(--orders-color-line);
-  border-radius: var(--orders-radius-round);
-  background-color: var(--orders-color-bg);
-  color: var(--orders-color-subtle);
-}
-
-.marketplace-orders__timeline-marker svg {
-  width: calc(var(--orders-icon-size) * 0.8);
-  height: calc(var(--orders-icon-size) * 0.8);
-}
-
-.marketplace-orders__timeline li[data-state='done'] .marketplace-orders__timeline-marker {
-  border-color: color-mix(in oklch, var(--orders-color-success) 58%, var(--orders-color-line));
-  color: var(--orders-color-success);
-}
-
-.marketplace-orders__timeline li[data-state='current'] .marketplace-orders__timeline-marker {
-  border-color: color-mix(in oklch, var(--orders-color-accent) 68%, var(--orders-color-line));
-  color: var(--orders-color-accent);
-}
-
-.marketplace-orders__timeline div {
-  display: grid;
-  gap: calc(var(--orders-unit) * 0.5);
-  padding-bottom: var(--orders-space-2);
-}
-
-.marketplace-orders__timeline span {
-  color: var(--orders-color-subtle);
-  font-size: var(--orders-font-label);
-  font-weight: 600;
-  line-height: var(--orders-line-body);
-}
-
-.marketplace-orders__timeline h4 {
-  color: var(--orders-color-text);
-  font-size: var(--orders-font-small);
-  font-weight: 600;
-  line-height: var(--orders-line-title);
-}
-
-.marketplace-orders__facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--orders-space-2);
-}
-
-.marketplace-orders__facts div {
-  display: grid;
-  gap: calc(var(--orders-unit) * 0.5);
-}
-
-.marketplace-orders__avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--orders-hit-size);
-  height: var(--orders-hit-size);
-  border: var(--orders-border) solid var(--orders-color-line);
-  border-radius: var(--orders-radius-round);
-  background-color: var(--orders-color-bg);
-  color: var(--orders-color-text);
-  font-size: var(--orders-font-small);
-  font-weight: 600;
-  line-height: var(--orders-line-tight);
-}
-
-.marketplace-orders__deliverables li,
-.marketplace-orders__messages li {
-  display: grid;
-  grid-template-columns: var(--orders-hit-size) minmax(0, 1fr) auto;
-  gap: var(--orders-space-2);
-  align-items: center;
-  min-height: calc(var(--orders-unit) * 8);
-  padding: var(--orders-space-2) 0;
-  border-bottom: var(--orders-border) solid var(--orders-color-line);
-  background-color: var(--orders-color-transparent);
-}
-
-.marketplace-orders__deliverables svg {
-  width: var(--orders-icon-size);
-  height: var(--orders-icon-size);
-  justify-self: center;
-  color: var(--orders-color-subtle);
-}
-
-.marketplace-orders__deliverables li[data-status='ready'] svg {
-  color: var(--orders-color-accent);
-}
-
-.marketplace-orders__deliverables li[data-status='approved'] svg {
-  color: var(--orders-color-success);
-}
-
-.marketplace-orders__deliverables span,
-.marketplace-orders__messages span:last-child {
-  display: grid;
-  gap: calc(var(--orders-unit) * 0.5);
-}
-
-.marketplace-orders__deliverables em {
-  color: var(--orders-color-muted);
-  font-size: var(--orders-font-label);
-  font-style: normal;
-  font-weight: 600;
-  line-height: var(--orders-line-tight);
-  white-space: nowrap;
-}
-
-.marketplace-orders__messages li {
-  grid-template-columns: var(--orders-hit-size) minmax(0, 1fr);
-}
-
-.marketplace-orders__message-icon {
-  width: calc(var(--orders-hit-size) * 0.82);
-  height: calc(var(--orders-hit-size) * 0.82);
-  min-width: calc(var(--orders-hit-size) * 0.82);
 }
 
 @media (max-width: 72rem) {
@@ -1308,50 +642,19 @@ const openMessages = (order: MarketplaceOrder) => {
     width: min(calc(100% - (var(--orders-space-3) * 2)), var(--orders-content-max));
   }
 
-  .marketplace-orders__hero-inner,
-  .marketplace-orders__next-action {
+  .marketplace-orders__hero-inner {
     padding: var(--orders-space-3);
   }
 
   .marketplace-orders__hero-inner,
   .marketplace-orders__toolbar,
-  .marketplace-orders__card,
-  .marketplace-orders__next-action,
-  .marketplace-orders__detail-header,
-  .marketplace-orders__panel-header,
-  .marketplace-orders__deliverables li {
+  .marketplace-orders__detail-header {
     grid-template-columns: 1fr;
   }
 
-  .marketplace-orders__facts,
   .marketplace-orders__list--grid {
     grid-template-columns: 1fr;
   }
 
-  .marketplace-orders__role-tabs {
-    width: 100%;
-  }
-
-  .marketplace-orders__panel-header > span {
-    max-width: none;
-    text-align: left;
-  }
-
-  .marketplace-orders__card-side {
-    min-width: 0;
-    grid-template-columns: repeat(3, auto);
-    align-items: center;
-    justify-content: start;
-    justify-items: start;
-    gap: var(--orders-space-2);
-  }
-
-  .marketplace-orders__card-side > strong {
-    font-size: var(--orders-font-small);
-  }
-
-  .marketplace-orders__deliverables em {
-    justify-self: start;
-  }
 }
 </style>

@@ -1,169 +1,162 @@
 <template>
   <CustomModal
     :model-value="modelValue"
-    title="Commander ce service"
-    desc="Envoie une demande claire au vendeur avant demarrage."
+    :title="modalTitle"
+    :desc="modalDescription"
     icon="lucide:shopping-bag"
     theme="app"
-    size="xl"
+    size="lg"
     @update:model-value="emit('update:modelValue', $event)"
     @close="emit('update:modelValue', false)"
   >
-    <form :id="formId" class="marketplace-order-modal" novalidate @submit.prevent="submitOrder">
-      <section class="marketplace-order-modal__summary" aria-label="Resume de la commande">
-        <div class="marketplace-order-modal__service">
-          <NuxtImg
-            v-if="service.bannerUrl"
-            class="marketplace-order-modal__cover"
-            :src="service.bannerUrl"
-            :alt="`Banniere du service ${service.name}`"
-            width="168"
-            height="96"
-            format="webp"
-            loading="lazy"
-            decoding="async"
-          />
-          <div v-else class="marketplace-order-modal__cover marketplace-order-modal__cover--empty" aria-hidden="true">
-            <Icon name="lucide:image" />
-          </div>
+    <div class="marketplace-order-modal" :data-step="currentStep">
+      <ol class="marketplace-order-modal__steps" aria-label="Progression de la commande">
+        <li :data-active="currentStep === 'details' ? 'true' : 'false'" :data-complete="currentStep === 'payment' ? 'true' : 'false'">
+          <span>1</span>
+          <strong>Informations</strong>
+        </li>
+        <li :data-active="currentStep === 'payment' ? 'true' : 'false'">
+          <span>2</span>
+          <strong>Paiement</strong>
+        </li>
+      </ol>
 
-          <div class="marketplace-order-modal__service-copy">
-            <p>Marketplace</p>
-            <h3>{{ service.name }}</h3>
-            <span>{{ sellerName }}</span>
-          </div>
+      <section class="marketplace-order-modal__summary" aria-label="Resume de la commande">
+        <MarketplaceSafeImage
+          class="marketplace-order-modal__cover"
+          empty-class="marketplace-order-modal__cover--empty"
+          :src="service.bannerUrl"
+          :alt="`Banniere du service ${service.name}`"
+          width="168"
+          height="104"
+          loading="lazy"
+          decoding="async"
+        />
+
+        <div class="marketplace-order-modal__summary-copy">
+          <p>{{ sellerName }}</p>
+          <h3>{{ service.name }}</h3>
+          <span>{{ offer.name }}</span>
         </div>
 
-        <dl class="marketplace-order-modal__facts">
+        <dl class="marketplace-order-modal__price" aria-label="Prix">
           <div>
-            <dt>Offre</dt>
-            <dd>{{ offer.name }}</dd>
+            <dt>Sous-total HT</dt>
+            <dd>{{ subtotalLabel }}</dd>
           </div>
           <div>
-            <dt>Prix</dt>
-            <dd>{{ orderPriceLabel }}</dd>
+            <dt>TVA {{ vatPercentLabel }}</dt>
+            <dd>{{ vatLabel }}</dd>
           </div>
           <div>
-            <dt>Vendeur</dt>
-            <dd>{{ sellerName }}</dd>
+            <dt>Total</dt>
+            <dd>{{ totalLabel }}</dd>
           </div>
         </dl>
       </section>
 
-      <section class="marketplace-order-modal__section">
-        <div class="marketplace-order-modal__section-head">
-          <h3>Brief</h3>
-          <p>Plus le contexte est precis, plus le vendeur peut repondre vite.</p>
-        </div>
-
+      <form
+        v-if="currentStep === 'details'"
+        :id="detailsFormId"
+        class="marketplace-order-modal__details"
+        novalidate
+        @submit.prevent="preparePayment"
+      >
         <CustomInputTextarea
           v-model="form.brief"
           name="orderBrief"
-          label="Besoin"
-          placeholder="Explique ce que tu veux obtenir, ton contexte actuel et ce qui compte le plus pour toi."
-          :rows="5"
+          label="Informations pour le vendeur"
+          placeholder="Precise ton besoin, ton contexte, tes disponibilites, ton niveau actuel ou les liens utiles."
+          :rows="6"
           :max-length="900"
           :show-count="true"
-          :required="true"
           :error-message="errors.brief"
         />
 
-        <div class="marketplace-order-modal__grid">
-          <CustomInputSelection
-            v-model="form.objective"
-            name="orderObjective"
-            label="Objectif principal"
-            placeholder="Choisir un objectif"
-            :options="objectiveOptions"
-            :required="true"
-            :error-message="errors.objective"
-          />
-
-          <CustomInputSelection
-            v-model="form.deadline"
-            name="orderDeadline"
-            label="Delai souhaite"
-            placeholder="Choisir un delai"
-            :options="deadlineOptions"
-            :required="true"
-            :error-message="errors.deadline"
-          />
+        <div class="marketplace-order-modal__notice">
+          <strong>Paiement securise</strong>
+          <p>Neeft conserve le paiement jusqu'a validation de la prestation. Le vendeur recoit les informations apres la commande.</p>
         </div>
-      </section>
+      </form>
 
-      <section class="marketplace-order-modal__section">
-        <div class="marketplace-order-modal__section-head">
-          <h3>Elements utiles</h3>
-          <p>Ajoute les liens, ressources ou infos de contact qui aideront au cadrage.</p>
+      <section v-else class="marketplace-order-modal__payment" aria-label="Paiement Stripe">
+        <div class="marketplace-order-modal__payment-head">
+          <span aria-hidden="true">
+            <Icon name="logos:stripe" />
+          </span>
+          <div>
+            <h3>Paiement par carte</h3>
+            <p>{{ totalLabel }} a regler pour confirmer la commande.</p>
+          </div>
         </div>
 
-        <CustomInputTextarea
-          v-model="form.assets"
-          name="orderAssets"
-          label="Liens ou ressources"
-          placeholder="Lien Discord, VOD, drive, profil, brief existant..."
-          :rows="3"
-          :max-length="500"
-          :show-count="true"
-          :error-message="errors.assets"
+        <div v-if="isPreparingPayment" class="marketplace-order-modal__loading" aria-live="polite">
+          Preparation du formulaire Stripe...
+        </div>
+
+        <AppStripePaymentForm
+          v-else-if="paymentIntent?.clientSecret"
+          :client-secret="paymentIntent.clientSecret"
+          :return-url="paymentReturnUrl"
+          :submit-label="`Payer ${totalLabel}`"
+          @succeeded="handlePaymentSucceeded"
+          @error="handlePaymentError"
         />
 
-        <CustomInputText
-          v-model="form.contact"
-          name="orderContact"
-          label="Contact prefere"
-          placeholder="Pseudo Neeft, Discord ou email"
-          :required="true"
-          :error-message="errors.contact"
-        />
-
-        <CustomInputCheckbox
-          v-model="form.confirmed"
-          name="orderConfirmation"
-          label="Je confirme que ma demande est prete a etre envoyee"
-          description="Le vendeur pourra accepter, refuser ou demander des precisions avant demarrage."
-          :required="true"
-          :error-message="errors.confirmed"
-        />
+        <div v-else class="marketplace-order-modal__loading marketplace-order-modal__loading--error" role="alert">
+          Impossible de charger le paiement Stripe.
+        </div>
       </section>
-    </form>
+    </div>
 
     <template #footer>
       <CustomButton
+        v-if="currentStep === 'payment'"
+        type="button"
+        label="Retour"
+        theme="app"
+        variant="ghost"
+        color="secondary"
+        :disabled="isPreparingPayment"
+        @click="currentStep = 'details'"
+      />
+      <CustomButton
+        v-else
         type="button"
         label="Annuler"
         theme="app"
         variant="ghost"
         color="secondary"
-        :disabled="isSubmitting"
+        :disabled="isPreparingPayment"
         @click="emit('update:modelValue', false)"
       />
       <CustomButton
+        v-if="currentStep === 'details'"
         type="submit"
-        :form="formId"
-        :label="submitLabel"
+        :form="detailsFormId"
+        :label="nextLabel"
+        right-icon="lucide:arrow-right"
         theme="app"
         variant="filled"
         color="primary"
-        :disabled="isSubmitting"
+        :disabled="isPreparingPayment"
       />
     </template>
   </CustomModal>
 </template>
 
 <script setup lang="ts">
-import type { MarketplaceOrderDeadline, MarketplaceOrderObjective, MarketplaceServiceLinePresenter, MarketplaceServicePresenter } from '~/plugins/marketplace-api'
+import type { MarketplaceOrderDeadline, MarketplaceOrderObjective, MarketplaceOrderPaymentIntentPresenter, MarketplaceOrderPresenter, MarketplaceServiceLinePresenter, MarketplaceServicePresenter } from '~/plugins/marketplace-api'
+
+type OrderStep = 'details' | 'payment'
 
 type OrderForm = {
   brief: string
-  objective: string
-  deadline: string
-  assets: string
-  contact: string
-  confirmed: boolean
 }
 
 type OrderErrors = Record<keyof OrderForm, string>
+
+const VAT_RATE = 0.2
 
 const props = defineProps<{
   modelValue: boolean
@@ -178,110 +171,131 @@ const emit = defineEmits<{
 const toast = useToast()
 const { $marketplaceAPI } = useNuxtApp()
 const generatedId = useId()
-const isSubmitting = ref(false)
+
+const currentStep = ref<OrderStep>('details')
+const isPreparingPayment = ref(false)
+const createdOrder = ref<MarketplaceOrderPresenter | null>(null)
+const paymentIntent = ref<MarketplaceOrderPaymentIntentPresenter | null>(null)
+
+const form = reactive<OrderForm>({
+  brief: '',
+})
+const errors = reactive<OrderErrors>({
+  brief: '',
+})
 
 const formatMarketplacePrice = (price: number) => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    maximumFractionDigits: 0
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(price)
 }
 
-const formId = computed(() => `marketplace-order-form-${generatedId}`)
+const detailsFormId = computed(() => `marketplace-order-details-form-${generatedId}`)
+const modalTitle = computed(() => currentStep.value === 'payment' ? 'Paiement securise' : 'Commander ce service')
+const modalDescription = computed(() => currentStep.value === 'payment'
+  ? 'Renseigne ta carte pour confirmer la commande.'
+  : 'Ajoute les informations utiles si besoin avant de passer au paiement.'
+)
 const sellerName = computed(() => props.service.seller?.username || 'Vendeur marketplace')
-const orderPriceLabel = computed(() => formatMarketplacePrice(Number(props.offer.price) || 0))
-const submitLabel = computed(() => isSubmitting.value ? 'Envoi...' : 'Envoyer la commande')
+const totalAmount = computed(() => Number(props.offer.price) || 0)
+const subtotalAmount = computed(() => totalAmount.value / (1 + VAT_RATE))
+const vatAmount = computed(() => totalAmount.value - subtotalAmount.value)
+const totalLabel = computed(() => formatMarketplacePrice(totalAmount.value))
+const subtotalLabel = computed(() => formatMarketplacePrice(subtotalAmount.value))
+const vatLabel = computed(() => formatMarketplacePrice(vatAmount.value))
+const vatPercentLabel = computed(() => `${Math.round(VAT_RATE * 100)}%`)
+const nextLabel = computed(() => isPreparingPayment.value ? 'Preparation...' : 'Suivant')
+const paymentReturnUrl = computed(() => {
+  if (!import.meta.client || !createdOrder.value) {
+    return ''
+  }
 
-const objectiveOptions = [
-  { value: 'performance', label: 'Ameliorer mes performances' },
-  { value: 'deliverable', label: 'Recevoir un livrable' },
-  { value: 'team', label: 'Structurer une equipe' },
-  { value: 'growth', label: 'Developper ma visibilite' },
-  { value: 'other', label: 'Autre besoin' },
-]
-
-const deadlineOptions = [
-  { value: 'flexible', label: 'Flexible' },
-  { value: 'week', label: 'Sous 7 jours' },
-  { value: 'two-weeks', label: 'Sous 2 semaines' },
-  { value: 'month', label: 'Dans le mois' },
-]
-
-const initialForm = (): OrderForm => ({
-  brief: '',
-  objective: '',
-  deadline: '',
-  assets: '',
-  contact: '',
-  confirmed: false,
+  return `${window.location.origin}/marketplace/orders/${createdOrder.value.id}?payment=success`
 })
-
-const initialErrors = (): OrderErrors => ({
-  brief: '',
-  objective: '',
-  deadline: '',
-  assets: '',
-  contact: '',
-  confirmed: '',
-})
-
-const form = reactive(initialForm())
-const errors = reactive(initialErrors())
 
 const resetForm = () => {
-  Object.assign(form, initialForm())
-  Object.assign(errors, initialErrors())
+  currentStep.value = 'details'
+  isPreparingPayment.value = false
+  createdOrder.value = null
+  paymentIntent.value = null
+  form.brief = ''
+  errors.brief = ''
 }
 
 const validateOrder = () => {
-  errors.brief = form.brief.trim() ? '' : 'Explique ton besoin.'
-  errors.objective = form.objective ? '' : 'Choisis un objectif.'
-  errors.deadline = form.deadline ? '' : 'Choisis un delai.'
-  errors.assets = ''
-  errors.contact = form.contact.trim() ? '' : 'Indique comment te recontacter.'
-  errors.confirmed = form.confirmed ? '' : 'Confirmation requise.'
-
-  return !Object.values(errors).some(Boolean)
+  errors.brief = ''
+  return true
 }
 
-const submitOrder = async () => {
+const createOrderIfNeeded = async () => {
+  if (createdOrder.value) {
+    return createdOrder.value
+  }
+
+  const order = await $marketplaceAPI.orders.create(props.service.id, {
+    serviceLineId: props.offer.id,
+    brief: form.brief.trim(),
+    objective: 'other' as MarketplaceOrderObjective,
+    deadline: 'flexible' as MarketplaceOrderDeadline,
+    contact: 'Neeft',
+    confirmed: true,
+  })
+
+  createdOrder.value = order
+  await refreshNuxtData(['marketplace-orders-buyer-list', 'marketplace-orders-seller-list'])
+  return order
+}
+
+const preparePayment = async () => {
   if (!validateOrder()) {
     return
   }
 
-  isSubmitting.value = true
+  isPreparingPayment.value = true
 
   try {
-    await $marketplaceAPI.orders.create(props.service.id, {
-      serviceLineId: props.offer.id,
-      brief: form.brief.trim(),
-      objective: form.objective as MarketplaceOrderObjective,
-      deadline: form.deadline as MarketplaceOrderDeadline,
-      assets: form.assets.trim() || undefined,
-      contact: form.contact.trim(),
-      confirmed: form.confirmed,
-    })
-
-    await refreshNuxtData(['marketplace-orders-buyer-list', 'marketplace-orders-seller-list'])
-
-    toast.add({
-      title: 'Commande envoyee',
-      desc: `${props.service.name} - ${props.offer.name} a ete transmis au vendeur.`,
-      icon: 'lucide:shopping-bag',
-      variant: 'success',
-    })
-    emit('update:modelValue', false)
+    const order = await createOrderIfNeeded()
+    paymentIntent.value = await $marketplaceAPI.orders.createPaymentIntent(order.id)
+    currentStep.value = 'payment'
   } catch {
     toast.add({
-      title: 'Commande non envoyee',
-      desc: 'Impossible de creer la commande pour le moment.',
+      title: 'Paiement indisponible',
+      desc: 'Impossible de preparer le paiement Stripe pour le moment.',
       icon: 'lucide:circle-alert',
       variant: 'error',
     })
   } finally {
-    isSubmitting.value = false
+    isPreparingPayment.value = false
   }
+}
+
+const handlePaymentSucceeded = async () => {
+  await refreshNuxtData(['marketplace-orders-buyer-list', 'marketplace-orders-seller-list'])
+
+  toast.add({
+    title: 'Paiement confirme',
+    desc: 'Ta commande est confirmee.',
+    icon: 'lucide:badge-check',
+    variant: 'success',
+  })
+
+  emit('update:modelValue', false)
+
+  if (createdOrder.value) {
+    await navigateTo(`/marketplace/orders/${createdOrder.value.id}?payment=success`)
+  }
+}
+
+const handlePaymentError = (message: string) => {
+  toast.add({
+    title: 'Paiement impossible',
+    desc: message || 'Stripe a refuse le paiement.',
+    icon: 'lucide:circle-alert',
+    variant: 'error',
+  })
 }
 
 watch(
@@ -297,30 +311,75 @@ watch(
 <style scoped>
 .marketplace-order-modal {
   display: grid;
-  gap: 24px;
-  min-width: min(760px, calc(100vw - 48px));
+  gap: 20px;
+  min-width: min(640px, calc(100vw - 48px));
+}
+
+.marketplace-order-modal__steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.marketplace-order-modal__steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid var(--modal-border);
+  border-radius: 8px;
+  color: var(--modal-muted);
+  background: color-mix(in srgb, var(--modal-surface) 84%, transparent);
+}
+
+.marketplace-order-modal__steps li[data-active='true'],
+.marketplace-order-modal__steps li[data-complete='true'] {
+  color: var(--modal-text);
+  border-color: color-mix(in oklch, var(--color-accent) 58%, var(--modal-border));
+  background: color-mix(in oklch, var(--color-accent) 12%, var(--modal-surface));
+}
+
+.marketplace-order-modal__steps span {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--modal-text);
+  background: color-mix(in srgb, var(--modal-border) 64%, var(--modal-surface));
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.marketplace-order-modal__steps li[data-active='true'] span,
+.marketplace-order-modal__steps li[data-complete='true'] span {
+  background: var(--color-accent);
+}
+
+.marketplace-order-modal__steps strong {
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .marketplace-order-modal__summary {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  grid-template-columns: 168px minmax(0, 1fr) minmax(160px, auto);
   gap: 16px;
+  align-items: center;
   padding: 16px;
   border: 1px solid var(--modal-border);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--modal-surface) 92%, transparent);
-}
-
-.marketplace-order-modal__service {
-  display: grid;
-  grid-template-columns: 168px minmax(0, 1fr);
-  gap: 14px;
-  align-items: center;
+  background: color-mix(in srgb, var(--modal-surface) 90%, var(--modal-border));
 }
 
 .marketplace-order-modal__cover {
   width: 100%;
-  aspect-ratio: 7 / 4;
+  aspect-ratio: 21 / 13;
   border-radius: 8px;
   object-fit: cover;
   background: var(--modal-border);
@@ -338,106 +397,140 @@ watch(
   height: 32px;
 }
 
-.marketplace-order-modal__service-copy {
+.marketplace-order-modal__summary-copy {
   display: grid;
   gap: 4px;
 }
 
-.marketplace-order-modal__service-copy p,
-.marketplace-order-modal__service-copy h3,
-.marketplace-order-modal__service-copy span {
+.marketplace-order-modal__summary-copy p,
+.marketplace-order-modal__summary-copy h3,
+.marketplace-order-modal__summary-copy span,
+.marketplace-order-modal__price,
+.marketplace-order-modal__notice p,
+.marketplace-order-modal__payment-head h3,
+.marketplace-order-modal__payment-head p {
   margin: 0;
 }
 
-.marketplace-order-modal__service-copy p,
-.marketplace-order-modal__facts dt,
-.marketplace-order-modal__section-head p {
+.marketplace-order-modal__summary-copy p,
+.marketplace-order-modal__summary-copy span {
   color: var(--modal-muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
 }
 
-.marketplace-order-modal__service-copy p,
-.marketplace-order-modal__facts dt {
-  font-size: 0.78rem;
-  font-weight: 800;
-  line-height: 1.2;
-  text-transform: uppercase;
-}
-
-.marketplace-order-modal__service-copy h3,
-.marketplace-order-modal__section-head h3 {
-  margin: 0;
+.marketplace-order-modal__summary-copy h3 {
   color: var(--modal-text);
-  font-weight: 800;
-  letter-spacing: 0;
-}
-
-.marketplace-order-modal__service-copy h3 {
   font-size: 1rem;
+  font-weight: 800;
   line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
-.marketplace-order-modal__service-copy span {
-  color: var(--modal-muted);
-  font-size: 0.88rem;
-  line-height: 1.4;
-}
-
-.marketplace-order-modal__facts {
+.marketplace-order-modal__price {
   display: grid;
-  gap: 10px;
-  margin: 0;
+  gap: 6px;
 }
 
-.marketplace-order-modal__facts div {
+.marketplace-order-modal__price div {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--modal-border);
+  gap: 14px;
+  color: var(--modal-muted);
+  font-size: 0.84rem;
+  line-height: 1.3;
 }
 
-.marketplace-order-modal__facts div:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
+.marketplace-order-modal__price div:last-child {
+  padding-top: 8px;
+  border-top: 1px solid var(--modal-border);
+  color: var(--modal-text);
+  font-weight: 800;
 }
 
-.marketplace-order-modal__facts dd {
+.marketplace-order-modal__price dd {
   margin: 0;
   color: var(--modal-text);
   font-weight: 800;
-  text-align: right;
+  white-space: nowrap;
 }
 
-.marketplace-order-modal__section {
+.marketplace-order-modal__details,
+.marketplace-order-modal__payment {
   display: grid;
   gap: 16px;
 }
 
-.marketplace-order-modal__section + .marketplace-order-modal__section {
-  padding-top: 24px;
-  border-top: 1px solid var(--modal-border);
-}
-
-.marketplace-order-modal__section-head {
+.marketplace-order-modal__notice {
   display: grid;
   gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in oklch, var(--color-accent) 36%, var(--modal-border));
+  border-radius: 8px;
+  background: color-mix(in oklch, var(--color-accent) 8%, var(--modal-surface));
 }
 
-.marketplace-order-modal__section-head h3 {
-  font-size: 0.98rem;
+.marketplace-order-modal__notice strong {
+  color: var(--modal-text);
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 
-.marketplace-order-modal__section-head p {
-  margin: 0;
+.marketplace-order-modal__notice p {
+  color: var(--modal-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.marketplace-order-modal__payment-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.marketplace-order-modal__payment-head > span {
+  display: inline-grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 1px solid var(--modal-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--modal-surface) 88%, transparent);
+}
+
+.marketplace-order-modal__payment-head svg {
+  width: 28px;
+  height: 28px;
+}
+
+.marketplace-order-modal__payment-head h3 {
+  color: var(--modal-text);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.marketplace-order-modal__payment-head p {
+  color: var(--modal-muted);
   font-size: 0.86rem;
   line-height: 1.45;
 }
 
-.marketplace-order-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+.marketplace-order-modal__loading {
+  padding: 18px;
+  border: 1px solid var(--modal-border);
+  border-radius: 8px;
+  color: var(--modal-muted);
+  background: color-mix(in srgb, var(--modal-surface) 92%, transparent);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.marketplace-order-modal__loading--error {
+  color: color-mix(in oklch, var(--color-danger) 72%, var(--modal-text));
 }
 
 @media (max-width: 760px) {
@@ -445,14 +538,18 @@ watch(
     min-width: 0;
   }
 
-  .marketplace-order-modal__summary,
-  .marketplace-order-modal__service,
-  .marketplace-order-modal__grid {
+  .marketplace-order-modal__summary {
     grid-template-columns: 1fr;
   }
 
-  .marketplace-order-modal__facts dd {
-    text-align: left;
+  .marketplace-order-modal__price {
+    max-width: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .marketplace-order-modal__steps {
+    grid-template-columns: 1fr;
   }
 }
 </style>

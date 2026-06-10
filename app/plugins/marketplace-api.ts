@@ -157,12 +157,29 @@ export type SearchMarketplaceServicesQuery = {
 
 export type CreateMarketplaceOrderInput = {
   serviceLineId: string
-  brief: string
+  brief?: string
   objective: MarketplaceOrderObjective
   deadline: MarketplaceOrderDeadline
   assets?: string
   contact: string
   confirmed?: boolean
+}
+
+export type CreateMarketplaceOrderCheckoutInput = {
+  successUrl?: string
+  cancelUrl?: string
+}
+
+export type MarketplaceOrderCheckoutPresenter = {
+  id: string
+  url: string | null
+}
+
+export type MarketplaceOrderPaymentIntentPresenter = {
+  id: string
+  intentType: 'payment'
+  clientSecret: string | null
+  orderId: string
 }
 
 export type UpdateMarketplaceOrderInput = Partial<Omit<CreateMarketplaceOrderInput, 'serviceLineId' | 'confirmed'>>
@@ -189,6 +206,8 @@ export type MarketplaceApi = {
   }
   orders: {
     create: (serviceId: string, input: CreateMarketplaceOrderInput) => Promise<MarketplaceOrderPresenter>
+    checkout: (orderId: string, input?: CreateMarketplaceOrderCheckoutInput) => Promise<MarketplaceOrderCheckoutPresenter>
+    createPaymentIntent: (orderId: string) => Promise<MarketplaceOrderPaymentIntentPresenter>
     listBuyer: (query?: MarketplaceOrdersQuery) => Promise<MarketplaceEnvelope<MarketplaceOrderPresenter[], MarketplaceListMeta>>
     listSeller: (query?: MarketplaceOrdersQuery) => Promise<MarketplaceEnvelope<MarketplaceOrderPresenter[], MarketplaceListMeta>>
     getBuyer: (orderId: string) => Promise<MarketplaceOrderPresenter>
@@ -238,6 +257,12 @@ export default defineNuxtPlugin(() => {
     orders: {
       create: async (serviceId: string, input: CreateMarketplaceOrderInput) => {
         return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPresenter>>(`/marketplace/services/${encodeURIComponent(serviceId)}/orders`, { method: 'POST', body: input, cache: 'no-store' }))
+      },
+      checkout: async (orderId: string, input: CreateMarketplaceOrderCheckoutInput = {}) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderCheckoutPresenter>>(`/marketplace/orders/${encodeURIComponent(orderId)}/checkout`, { method: 'POST', body: input, cache: 'no-store' }))
+      },
+      createPaymentIntent: async (orderId: string) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPaymentIntentPresenter>>(`/marketplace/orders/${encodeURIComponent(orderId)}/payment-intent`, { method: 'POST', cache: 'no-store' }))
       },
       listBuyer: async (query = {}) => {
         return await api<MarketplaceEnvelope<MarketplaceOrderPresenter[], MarketplaceListMeta>>('/marketplace/orders', { method: 'GET', query: getQuery(query), cache: 'no-store' })

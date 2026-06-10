@@ -3,21 +3,16 @@
     <section class="marketplace-service-profile-hero">
       <div class="marketplace-service-profile-shell">
         <div class="marketplace-service-profile-hero__banner">
-          <NuxtImg
-            v-if="service.bannerUrl"
+          <MarketplaceSafeImage
             class="marketplace-service-profile-hero__image"
+            empty-class="marketplace-service-profile-hero__image--empty"
             :src="service.bannerUrl"
             :alt="`Banniere du service ${service.name}`"
             width="1440"
             height="360"
-            format="webp"
             loading="eager"
             decoding="async"
-            preload
           />
-          <div v-else class="marketplace-service-profile-hero__image marketplace-service-profile-hero__image--empty" aria-hidden="true">
-            <Icon name="lucide:image" />
-          </div>
 
           <div class="marketplace-service-profile-hero__back">
             <CustomLink
@@ -89,6 +84,30 @@
                 aria-label="Partager le service"
                 @click="shareService"
               />
+              <CustomButton
+                v-if="isServiceOwner"
+                label=""
+                left-icon="lucide:pencil"
+                theme="app"
+                variant="outlined"
+                color="secondary"
+                size="sm"
+                shape="circle"
+                aria-label="Modifier le service"
+                @click="isServiceEditOpen = true"
+              />
+              <CustomButton
+                v-if="isServiceOwner"
+                label=""
+                left-icon="lucide:trash-2"
+                theme="app"
+                variant="outlined"
+                color="secondary"
+                size="sm"
+                shape="circle"
+                aria-label="Supprimer le service"
+                @click="isDeleteServiceOpen = true"
+              />
             </div>
           </div>
         </div>
@@ -111,20 +130,19 @@
         </BaseProfileSection>
 
         <BaseProfileSection
-          v-if="service.images.length"
+          v-if="serviceGalleryImages.length"
           title="Images"
           eyebrow="Portfolio"
           surface="plain"
           id="marketplace-service-gallery"
         >
           <ul class="marketplace-service-profile-gallery" aria-label="Images du service">
-            <li v-for="image in service.images" :key="image">
-              <NuxtImg
+            <li v-for="image in serviceGalleryImages" :key="image">
+              <MarketplaceSafeImage
                 :src="image"
                 :alt="`Image du service ${service.name}`"
                 width="520"
                 height="320"
-                format="webp"
                 loading="lazy"
                 decoding="async"
               />
@@ -146,19 +164,15 @@
                 :to="`/marketplace/${relatedService.slug}`"
                 :aria-label="`Voir le service ${relatedService.title}`"
               >
-                <NuxtImg
-                  v-if="relatedService.coverImageUrl"
+                <MarketplaceSafeImage
                   :src="relatedService.coverImageUrl"
                   :alt="`Banniere du service ${relatedService.title}`"
+                  empty-class="marketplace-service-profile-related__empty"
                   width="320"
                   height="160"
-                  format="webp"
                   loading="lazy"
                   decoding="async"
                 />
-                <div v-else class="marketplace-service-profile-related__empty" aria-hidden="true">
-                  <Icon name="lucide:image" />
-                </div>
                 <span>
                   <small v-if="getRelatedServiceCategoryLabel(relatedService)">{{ getRelatedServiceCategoryLabel(relatedService) }}</small>
                   <strong>{{ relatedService.title }}</strong>
@@ -269,11 +283,23 @@
       :service="service"
       :offer="selectedOffer"
     />
+    <HeaderServiceProposalModal
+      v-model="isServiceEditOpen"
+      :service="service"
+      @saved="handleServiceSaved"
+    />
+    <MarketplaceServiceDeleteModal
+      v-model="isDeleteServiceOpen"
+      :service="service"
+      :deleting="isDeletingService"
+      @confirm="deleteService"
+    />
   </main>
 </template>
 
 <script setup lang="ts">
 import type { MarketplaceServiceLinePresenter, MarketplaceServiceListItemPresenter, MarketplaceServicePresenter, MarketplaceServiceStatus } from '~/plugins/marketplace-api'
+import { getSafeMarketplaceImageSrc, isSafeMarketplaceImageSrc } from '~/utils/marketplaceImages'
 
 definePageMeta({
   layout: 'app'
@@ -281,6 +307,7 @@ definePageMeta({
 
 const route = useRoute()
 const toast = useToast()
+const sessionStore = useSessionStore()
 const { $marketplaceAPI } = useNuxtApp()
 const routeSlug = String(Array.isArray(route.params.slug) ? route.params.slug[0] || '' : route.params.slug || '')
 
@@ -314,7 +341,7 @@ if (!routeSlug) {
   throw createError({ statusCode: 404, statusMessage: 'Service marketplace introuvable' })
 }
 
-const { data: apiService, error: serviceError } = await useAsyncData(`marketplace-service-${routeSlug}`, () => $marketplaceAPI.services.get(routeSlug))
+const { data: apiService, error: serviceError, refresh: refreshService } = await useAsyncData(`marketplace-service-${routeSlug}`, () => $marketplaceAPI.services.get(routeSlug))
 
 if (serviceError.value || !apiService.value) {
   const statusCode = Number((serviceError.value as { statusCode?: unknown } | null)?.statusCode || 404)
@@ -329,6 +356,9 @@ const { data: relatedServiceData } = await useAsyncData(`marketplace-service-rel
 const service = computed(() => apiService.value as MarketplaceServicePresenter)
 const selectedOfferId = ref('')
 const isOrderModalOpen = ref(false)
+const isServiceEditOpen = ref(false)
+const isDeleteServiceOpen = ref(false)
+const isDeletingService = ref(false)
 
 const serviceOffers = computed(() => service.value.services || [])
 
@@ -348,7 +378,12 @@ const priceLabel = computed(() => selectedOffer.value ? formatMarketplacePrice(N
 const descriptionParagraphs = computed(() => getDescriptionParagraphs(service.value.description))
 const serviceShortDescription = computed(() => getShortDescription(service.value.description))
 const sellerName = computed(() => service.value.seller?.username || 'Vendeur marketplace')
+const isServiceOwner = computed(() => {
+  const sellerSlug = service.value.seller?.slug
+  return Boolean(sessionStore.isLoggedIn && sellerSlug && sessionStore.mySlug && sellerSlug === sessionStore.mySlug)
+})
 const serviceGames = computed(() => service.value.rscGames || [])
+const serviceGalleryImages = computed(() => (service.value.images || []).filter(isSafeMarketplaceImageSrc))
 const serviceOfferCountLabel = computed(() => {
   const count = serviceOffers.value.length
   return `${count} prestation${count > 1 ? 's' : ''}`
@@ -428,14 +463,71 @@ const shareService = async () => {
   }
 }
 
+const refreshMarketplaceServiceViews = async (savedService?: MarketplaceServicePresenter) => {
+  const refreshKeys = ['marketplace-services', 'marketplace-services-mine', `marketplace-service-${routeSlug}`]
+
+  if (savedService) {
+    apiService.value = savedService
+
+    if (savedService.slug && savedService.slug !== routeSlug) {
+      refreshKeys.push(`marketplace-service-${savedService.slug}`)
+    }
+  }
+
+  await refreshNuxtData(refreshKeys)
+
+  if (savedService?.slug && savedService.slug !== routeSlug) {
+    await navigateTo(`/marketplace/${savedService.slug}`)
+    return
+  }
+
+  await refreshService()
+}
+
+const handleServiceSaved = async (savedService: MarketplaceServicePresenter) => {
+  await refreshMarketplaceServiceViews(savedService)
+}
+
+const deleteService = async (targetService: MarketplaceServicePresenter) => {
+  if (!isServiceOwner.value) return
+
+  isDeletingService.value = true
+
+  try {
+    await $marketplaceAPI.services.delete(targetService.id)
+    await refreshNuxtData(['marketplace-services', 'marketplace-services-mine', `marketplace-service-${routeSlug}`])
+    toast.add({
+      title: 'Service supprime',
+      desc: `${targetService.name} a ete retire de la marketplace.`,
+      icon: 'lucide:trash-2',
+      variant: 'success'
+    })
+    isDeleteServiceOpen.value = false
+    await navigateTo('/marketplace/services')
+  } catch {
+    toast.add({
+      title: 'Suppression impossible',
+      desc: 'Le service n a pas pu etre supprime.',
+      icon: 'lucide:circle-alert',
+      variant: 'error'
+    })
+  } finally {
+    isDeletingService.value = false
+  }
+}
+
+onMounted(() => {
+  void sessionStore.bootstrap()
+})
+
 useSeoMeta({
   title: () => service.value.name,
   description: () => serviceShortDescription.value,
   ogTitle: () => service.value.name,
   ogDescription: () => serviceShortDescription.value,
-  ogImage: () => service.value.bannerUrl || undefined,
+  ogImage: () => getSafeMarketplaceImageSrc(service.value.bannerUrl) || undefined,
   twitterCard: 'summary_large_image',
-  twitterImage: () => service.value.bannerUrl || undefined
+  twitterImage: () => getSafeMarketplaceImageSrc(service.value.bannerUrl) || undefined
 })
 </script>
 

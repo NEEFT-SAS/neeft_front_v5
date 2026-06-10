@@ -12,20 +12,7 @@
           <p>Gere tes fiches, leur visibilite et les prestations que les clients peuvent commander.</p>
         </div>
 
-        <nav class="marketplace-services__tabs" aria-label="Vues du suivi marketplace">
-          <NuxtLink class="marketplace-services__tab" to="/marketplace/orders">
-            <Icon name="lucide:shopping-bag" aria-hidden="true" />
-            <span>Achats</span>
-          </NuxtLink>
-          <NuxtLink class="marketplace-services__tab" to="/marketplace/sales">
-            <Icon name="lucide:inbox" aria-hidden="true" />
-            <span>Ventes</span>
-          </NuxtLink>
-          <NuxtLink class="marketplace-services__tab marketplace-services__tab--active" to="/marketplace/services" aria-current="page">
-            <Icon name="lucide:store" aria-hidden="true" />
-            <span>Services</span>
-          </NuxtLink>
-        </nav>
+        <MarketplaceTrackingTabs active="services" />
       </div>
     </section>
 
@@ -78,56 +65,14 @@
 
         <ul v-else-if="visibleServices.length" class="marketplace-services__list" aria-live="polite">
           <li v-for="service in visibleServices" :key="service.id">
-            <article class="marketplace-services__card">
-              <NuxtLink class="marketplace-services__cover" :to="getServicePath(service)" :aria-label="`Voir le service ${service.name}`">
-                <NuxtImg v-if="service.bannerUrl" :src="service.bannerUrl" :alt="`Banniere du service ${service.name}`" width="360" height="220" format="webp" loading="lazy" decoding="async" />
-                <div v-else class="marketplace-services__cover-empty" aria-hidden="true">
-                  <Icon name="lucide:image" />
-                </div>
-                <span :data-status="service.status">{{ getStatusLabel(service.status) }}</span>
-              </NuxtLink>
-
-              <div class="marketplace-services__card-content">
-                <div class="marketplace-services__card-heading">
-                  <div>
-                    <p class="marketplace-services__eyebrow">
-                      Marketplace
-                    </p>
-                    <h3>{{ service.name }}</h3>
-                  </div>
-                  <strong v-if="getServicePriceLabel(service)">{{ getServicePriceLabel(service) }}</strong>
-                </div>
-
-                <p class="marketplace-services__description">
-                  {{ getShortDescription(service.description) }}
-                </p>
-
-                <dl class="marketplace-services__facts">
-                  <div>
-                    <dt>Commandes</dt>
-                    <dd>{{ service.ordersCount }}</dd>
-                  </div>
-                  <div>
-                    <dt>Note</dt>
-                    <dd>{{ getRatingLabel(service.ratingAvg, service.ratingCount) }}</dd>
-                  </div>
-                  <div>
-                    <dt>Prestations</dt>
-                    <dd>{{ getOfferCountLabel(service) }}</dd>
-                  </div>
-                  <div>
-                    <dt>Mise a jour</dt>
-                    <dd>{{ getDateLabel(service.updatedAt) }}</dd>
-                  </div>
-                </dl>
-
-                <div class="marketplace-services__actions">
-                  <CustomLink label="Voir" :to="getServicePath(service)" left-icon="lucide:eye" theme="app" variant="outlined" color="secondary" size="sm" />
-                  <CustomButton :label="getStatusActionLabel(service.status)" :left-icon="getStatusActionIcon(service.status)" theme="app" variant="outlined" color="secondary" size="sm" :disabled="updatingServiceId === service.id || deletingServiceId === service.id" @click="toggleServiceStatus(service)" />
-                  <CustomButton label="Supprimer" left-icon="lucide:trash-2" theme="app" variant="ghost" color="secondary" size="sm" :disabled="updatingServiceId === service.id || deletingServiceId === service.id" @click="deleteService(service)" />
-                </div>
-              </div>
-            </article>
+            <MarketplaceManagedServiceCard
+              :service="service"
+              :updating="updatingServiceId === service.id"
+              :deleting="deletingServiceId === service.id"
+              @edit="openEditServiceModal"
+              @toggle-status="toggleServiceStatus"
+              @delete="openDeleteServiceModal"
+            />
           </li>
         </ul>
 
@@ -141,6 +86,8 @@
     </div>
 
     <HeaderServiceProposalModal v-model="isServiceProposalOpen" />
+    <HeaderServiceProposalModal v-model="isServiceEditOpen" :service="serviceBeingEdited" @saved="handleServiceSaved" />
+    <MarketplaceServiceDeleteModal v-model="isDeleteServiceOpen" :service="serviceBeingDeleted" :deleting="Boolean(deletingServiceId)" @confirm="deleteService" />
   </main>
 </template>
 
@@ -171,12 +118,6 @@ const statusFilters = [
   { value: 'ARCHIVED', label: 'Archives', icon: 'lucide:archive' }
 ] as const satisfies readonly { value: ServiceStatusFilter, label: string, icon: string }[]
 
-const statusLabels: Record<MarketplaceServiceStatus, string> = {
-  DRAFT: 'Brouillon',
-  PUBLISHED: 'Publie',
-  ARCHIVED: 'Archive'
-}
-
 const { data: marketplaceServicesData, pending: isServicesPending, error: servicesError, refresh } = await useAsyncData('marketplace-services-mine', async () => {
   const response = await $marketplaceAPI.services.mine({ limit: 100 })
   return response.data
@@ -185,9 +126,12 @@ const { data: marketplaceServicesData, pending: isServicesPending, error: servic
 const searchQuery = ref('')
 const activeStatus = ref<ServiceStatusFilter>('all')
 const isServiceProposalOpen = ref(false)
+const isServiceEditOpen = ref(false)
+const isDeleteServiceOpen = ref(false)
+const serviceBeingEdited = ref<MarketplaceServicePresenter | null>(null)
+const serviceBeingDeleted = ref<MarketplaceServicePresenter | null>(null)
 const updatingServiceId = ref('')
 const deletingServiceId = ref('')
-const dateFormatter = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 
 const apiServices = computed(() => marketplaceServicesData.value || [])
 const services = computed(() => apiServices.value)
@@ -208,62 +152,23 @@ const refreshMarketplaceServices = () => refresh()
 
 const normalizeText = (value: string) => value.toLocaleLowerCase('fr-FR').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
-const formatMarketplacePrice = (price: number) => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0
-  }).format(price)
-}
-
-const getShortDescription = (description: string) => {
-  const normalized = description.replace(/\s+/g, ' ').trim()
-  if (normalized.length <= 180) return normalized
-  return `${normalized.slice(0, 177).trim()}...`
-}
-
 const getStatusCount = (status: ServiceStatusFilter) => {
   if (status === 'all') return services.value.length
   return services.value.filter(service => service.status === status).length
 }
 
-const getStatusLabel = (status: MarketplaceServiceStatus) => statusLabels[status]
-
-const getServicePath = (service: MarketplaceServicePresenter) => `/marketplace/${service.slug}`
-
-const getOfferCountLabel = (service: MarketplaceServicePresenter) => {
-  const count = service.services.length
-  return `${count} prestation${count > 1 ? 's' : ''}`
+const openEditServiceModal = (service: MarketplaceServicePresenter) => {
+  serviceBeingEdited.value = service
+  isServiceEditOpen.value = true
 }
 
-const getServicePriceLabel = (service: MarketplaceServicePresenter) => {
-  const prices = service.services
-    .map(line => Number(line.price))
-    .filter(price => Number.isFinite(price))
-
-  return prices.length ? formatMarketplacePrice(Math.min(...prices)) : ''
+const openDeleteServiceModal = (service: MarketplaceServicePresenter) => {
+  serviceBeingDeleted.value = service
+  isDeleteServiceOpen.value = true
 }
 
-const getRatingLabel = (rating: number, ratingCount: number) => {
-  if (!ratingCount) return 'Aucune note'
-  return `${Number(rating).toFixed(1).replace('.', ',')} (${ratingCount})`
-}
-
-const getDateLabel = (value: string) => {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Date inconnue'
-  return dateFormatter.format(date)
-}
-
-const getStatusActionLabel = (status: MarketplaceServiceStatus) => {
-  if (status === 'PUBLISHED') return 'Desactiver'
-  if (status === 'ARCHIVED') return 'Republier'
-  return 'Publier'
-}
-
-const getStatusActionIcon = (status: MarketplaceServiceStatus) => {
-  if (status === 'PUBLISHED') return 'lucide:archive'
-  return 'lucide:badge-check'
+const handleServiceSaved = async () => {
+  await refreshMarketplaceServices()
 }
 
 const toggleServiceStatus = async (service: MarketplaceServicePresenter) => {
@@ -291,15 +196,14 @@ const toggleServiceStatus = async (service: MarketplaceServicePresenter) => {
 }
 
 const deleteService = async (service: MarketplaceServicePresenter) => {
-  const confirmed = window.confirm(`Supprimer le service "${service.name}" ?`)
-  if (!confirmed) return
-
   deletingServiceId.value = service.id
 
   try {
     await $marketplaceAPI.services.delete(service.id)
     await refreshNuxtData(['marketplace-services', 'marketplace-services-mine'])
     await refreshMarketplaceServices()
+    isDeleteServiceOpen.value = false
+    serviceBeingDeleted.value = null
     toast.add({
       variant: 'success',
       title: 'Service supprime',
@@ -315,6 +219,14 @@ const deleteService = async (service: MarketplaceServicePresenter) => {
     deletingServiceId.value = ''
   }
 }
+
+watch(isServiceEditOpen, (isOpen) => {
+  if (!isOpen) serviceBeingEdited.value = null
+})
+
+watch(isDeleteServiceOpen, (isOpen) => {
+  if (!isOpen && !deletingServiceId.value) serviceBeingDeleted.value = null
+})
 </script>
 
 <style scoped>
@@ -438,54 +350,11 @@ const deleteService = async (service: MarketplaceServicePresenter) => {
 }
 
 .marketplace-services__hero-copy > p,
-.marketplace-services__description,
 .marketplace-services__empty p {
   color: var(--services-color-muted);
   font-size: var(--services-font-body);
   line-height: var(--services-line-body);
   text-wrap: pretty;
-}
-
-.marketplace-services__tabs {
-  display: inline-grid;
-  grid-template-columns: repeat(3, minmax(calc(var(--services-unit) * 13), 1fr));
-  gap: var(--services-space-1);
-  padding: var(--services-space-1);
-  border: var(--services-border) solid var(--services-color-line);
-  border-radius: var(--services-radius-round);
-  background-color: var(--services-color-bg);
-}
-
-.marketplace-services__tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--services-hit-size);
-  gap: var(--services-space-1);
-  padding: 0 var(--services-space-2);
-  border-radius: var(--services-radius-round);
-  color: var(--services-color-muted);
-  font-size: var(--services-font-small);
-  font-weight: 600;
-  line-height: var(--services-line-tight);
-  text-decoration: none;
-}
-
-.marketplace-services__tab:hover,
-.marketplace-services__tab--active {
-  background-color: color-mix(in oklch, var(--services-color-accent) 14%, var(--services-color-bg));
-  color: var(--services-color-text);
-}
-
-.marketplace-services__tab:focus-visible,
-.marketplace-services__cover:focus-visible {
-  outline: calc(var(--services-border) * 3) solid var(--services-color-accent);
-  outline-offset: calc(var(--services-border) * 3);
-}
-
-.marketplace-services__tab svg {
-  width: var(--services-icon-size);
-  height: var(--services-icon-size);
 }
 
 .marketplace-services__body {
@@ -527,141 +396,6 @@ const deleteService = async (service: MarketplaceServicePresenter) => {
   list-style: none;
 }
 
-.marketplace-services__card {
-  display: grid;
-  grid-template-columns: minmax(calc(var(--services-unit) * 28), 0.34fr) minmax(0, 1fr);
-  overflow: hidden;
-  border: var(--services-border) solid var(--services-color-line);
-  border-radius: var(--services-radius);
-  background-color: var(--services-color-panel);
-  box-shadow: 0 var(--services-space-3) var(--services-space-8) color-mix(in oklch, var(--services-color-shadow) 54%, var(--services-color-transparent));
-}
-
-.marketplace-services__cover {
-  position: relative;
-  display: block;
-  min-height: calc(var(--services-unit) * 24);
-  background-color: var(--services-color-panel-strong);
-  color: inherit;
-  text-decoration: none;
-}
-
-.marketplace-services__cover img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.marketplace-services__cover-empty {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  min-height: inherit;
-  align-items: center;
-  justify-content: center;
-  color: var(--services-color-subtle);
-  background-color: var(--services-color-panel-strong);
-}
-
-.marketplace-services__cover-empty svg {
-  width: calc(var(--services-unit) * 5);
-  height: calc(var(--services-unit) * 5);
-}
-
-.marketplace-services__cover span {
-  position: absolute;
-  top: var(--services-space-2);
-  left: var(--services-space-2);
-  display: inline-flex;
-  min-height: calc(var(--services-unit) * 3.5);
-  align-items: center;
-  padding: 0 var(--services-space-2);
-  border: var(--services-border) solid color-mix(in oklch, var(--services-color-text) 18%, var(--services-color-transparent));
-  border-radius: var(--services-radius-round);
-  background-color: color-mix(in oklch, var(--services-color-bg) 88%, var(--services-color-transparent));
-  color: var(--services-color-text);
-  font-size: var(--services-font-label);
-  font-weight: 700;
-  line-height: var(--services-line-tight);
-}
-
-.marketplace-services__cover span[data-status='PUBLISHED'] {
-  color: var(--services-color-success);
-}
-
-.marketplace-services__cover span[data-status='DRAFT'] {
-  color: var(--services-color-warning);
-}
-
-.marketplace-services__cover span[data-status='ARCHIVED'] {
-  color: var(--services-color-subtle);
-}
-
-.marketplace-services__card-content {
-  display: grid;
-  gap: var(--services-space-3);
-  padding: var(--services-space-3);
-}
-
-.marketplace-services__card-heading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--services-space-3);
-  align-items: start;
-}
-
-.marketplace-services__card-heading > div {
-  display: grid;
-  gap: calc(var(--services-unit) * 0.5);
-}
-
-.marketplace-services__card-heading > strong {
-  color: var(--services-color-text);
-  font-size: calc(var(--services-unit) * 2.25);
-  font-weight: 700;
-  line-height: var(--services-line-tight);
-  white-space: nowrap;
-}
-
-.marketplace-services__description {
-  max-width: calc(var(--services-unit) * 88);
-  font-size: var(--services-font-small);
-}
-
-.marketplace-services__facts {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--services-space-2);
-}
-
-.marketplace-services__facts div {
-  display: grid;
-  gap: calc(var(--services-unit) * 0.5);
-  padding-top: var(--services-space-2);
-  border-top: var(--services-border) solid var(--services-color-line);
-}
-
-.marketplace-services__facts dt {
-  color: var(--services-color-muted);
-  font-size: var(--services-font-label);
-  font-weight: 600;
-  line-height: var(--services-line-body);
-}
-
-.marketplace-services__facts dd {
-  color: var(--services-color-text);
-  font-size: var(--services-font-small);
-  font-weight: 700;
-  line-height: var(--services-line-tight);
-}
-
-.marketplace-services__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--services-space-2);
-}
-
 .marketplace-services__empty {
   display: grid;
   justify-items: center;
@@ -685,17 +419,12 @@ const deleteService = async (service: MarketplaceServicePresenter) => {
 
 @media (max-width: 72rem) {
   .marketplace-services__hero-inner,
-  .marketplace-services__toolbar,
-  .marketplace-services__card {
+  .marketplace-services__toolbar {
     grid-template-columns: 1fr;
   }
 
   .marketplace-services__toolbar-actions {
     justify-content: flex-start;
-  }
-
-  .marketplace-services__facts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -704,17 +433,5 @@ const deleteService = async (service: MarketplaceServicePresenter) => {
     width: min(calc(100% - (var(--services-space-3) * 2)), var(--services-content-max));
   }
 
-  .marketplace-services__tabs {
-    width: 100%;
-  }
-
-  .marketplace-services__facts,
-  .marketplace-services__card-heading {
-    grid-template-columns: 1fr;
-  }
-
-  .marketplace-services__card-heading > strong {
-    white-space: normal;
-  }
 }
 </style>

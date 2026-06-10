@@ -1,9 +1,9 @@
 <template>
   <CustomModal
     :model-value="modelValue"
-    title="Proposer un service"
-    desc="Compose ta fiche avec une presentation claire, des jeux optionnels et des prestations tarifees."
-    icon="lucide:store"
+    :title="modalTitle"
+    :desc="modalDescription"
+    :icon="modalIcon"
     theme="app"
     size="xl"
     @update:model-value="emit('update:modelValue', $event)"
@@ -149,27 +149,48 @@
           :crop-output-width="1600"
           :crop-output-height="700"
           :max-size-mb="8"
+          :error-message="bannerErrorMessage"
+          @change="onBannerImageChange"
         />
+        <p
+          v-if="getUploadStatusText(bannerUpload)"
+          class="header-action-form__upload-state"
+          :data-status="bannerUpload.status"
+        >
+          {{ getUploadStatusText(bannerUpload) }}
+        </p>
 
         <div class="header-action-form__media-grid">
-          <CustomInputUpload
+          <div
             v-for="(_, index) in galleryImages"
             :key="`gallery-${index}`"
-            v-model="galleryImages[index]"
-            :label="`Image ${index + 1}`"
-            description="Image optionnelle."
-            placeholder="Importer"
-            drop-label="Depose une image"
-            change-label="Changer"
-            shape="square"
-            :aspect-ratio="4 / 3"
-            :crop="true"
-            :crop-on-select="true"
-            :crop-output-width="960"
-            :crop-output-height="720"
-            :max-size-mb="6"
-            :error-message="galleryErrors[index]"
-          />
+            class="header-action-form__media-item"
+          >
+            <CustomInputUpload
+              v-model="galleryImages[index]"
+              :label="`Image ${index + 1}`"
+              description="Image optionnelle."
+              placeholder="Importer"
+              drop-label="Depose une image"
+              change-label="Changer"
+              shape="square"
+              :aspect-ratio="4 / 3"
+              :crop="true"
+              :crop-on-select="true"
+              :crop-output-width="960"
+              :crop-output-height="720"
+              :max-size-mb="6"
+              :error-message="getGalleryErrorMessage(index)"
+              @change="onGalleryImageChange($event, index)"
+            />
+            <p
+              v-if="getUploadStatusText(galleryUploads[index])"
+              class="header-action-form__upload-state"
+              :data-status="galleryUploads[index]?.status"
+            >
+              {{ getUploadStatusText(galleryUploads[index]) }}
+            </p>
+          </div>
         </div>
       </section>
     </form>
@@ -191,14 +212,14 @@
         theme="app"
         variant="filled"
         color="primary"
-        :disabled="isSubmitting"
+        :disabled="isSubmitting || hasMediaUploading"
       />
     </template>
   </CustomModal>
 </template>
 
 <script setup lang="ts">
-import type { CreateMarketplaceServiceInput } from '~/plugins/marketplace-api'
+import type { CreateMarketplaceServiceInput, MarketplaceServicePresenter } from '~/plugins/marketplace-api'
 
 type UploadValue = {
   file: File | null
@@ -213,6 +234,17 @@ type UploadValue = {
   } | null
 }
 
+type MediaUploadStatus = 'idle' | 'uploading' | 'success' | 'error'
+
+type MediaUploadState = {
+  remoteUrl: string
+  status: MediaUploadStatus
+  error: string
+  signature: string
+  promise: Promise<string> | null
+  runId: number
+}
+
 type ServiceItem = {
   id: string
   name: string
@@ -223,26 +255,29 @@ type ServiceItem = {
 type FormErrors = {
   name: string
   description: string
+  banner: string
 }
 
 type ServiceItemErrors = Omit<ServiceItem, 'id'>
 
 const props = defineProps<{
   modelValue: boolean
+  service?: MarketplaceServicePresenter | null
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
+  saved: [service: MarketplaceServicePresenter]
 }>()
 
 const toast = useToast()
 const { $marketplaceAPI } = useNuxtApp()
+const { uploadMarketplaceServiceImage, isConfigured } = useFirebaseUpload()
 const resourcesStore = useResourcesStore()
 const generatedId = useId()
 const isSubmitting = ref(false)
 
 const formId = computed(() => `header-service-proposal-form-${generatedId}`)
-const submitLabel = computed(() => isSubmitting.value ? 'Envoi...' : 'Envoyer')
 
 let serviceIdSeed = 0
 
@@ -262,6 +297,16 @@ const createServiceErrors = (): ServiceItemErrors => ({
 const createFormErrors = (): FormErrors => ({
   name: '',
   description: '',
+  banner: '',
+})
+
+const createMediaUploadState = (): MediaUploadState => ({
+  remoteUrl: '',
+  status: 'idle',
+  error: '',
+  signature: '',
+  promise: null,
+  runId: 0,
 })
 
 const initialForm = () => ({
@@ -274,9 +319,35 @@ const errors = reactive(createFormErrors())
 const bannerImage = ref<UploadValue | null>(null)
 const galleryImages = ref<Array<UploadValue | null>>([null, null, null])
 const galleryErrors = ref(['', '', ''])
+const bannerUpload = reactive(createMediaUploadState())
+const galleryUploads = ref<MediaUploadState[]>([
+  createMediaUploadState(),
+  createMediaUploadState(),
+  createMediaUploadState(),
+])
 const selectedGameIds = ref<Array<string | number>>([])
 const services = ref<ServiceItem[]>([createServiceItem()])
 const serviceErrors = ref<ServiceItemErrors[]>([createServiceErrors()])
+
+const isEditMode = computed(() => Boolean(props.service?.id))
+
+const modalTitle = computed(() => isEditMode.value ? 'Modifier le service' : 'Proposer un service')
+const modalDescription = computed(() => isEditMode.value
+  ? 'Ajuste la fiche, les offres, les jeux et les visuels publies.'
+  : 'Compose ta fiche avec une presentation claire, des jeux optionnels et des prestations tarifees.'
+)
+const modalIcon = computed(() => isEditMode.value ? 'lucide:pencil' : 'lucide:store')
+
+const hasMediaUploading = computed(() => {
+  return bannerUpload.status === 'uploading'
+    || galleryUploads.value.some(upload => upload.status === 'uploading')
+})
+const submitLabel = computed(() => {
+  if (isSubmitting.value) return isEditMode.value ? 'Mise a jour...' : 'Publication...'
+  if (hasMediaUploading.value) return 'Upload en cours...'
+  return isEditMode.value ? 'Enregistrer' : 'Envoyer'
+})
+const bannerErrorMessage = computed(() => errors.banner || bannerUpload.error)
 
 const gameOptions = computed(() => {
   return [...(resourcesStore.rscGames || [])]
@@ -288,15 +359,98 @@ const gameOptions = computed(() => {
     }))
 })
 
-const resetForm = () => {
+const resetMediaUploadState = (state: MediaUploadState) => {
+  state.runId += 1
+  state.remoteUrl = ''
+  state.status = 'idle'
+  state.error = ''
+  state.signature = ''
+  state.promise = null
+}
+
+const createGalleryUploadStates = (count = 3) => Array.from({ length: count }, () => createMediaUploadState())
+
+const isPersistedMediaUrl = (url?: string) => {
+  return Boolean(url && !/^(blob:|data:|file:|javascript:)/i.test(url))
+}
+
+const createExistingUploadValue = (url?: string | null): UploadValue | null => {
+  const previewUrl = typeof url === 'string' ? url.trim() : ''
+
+  if (!isPersistedMediaUrl(previewUrl)) {
+    return null
+  }
+
+  return {
+    file: null,
+    croppedFile: null,
+    previewUrl,
+    croppedPreviewUrl: '',
+    crop: null,
+  }
+}
+
+const getExistingUploadUrl = (value: UploadValue | null) => {
+  const previewUrl = value?.croppedPreviewUrl || value?.previewUrl || ''
+  return isPersistedMediaUrl(previewUrl) ? previewUrl : ''
+}
+
+const resetCreateForm = () => {
   Object.assign(form, initialForm())
   Object.assign(errors, createFormErrors())
   bannerImage.value = null
   galleryImages.value = [null, null, null]
   galleryErrors.value = ['', '', '']
+  resetMediaUploadState(bannerUpload)
+  galleryUploads.value = createGalleryUploadStates()
   selectedGameIds.value = []
   services.value = [createServiceItem()]
   serviceErrors.value = [createServiceErrors()]
+}
+
+const hydrateEditForm = (service: MarketplaceServicePresenter) => {
+  Object.assign(form, {
+    name: service.name || '',
+    description: service.description || '',
+  })
+  Object.assign(errors, createFormErrors())
+
+  bannerImage.value = createExistingUploadValue(service.bannerUrl)
+  resetMediaUploadState(bannerUpload)
+  bannerUpload.remoteUrl = getExistingUploadUrl(bannerImage.value)
+
+  const imageUrls = Array.isArray(service.images) ? service.images : []
+  const gallerySlotCount = Math.max(3, Math.min(8, imageUrls.length || 3))
+  galleryImages.value = Array.from({ length: gallerySlotCount }, (_, index) => createExistingUploadValue(imageUrls[index]))
+  galleryErrors.value = Array.from({ length: gallerySlotCount }, () => '')
+  galleryUploads.value = createGalleryUploadStates(gallerySlotCount)
+  galleryImages.value.forEach((image, index) => {
+    const state = galleryUploads.value[index]
+    if (state) state.remoteUrl = getExistingUploadUrl(image)
+  })
+
+  selectedGameIds.value = (service.rscGames || []).map(game => game.id)
+  services.value = (service.services || []).map((serviceLine) => ({
+    id: `service-${serviceIdSeed++}`,
+    name: serviceLine.name || '',
+    description: serviceLine.description || '',
+    price: String(serviceLine.price ?? ''),
+  }))
+
+  if (!services.value.length) {
+    services.value = [createServiceItem()]
+  }
+
+  serviceErrors.value = services.value.map(() => createServiceErrors())
+}
+
+const resetForm = () => {
+  if (props.service) {
+    hydrateEditForm(props.service)
+    return
+  }
+
+  resetCreateForm()
 }
 
 const addService = () => {
@@ -322,6 +476,7 @@ const removeService = (serviceId: string) => {
 const validateForm = () => {
   errors.name = form.name.trim().length >= 3 ? '' : 'Nom requis, 3 caracteres minimum.'
   errors.description = form.description.trim().length >= 20 ? '' : 'Description requise, 20 caracteres minimum.'
+  errors.banner = ''
   galleryErrors.value = ['', '', '']
 
   serviceErrors.value = services.value.map((service) => ({
@@ -339,8 +494,112 @@ const validateForm = () => {
   return !hasFormErrors && !hasGalleryErrors && !hasServiceErrors
 }
 
-const getUploadUrl = (value: UploadValue | null) => {
-  return value?.croppedPreviewUrl || value?.previewUrl || ''
+const getUploadFile = (value: UploadValue | null) => {
+  return value?.croppedFile || value?.file || null
+}
+
+const getUploadSignature = (file: File) => {
+  return [file.name, file.size, file.lastModified, file.type].join(':')
+}
+
+const getUploadStatusText = (state?: MediaUploadState) => {
+  if (!state) return ''
+  if (state.status === 'uploading') return 'Envoi de l image...'
+  if (state.status === 'success') return 'Image prete'
+  return ''
+}
+
+const getGalleryErrorMessage = (index: number) => {
+  return galleryErrors.value[index] || galleryUploads.value[index]?.error || ''
+}
+
+const resolveMediaUploadError = (error: unknown) => {
+  if (error instanceof Error && error.message) return error.message
+  return 'Upload de l image impossible.'
+}
+
+const uploadMediaValue = async (
+  value: UploadValue | null,
+  state: MediaUploadState,
+  target: 'banner' | 'gallery',
+  index = 0,
+) => {
+  const file = getUploadFile(value)
+
+  if (!file) {
+    const existingUrl = getExistingUploadUrl(value)
+    resetMediaUploadState(state)
+    state.remoteUrl = existingUrl
+    return existingUrl
+  }
+
+  const signature = getUploadSignature(file)
+
+  if (state.signature === signature && state.remoteUrl) {
+    return state.remoteUrl
+  }
+
+  if (state.signature === signature && state.promise) {
+    return await state.promise
+  }
+
+  const runId = state.runId + 1
+  state.runId = runId
+  state.signature = signature
+  state.status = 'uploading'
+  state.error = ''
+  state.remoteUrl = ''
+
+  if (!isConfigured.value) {
+    const error = new Error('Firebase Storage n est pas configure.')
+    state.status = 'error'
+    state.error = error.message
+    throw error
+  }
+
+  const promise = uploadMarketplaceServiceImage({
+    file,
+    serviceName: form.name || 'service',
+    target,
+    index,
+  })
+    .then((url) => {
+      if (state.runId === runId) {
+        state.remoteUrl = url
+        state.status = 'success'
+        state.error = ''
+        state.promise = null
+      }
+
+      return url
+    })
+    .catch((error: unknown) => {
+      if (state.runId === runId) {
+        state.remoteUrl = ''
+        state.status = 'error'
+        state.error = resolveMediaUploadError(error)
+        state.promise = null
+      }
+
+      throw error
+    })
+
+  state.promise = promise
+  return await promise
+}
+
+const onBannerImageChange = (value: UploadValue | null) => {
+  bannerImage.value = value
+  void uploadMediaValue(value, bannerUpload, 'banner').catch(() => {})
+}
+
+const onGalleryImageChange = (value: UploadValue | null, index: number) => {
+  galleryImages.value[index] = value
+
+  const state = galleryUploads.value[index]
+  if (!state) return
+
+  void uploadMediaValue(value, state, 'gallery', index).catch(() => {})
 }
 
 const parsePrice = (value: string) => {
@@ -355,15 +614,39 @@ const getSelectedGameIds = () => {
     .filter(value => Number.isInteger(value) && value > 0)
 }
 
-const toMarketplaceServicePayload = (): CreateMarketplaceServiceInput => {
-  const bannerUrl = getUploadUrl(bannerImage.value)
-  const images = galleryImages.value.map(getUploadUrl).filter(Boolean)
+const uploadServiceMedia = async () => {
+  const images: string[] = []
+  let bannerUrl = ''
+
+  try {
+    bannerUrl = await uploadMediaValue(bannerImage.value, bannerUpload, 'banner')
+  } catch (error) {
+    errors.banner = resolveMediaUploadError(error)
+    throw error
+  }
+
+  for (const [index, image] of galleryImages.value.entries()) {
+    const state = galleryUploads.value[index]
+    if (!state) continue
+
+    try {
+      const imageUrl = await uploadMediaValue(image, state, 'gallery', index)
+      if (imageUrl) images.push(imageUrl)
+    } catch (error) {
+      galleryErrors.value[index] = resolveMediaUploadError(error)
+      throw error
+    }
+  }
+
+  return { bannerUrl, images }
+}
+
+const toMarketplaceServicePayload = ({ bannerUrl, images }: { bannerUrl: string, images: string[] }): CreateMarketplaceServiceInput => {
   const gameIds = getSelectedGameIds()
 
   const payload: CreateMarketplaceServiceInput = {
     name: form.name.trim(),
     description: form.description.trim(),
-    status: 'PUBLISHED',
     services: services.value.map(service => ({
       name: service.name.trim(),
       description: service.description.trim(),
@@ -371,11 +654,22 @@ const toMarketplaceServicePayload = (): CreateMarketplaceServiceInput => {
     }))
   }
 
-  if (bannerUrl) payload.bannerUrl = bannerUrl
-  if (images.length) payload.images = images
-  if (gameIds.length) payload.gameIds = gameIds
+  if (!isEditMode.value) payload.status = 'PUBLISHED'
+  if (bannerUrl || isEditMode.value) payload.bannerUrl = bannerUrl || null
+  if (images.length || isEditMode.value) payload.images = images
+  if (gameIds.length || isEditMode.value) payload.gameIds = gameIds
 
   return payload
+}
+
+const getRefreshKeys = (service: MarketplaceServicePresenter) => {
+  const keys = ['marketplace-services', 'marketplace-services-mine']
+  const currentSlug = props.service?.slug
+
+  if (currentSlug) keys.push(`marketplace-service-${currentSlug}`)
+  if (service.slug && service.slug !== currentSlug) keys.push(`marketplace-service-${service.slug}`)
+
+  return keys
 }
 
 const submitForm = async () => {
@@ -386,21 +680,30 @@ const submitForm = async () => {
   isSubmitting.value = true
 
   try {
-    const createdService = await $marketplaceAPI.services.create(toMarketplaceServicePayload())
-    await refreshNuxtData('marketplace-services')
+    const media = await uploadServiceMedia()
+    const payload = toMarketplaceServicePayload(media)
+    const savedService = props.service?.id
+      ? await $marketplaceAPI.services.update(props.service.id, payload)
+      : await $marketplaceAPI.services.create(payload)
+
+    await refreshNuxtData(getRefreshKeys(savedService))
 
     toast.add({
-      title: 'Service propose',
-      desc: 'Ta fiche est publiee sur la marketplace.',
-      icon: 'lucide:store',
+      title: isEditMode.value ? 'Service modifie' : 'Service propose',
+      desc: isEditMode.value ? 'La fiche service est a jour.' : 'Ta fiche est publiee sur la marketplace.',
+      icon: isEditMode.value ? 'lucide:pencil' : 'lucide:store',
       variant: 'success',
     })
+    emit('saved', savedService)
     emit('update:modelValue', false)
-    await navigateTo(`/marketplace/${createdService.slug}`)
+
+    if (!isEditMode.value) {
+      await navigateTo(`/marketplace/${savedService.slug}`)
+    }
   } catch {
     toast.add({
-      title: 'Service non envoye',
-      desc: 'Impossible de publier ce service pour le moment.',
+      title: isEditMode.value ? 'Service non modifie' : 'Service non envoye',
+      desc: isEditMode.value ? 'Impossible de modifier ce service pour le moment.' : 'Impossible de publier ce service pour le moment.',
       icon: 'lucide:circle-alert',
       variant: 'error',
     })
@@ -410,8 +713,8 @@ const submitForm = async () => {
 }
 
 watch(
-  () => props.modelValue,
-  (isOpen) => {
+  [() => props.modelValue, () => props.service?.id],
+  ([isOpen]) => {
     if (isOpen) {
       resetForm()
     }
@@ -493,6 +796,24 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+}
+
+.header-action-form__media-item {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.header-action-form__upload-state {
+  margin: -6px 0 0;
+  color: var(--modal-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.header-action-form__upload-state[data-status='success'] {
+  color: color-mix(in oklch, var(--color-success) 72%, var(--modal-text));
 }
 
 .header-action-form__services {
