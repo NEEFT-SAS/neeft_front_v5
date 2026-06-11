@@ -260,17 +260,20 @@ type FormErrors = {
 
 type ServiceItemErrors = Omit<ServiceItem, 'id'>
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: boolean
   service?: MarketplaceServicePresenter | null
-}>()
+  refreshOnSaved?: boolean
+}>(), {
+  refreshOnSaved: true,
+})
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   saved: [service: MarketplaceServicePresenter]
 }>()
 
-const toast = useToast()
+const marketplaceToast = useMarketplaceToasts()
 const { $marketplaceAPI } = useNuxtApp()
 const { uploadMarketplaceServiceImage, isConfigured } = useFirebaseUpload()
 const resourcesStore = useResourcesStore()
@@ -662,15 +665,7 @@ const toMarketplaceServicePayload = ({ bannerUrl, images }: { bannerUrl: string,
   return payload
 }
 
-const getRefreshKeys = (service: MarketplaceServicePresenter) => {
-  const keys = ['marketplace-services', 'marketplace-services-mine']
-  const currentSlug = props.service?.slug
-
-  if (currentSlug) keys.push(`marketplace-service-${currentSlug}`)
-  if (service.slug && service.slug !== currentSlug) keys.push(`marketplace-service-${service.slug}`)
-
-  return keys
-}
+const getRefreshKeys = () => ['marketplace-services', 'marketplace-services-mine']
 
 const submitForm = async () => {
   if (!validateForm()) {
@@ -686,14 +681,11 @@ const submitForm = async () => {
       ? await $marketplaceAPI.services.update(props.service.id, payload)
       : await $marketplaceAPI.services.create(payload)
 
-    await refreshNuxtData(getRefreshKeys(savedService))
+    if (props.refreshOnSaved) {
+      await refreshNuxtData(getRefreshKeys())
+    }
 
-    toast.add({
-      title: isEditMode.value ? 'Service modifie' : 'Service propose',
-      desc: isEditMode.value ? 'La fiche service est a jour.' : 'Ta fiche est publiee sur la marketplace.',
-      icon: isEditMode.value ? 'lucide:pencil' : 'lucide:store',
-      variant: 'success',
-    })
+    marketplaceToast.services.saved(isEditMode.value)
     emit('saved', savedService)
     emit('update:modelValue', false)
 
@@ -701,12 +693,7 @@ const submitForm = async () => {
       await navigateTo(`/marketplace/${savedService.slug}`)
     }
   } catch {
-    toast.add({
-      title: isEditMode.value ? 'Service non modifie' : 'Service non envoye',
-      desc: isEditMode.value ? 'Impossible de modifier ce service pour le moment.' : 'Impossible de publier ce service pour le moment.',
-      icon: 'lucide:circle-alert',
-      variant: 'error',
-    })
+    marketplaceToast.services.saveFailed(isEditMode.value)
   } finally {
     isSubmitting.value = false
   }

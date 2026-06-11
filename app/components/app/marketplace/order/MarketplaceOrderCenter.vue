@@ -180,6 +180,15 @@
         </section>
       </section>
     </div>
+
+    <MarketplaceOrderStatusConfirmModal
+      :model-value="Boolean(pendingStatusAction)"
+      :order="pendingStatusAction?.order || null"
+      :target-status="pendingStatusAction?.nextStatus || null"
+      :processing="Boolean(actionOrderId)"
+      @update:model-value="handleStatusConfirmationToggle"
+      @confirm="confirmPendingStatusAction"
+    />
   </main>
 </template>
 
@@ -196,18 +205,24 @@ const props = withDefaults(defineProps<{
   orderId: ''
 })
 
-const toast = useToast()
+const marketplaceToast = useMarketplaceToasts()
 const { $marketplaceAPI } = useNuxtApp()
+const route = useRoute()
 const generatedId = useId()
 const detailTitleId = `marketplace-orders-detail-title-${generatedId}`
 
 const searchQuery = ref('')
 const activeStatus = ref<MarketplaceOrderStatusFilter>('all')
 const actionOrderId = ref('')
+const pendingStatusAction = ref<{ order: MarketplaceOrder; nextStatus: MarketplaceApiOrderStatus } | null>(null)
 
 const content = computed(() => marketplaceOrderRoleContent[props.role])
 const listPath = computed(() => props.role === 'buyer' ? '/marketplace/orders' : '/marketplace/sales')
 const marketplaceOrdersDataKey = computed(() => props.view === 'detail' && props.orderId ? `marketplace-orders-${props.role}-${props.orderId}` : `marketplace-orders-${props.role}-list`)
+const serviceIdFilter = computed(() => {
+  const value = route.query.serviceId
+  return Array.isArray(value) ? value[0] || '' : String(value || '')
+})
 
 const fetchMarketplaceOrders = async () => {
   if (props.view === 'detail' && props.orderId) {
@@ -218,14 +233,15 @@ const fetchMarketplaceOrders = async () => {
     return [toMarketplaceOrder(order, props.role)]
   }
 
+  const query = serviceIdFilter.value ? { limit: 100, serviceId: serviceIdFilter.value } : { limit: 100 }
   const response = props.role === 'buyer'
-    ? await $marketplaceAPI.orders.listBuyer({ limit: 100 })
-    : await $marketplaceAPI.orders.listSeller({ limit: 100 })
+    ? await $marketplaceAPI.orders.listBuyer(query)
+    : await $marketplaceAPI.orders.listSeller(query)
 
   return toMarketplaceOrders(response.data, props.role)
 }
 
-const { data: marketplaceOrders, pending: isOrdersPending, error: ordersError, refresh: refreshOrders } = await useAsyncData(marketplaceOrdersDataKey.value, fetchMarketplaceOrders, { watch: [() => props.role, () => props.view, () => props.orderId] })
+const { data: marketplaceOrders, pending: isOrdersPending, error: ordersError, refresh: refreshOrders } = await useAsyncData(marketplaceOrdersDataKey.value, fetchMarketplaceOrders, { watch: [() => props.role, () => props.view, () => props.orderId, serviceIdFilter] })
 const orders = computed(() => marketplaceOrders.value || [])
 const refreshMarketplaceOrders = () => refreshOrders()
 
@@ -244,8 +260,9 @@ const visibleOrders = computed(() => {
 
   return orders.value.filter((order) => {
     const matchesStatus = activeStatus.value === 'all' || order.status === activeStatus.value
+    const matchesService = !serviceIdFilter.value || order.serviceId === serviceIdFilter.value
 
-    if (!matchesStatus) return false
+    if (!matchesStatus || !matchesService) return false
     if (!query) return true
 
     const index = normalizeSearch([
@@ -292,6 +309,18 @@ const getNextMarketplaceStatus = (order: MarketplaceOrder): MarketplaceApiOrderS
   return null
 }
 
+const requiresStatusConfirmation = (nextStatus: MarketplaceApiOrderStatus) => {
+  return nextStatus === 'DELIVERED' || nextStatus === 'COMPLETED'
+}
+
+const getStatusNote = (nextStatus: MarketplaceApiOrderStatus) => {
+  if (nextStatus === 'ACCEPTED') return 'Commande acceptee par le vendeur.'
+  if (nextStatus === 'IN_PROGRESS') return 'Mission demarree par le vendeur.'
+  if (nextStatus === 'DELIVERED') return 'Livraison envoyee par le vendeur. Validation client attendue.'
+  if (nextStatus === 'COMPLETED') return 'Livraison validee par le client. Commande terminee.'
+  return undefined
+}
+
 const runPrimaryAction = async (order: MarketplaceOrder) => {
   const action = getAction(order)
   const nextStatus = getNextMarketplaceStatus(order)
@@ -299,51 +328,58 @@ const runPrimaryAction = async (order: MarketplaceOrder) => {
   if (action.disabled) return
 
   if (!nextStatus) {
-    toast.add({
+    marketplaceToast.orders.actionInfo({
       title: action.title,
       desc: `${order.id} - ${action.ctaLabel}`,
       icon: action.icon,
-      variant: action.urgent ? 'warning' : 'info'
+      urgent: action.urgent
     })
     return
   }
 
+  if (requiresStatusConfirmation(nextStatus)) {
+    pendingStatusAction.value = { order, nextStatus }
+    return
+  }
+
+  await updateOrderStatus(order, nextStatus)
+}
+
+const updateOrderStatus = async (order: MarketplaceOrder, nextStatus: MarketplaceApiOrderStatus) => {
+  const action = getAction(order)
   actionOrderId.value = order.id
 
   try {
     if (props.role === 'seller') {
-      await $marketplaceAPI.orders.updateSellerStatus(order.id, { status: nextStatus })
+      await $marketplaceAPI.orders.updateSellerStatus(order.id, { status: nextStatus, note: getStatusNote(nextStatus) })
     } else {
-      await $marketplaceAPI.orders.updateBuyerStatus(order.id, { status: nextStatus })
+      await $marketplaceAPI.orders.updateBuyerStatus(order.id, { status: nextStatus, note: getStatusNote(nextStatus) })
     }
 
     await refreshOrders()
+    pendingStatusAction.value = null
 
-    toast.add({
-      title: 'Commande mise a jour',
-      desc: `${order.id} - ${action.ctaLabel}`,
-      icon: action.icon,
-      variant: 'success'
-    })
+    marketplaceToast.orders.statusUpdated(order.id, action.ctaLabel, action.icon)
   } catch {
-    toast.add({
-      title: 'Action impossible',
-      desc: 'La commande n a pas pu etre mise a jour.',
-      icon: 'lucide:circle-alert',
-      variant: 'error'
-    })
+    marketplaceToast.orders.statusUpdateFailed()
   } finally {
     actionOrderId.value = ''
   }
 }
 
+const handleStatusConfirmationToggle = (value: boolean) => {
+  if (!value && !actionOrderId.value) {
+    pendingStatusAction.value = null
+  }
+}
+
+const confirmPendingStatusAction = async () => {
+  if (!pendingStatusAction.value) return
+  await updateOrderStatus(pendingStatusAction.value.order, pendingStatusAction.value.nextStatus)
+}
+
 const openMessages = (order: MarketplaceOrder) => {
-  toast.add({
-    title: 'Conversation',
-    desc: `${order.id} - messagerie de commande`,
-    icon: 'lucide:message-circle',
-    variant: 'neutral'
-  })
+  marketplaceToast.orders.conversationOpened(order.id)
 }
 </script>
 

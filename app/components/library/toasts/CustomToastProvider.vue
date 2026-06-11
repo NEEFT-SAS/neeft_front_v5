@@ -33,8 +33,9 @@ const { byPosition, remove } = useToast()
 
 <style scoped>
 .cus-toast-provider {
+  --toast-provider-header-height: var(--app-header-height, var(--landing-header-height, calc(var(--unit) * 7)));
   position: fixed;
-  inset-block: var(--landing-header-height) 0;
+  inset-block: var(--toast-provider-header-height) 0;
   inset-inline: 0;
   z-index: var(--layer-popover);
   pointer-events: none;
@@ -50,12 +51,12 @@ const { byPosition, remove } = useToast()
 }
 
 .cus-toast-provider__region[data-position='top-left'] {
-  inset-block-start: calc(var(--landing-header-height) + var(--toast-provider-safe-edge));
+  inset-block-start: calc(var(--toast-provider-header-height) + var(--toast-provider-safe-edge));
   inset-inline-start: var(--toast-provider-edge);
 }
 
 .cus-toast-provider__region[data-position='top-right'] {
-  inset-block-start: calc(var(--landing-header-height) + var(--toast-provider-safe-edge));
+  inset-block-start: calc(var(--toast-provider-header-height) + var(--toast-provider-safe-edge));
   inset-inline-end: var(--toast-provider-edge);
 }
 

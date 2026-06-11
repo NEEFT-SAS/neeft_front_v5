@@ -39,6 +39,26 @@
         </div>
       </dl>
 
+      <div class="marketplace-managed-service-card__tracking">
+        <span>
+          <small>Suivi commandes</small>
+          <strong>{{ trackingHeadline }}</strong>
+        </span>
+        <span>
+          <small>A valider</small>
+          <strong>{{ tracking?.reviewCount ?? 0 }}</strong>
+        </span>
+        <CustomLink
+          label="Voir le suivi"
+          :to="salesTrackingPath"
+          left-icon="lucide:clipboard-list"
+          theme="app"
+          variant="outlined"
+          color="secondary"
+          size="sm"
+        />
+      </div>
+
       <div class="marketplace-managed-service-card__actions">
         <CustomLink label="Voir" :to="servicePath" left-icon="lucide:eye" theme="app" variant="outlined" color="secondary" size="sm" />
         <CustomButton label="Modifier" left-icon="lucide:pencil" theme="app" variant="outlined" color="secondary" size="sm" :disabled="updating || deleting" @click="emit('edit', service)" />
@@ -52,8 +72,15 @@
 <script setup lang="ts">
 import type { MarketplaceServicePresenter, MarketplaceServiceStatus } from '~/plugins/marketplace-api'
 
+type MarketplaceManagedServiceTracking = {
+  activeCount: number
+  reviewCount: number
+  latestStatusLabel: string
+}
+
 const props = defineProps<{
   service: MarketplaceServicePresenter
+  tracking?: MarketplaceManagedServiceTracking
   updating?: boolean
   deleting?: boolean
 }>()
@@ -81,6 +108,7 @@ const formatMarketplacePrice = (price: number) => {
 }
 
 const servicePath = computed(() => `/marketplace/${props.service.slug}`)
+const salesTrackingPath = computed(() => `/marketplace/sales?serviceId=${encodeURIComponent(props.service.id)}`)
 const statusLabel = computed(() => statusLabels[props.service.status])
 
 const shortDescription = computed(() => {
@@ -111,6 +139,14 @@ const updatedAtLabel = computed(() => {
   const date = new Date(props.service.updatedAt)
   if (Number.isNaN(date.getTime())) return 'Date inconnue'
   return dateFormatter.format(date)
+})
+
+const trackingHeadline = computed(() => {
+  if (!props.tracking || (!props.tracking.activeCount && !props.tracking.reviewCount)) {
+    return props.service.ordersCount ? props.tracking?.latestStatusLabel || 'Historique disponible' : 'Aucune commande'
+  }
+
+  return `${props.tracking.activeCount} ouverte${props.tracking.activeCount > 1 ? 's' : ''} - ${props.tracking.latestStatusLabel}`
 })
 
 const statusActionLabel = computed(() => {
@@ -287,6 +323,37 @@ const statusActionIcon = computed(() => {
   line-height: var(--services-line-tight);
 }
 
+.marketplace-managed-service-card__tracking {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(calc(var(--services-unit) * 10), auto) auto;
+  gap: var(--services-space-2);
+  align-items: center;
+  padding: var(--services-space-2) 0;
+  border-top: var(--services-border) solid var(--services-color-line);
+  border-bottom: var(--services-border) solid var(--services-color-line);
+}
+
+.marketplace-managed-service-card__tracking > span {
+  display: grid;
+  gap: calc(var(--services-unit) * 0.5);
+}
+
+.marketplace-managed-service-card__tracking small {
+  color: var(--services-color-subtle);
+  font-size: var(--services-font-label);
+  font-weight: 700;
+  line-height: var(--services-line-body);
+  text-transform: uppercase;
+}
+
+.marketplace-managed-service-card__tracking strong {
+  color: var(--services-color-text);
+  font-size: var(--services-font-small);
+  font-weight: 700;
+  line-height: var(--services-line-tight);
+  overflow-wrap: anywhere;
+}
+
 .marketplace-managed-service-card__actions {
   display: flex;
   flex-wrap: wrap;
@@ -300,6 +367,11 @@ const statusActionIcon = computed(() => {
 
   .marketplace-managed-service-card__facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .marketplace-managed-service-card__tracking {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 }
 

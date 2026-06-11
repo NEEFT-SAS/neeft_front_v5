@@ -5,6 +5,7 @@
       <NuxtPage />
     </NuxtLayout>
     <CustomModalProvider />
+    <CustomToastProvider />
   </div>
 </template>
 

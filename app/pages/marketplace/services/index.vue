@@ -67,6 +67,7 @@
           <li v-for="service in visibleServices" :key="service.id">
             <MarketplaceManagedServiceCard
               :service="service"
+              :tracking="getServiceTracking(service)"
               :updating="updatingServiceId === service.id"
               :deleting="deletingServiceId === service.id"
               @edit="openEditServiceModal"
@@ -86,15 +87,20 @@
     </div>
 
     <HeaderServiceProposalModal v-model="isServiceProposalOpen" />
-    <HeaderServiceProposalModal v-model="isServiceEditOpen" :service="serviceBeingEdited" @saved="handleServiceSaved" />
+    <HeaderServiceProposalModal v-model="isServiceEditOpen" :service="serviceBeingEdited" :refresh-on-saved="false" @saved="handleServiceSaved" />
     <MarketplaceServiceDeleteModal v-model="isDeleteServiceOpen" :service="serviceBeingDeleted" :deleting="Boolean(deletingServiceId)" @confirm="deleteService" />
   </main>
 </template>
 
 <script setup lang="ts">
-import type { MarketplaceServicePresenter, MarketplaceServiceStatus } from '~/plugins/marketplace-api'
+import type { MarketplaceOrderPresenter, MarketplaceOrderStatus, MarketplaceServicePresenter, MarketplaceServiceStatus } from '~/plugins/marketplace-api'
 
 type ServiceStatusFilter = MarketplaceServiceStatus | 'all'
+type ServiceOrderTracking = {
+  activeCount: number
+  reviewCount: number
+  latestStatusLabel: string
+}
 
 definePageMeta({
   layout: 'app'
@@ -109,7 +115,7 @@ useSeoMeta({
 })
 
 const { $marketplaceAPI } = useNuxtApp()
-const toast = useToast()
+const marketplaceToast = useMarketplaceToasts()
 
 const statusFilters = [
   { value: 'all', label: 'Tous', icon: 'lucide:layout-grid' },
@@ -121,6 +127,15 @@ const statusFilters = [
 const { data: marketplaceServicesData, pending: isServicesPending, error: servicesError, refresh } = await useAsyncData('marketplace-services-mine', async () => {
   const response = await $marketplaceAPI.services.mine({ limit: 100 })
   return response.data
+})
+
+const { data: marketplaceSalesData, refresh: refreshSales } = await useAsyncData('marketplace-services-sales-summary', async () => {
+  try {
+    const response = await $marketplaceAPI.orders.listSeller({ limit: 100 })
+    return response.data
+  } catch {
+    return [] as MarketplaceOrderPresenter[]
+  }
 })
 
 const searchQuery = ref('')
@@ -135,6 +150,7 @@ const deletingServiceId = ref('')
 
 const apiServices = computed(() => marketplaceServicesData.value || [])
 const services = computed(() => apiServices.value)
+const salesOrders = computed(() => marketplaceSalesData.value || [])
 const hasServices = computed(() => services.value.length > 0)
 
 const normalizedSearch = computed(() => normalizeText(searchQuery.value))
@@ -148,13 +164,60 @@ const visibleServices = computed(() => {
   })
 })
 
-const refreshMarketplaceServices = () => refresh()
+const refreshMarketplaceServices = async () => {
+  await Promise.all([refresh(), refreshSales()])
+}
 
 const normalizeText = (value: string) => value.toLocaleLowerCase('fr-FR').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
 const getStatusCount = (status: ServiceStatusFilter) => {
   if (status === 'all') return services.value.length
   return services.value.filter(service => service.status === status).length
+}
+
+const orderStatusLabels: Record<MarketplaceOrderStatus, string> = {
+  PENDING: 'A accepter',
+  ACCEPTED: 'Acceptee',
+  IN_PROGRESS: 'En cours',
+  DELIVERED: 'Livree',
+  COMPLETED: 'Terminee',
+  CANCELLED: 'Annulee',
+  REJECTED: 'Refusee'
+}
+
+const trackingByService = computed(() => {
+  const map = new Map<string, ServiceOrderTracking>()
+
+  for (const order of salesOrders.value) {
+    if (!order.serviceId) continue
+
+    const current = map.get(order.serviceId) || {
+      activeCount: 0,
+      reviewCount: 0,
+      latestStatusLabel: 'Aucune commande'
+    }
+
+    if (!['COMPLETED', 'CANCELLED', 'REJECTED'].includes(order.status)) {
+      current.activeCount += 1
+    }
+
+    if (order.status === 'DELIVERED') {
+      current.reviewCount += 1
+    }
+
+    current.latestStatusLabel = orderStatusLabels[order.status]
+    map.set(order.serviceId, current)
+  }
+
+  return map
+})
+
+const getServiceTracking = (service: MarketplaceServicePresenter): ServiceOrderTracking => {
+  return trackingByService.value.get(service.id) || {
+    activeCount: 0,
+    reviewCount: 0,
+    latestStatusLabel: service.ordersCount ? 'Historique disponible' : 'Aucune commande'
+  }
 }
 
 const openEditServiceModal = (service: MarketplaceServicePresenter) => {
@@ -179,17 +242,9 @@ const toggleServiceStatus = async (service: MarketplaceServicePresenter) => {
     await $marketplaceAPI.services.update(service.id, { status: nextStatus })
     await refreshNuxtData(['marketplace-services', 'marketplace-services-mine'])
     await refreshMarketplaceServices()
-    toast.add({
-      variant: 'success',
-      title: nextStatus === 'PUBLISHED' ? 'Service publie' : 'Service desactive',
-      desc: `${service.name} a ete mis a jour.`
-    })
+    marketplaceToast.services.statusUpdated(service.name, nextStatus)
   } catch {
-    toast.add({
-      variant: 'error',
-      title: 'Mise a jour impossible',
-      desc: 'Le statut du service n a pas pu etre modifie.'
-    })
+    marketplaceToast.services.statusUpdateFailed()
   } finally {
     updatingServiceId.value = ''
   }
@@ -204,17 +259,9 @@ const deleteService = async (service: MarketplaceServicePresenter) => {
     await refreshMarketplaceServices()
     isDeleteServiceOpen.value = false
     serviceBeingDeleted.value = null
-    toast.add({
-      variant: 'success',
-      title: 'Service supprime',
-      desc: `${service.name} a ete retire de la marketplace.`
-    })
+    marketplaceToast.services.deleted(service.name)
   } catch {
-    toast.add({
-      variant: 'error',
-      title: 'Suppression impossible',
-      desc: 'Le service n a pas pu etre supprime.'
-    })
+    marketplaceToast.services.deleteFailed()
   } finally {
     deletingServiceId.value = ''
   }

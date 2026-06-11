@@ -47,9 +47,15 @@
 
         <footer v-if="sellerName || priceLabel" class="marketplace-service-card__footer">
           <div v-if="sellerName" class="marketplace-service-card__seller">
-            <span class="marketplace-service-card__seller-icon" aria-hidden="true">
-              <Icon name="lucide:user-round" />
-            </span>
+            <CustomAvatar
+              class="marketplace-service-card__seller-avatar"
+              :src="sellerAvatarSrc"
+              :name="sellerName"
+              size="xs"
+              theme="app"
+              color="primary"
+              decorative
+            />
             <span>{{ sellerName }}</span>
           </div>
 
@@ -80,6 +86,7 @@ const formatMarketplacePrice = (price: number) => {
 const servicePath = computed(() => `/marketplace/${props.service.slug}`)
 const primaryCategory = computed(() => props.service.rscCategories?.[0] || null)
 const sellerName = computed(() => props.service.seller?.username || '')
+const sellerAvatarSrc = computed(() => props.service.seller?.profilePicture || '')
 
 const priceLabel = computed(() => {
   const prices = (props.service.offers || [])
@@ -261,20 +268,8 @@ const gameBadges = computed(() => {
   white-space: nowrap;
 }
 
-.marketplace-service-card__seller-icon {
-  width: calc(var(--search-hit-size) * 0.8);
-  height: calc(var(--search-hit-size) * 0.8);
-  border: var(--search-border) solid var(--search-color-panel-line);
-  border-radius: var(--search-radius);
-  background-color: var(--search-color-panel);
-  color: var(--search-color-accent);
-
-  @apply inline-flex shrink-0 items-center justify-center;
-}
-
-.marketplace-service-card__seller-icon svg {
-  width: calc(var(--search-hit-size) * 0.42);
-  height: calc(var(--search-hit-size) * 0.42);
+.marketplace-service-card__seller-avatar {
+  border-color: var(--search-color-panel-line);
 }
 
 .marketplace-service-card__description {

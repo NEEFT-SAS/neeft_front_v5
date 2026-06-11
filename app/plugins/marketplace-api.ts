@@ -59,6 +59,15 @@ export type MarketplaceServiceListItemPresenter = {
   reviewCount: number
 }
 
+export type MarketplaceServiceReviewPresenter = {
+  id: string
+  rating: number
+  comment: string
+  author: MarketplaceProfilePresenter | null
+  createdAt: string
+  updatedAt: string
+}
+
 export type MarketplaceServicePresenter = {
   id: string
   sellerProfileId: string
@@ -191,8 +200,18 @@ export type UpdateMarketplaceOrderStatusInput = {
 
 export type MarketplaceOrdersQuery = {
   status?: MarketplaceOrderStatus
+  serviceId?: string
   limit?: number
   offset?: number
+}
+
+export type MarketplaceServiceReviewsQuery = {
+  limit?: number
+  offset?: number
+}
+
+export type MarketplaceServiceReviewsMeta = MarketplaceListMeta & {
+  ratingAvg: number
 }
 
 export type MarketplaceApi = {
@@ -203,6 +222,9 @@ export type MarketplaceApi = {
     create: (input: CreateMarketplaceServiceInput) => Promise<MarketplaceServicePresenter>
     update: (serviceId: string, input: UpdateMarketplaceServiceInput) => Promise<MarketplaceServicePresenter>
     delete: (serviceId: string) => Promise<{ deleted: boolean }>
+  }
+  reviews: {
+    listForService: (serviceIdOrSlug: string, query?: MarketplaceServiceReviewsQuery) => Promise<MarketplaceEnvelope<MarketplaceServiceReviewPresenter[], MarketplaceServiceReviewsMeta>>
   }
   orders: {
     create: (serviceId: string, input: CreateMarketplaceOrderInput) => Promise<MarketplaceOrderPresenter>
@@ -252,6 +274,11 @@ export default defineNuxtPlugin(() => {
       },
       delete: async (serviceId: string) => {
         return await unwrap(api<MarketplaceEnvelope<{ deleted: boolean }>>(`/marketplace/services/${encodeURIComponent(serviceId)}`, { method: 'DELETE', cache: 'no-store' }))
+      }
+    },
+    reviews: {
+      listForService: async (serviceIdOrSlug: string, query = {}) => {
+        return await api<MarketplaceEnvelope<MarketplaceServiceReviewPresenter[], MarketplaceServiceReviewsMeta>>(`/marketplace/services/${encodeURIComponent(serviceIdOrSlug)}/reviews`, { method: 'GET', query: getQuery(query), cache: 'no-store' })
       }
     },
     orders: {

@@ -45,6 +45,7 @@ export type MarketplaceOrderMessage = {
 export type MarketplaceOrder = {
   id: string
   apiStatus?: MarketplaceApiOrderStatus
+  serviceId: string | null
   serviceSlug: string
   serviceTitle: string
   serviceIcon: string
@@ -153,7 +154,7 @@ const getMarketplaceOrderParticipant = (profile: MarketplaceOrderPresenter['buye
 const getMarketplaceOrderAction = (order: MarketplaceOrderPresenter, role: MarketplaceOrderRole): MarketplaceOrderAction => {
   if (order.status === 'PENDING') {
     return role === 'seller'
-      ? { title: 'Brief a accepter', description: 'La commande vient d arriver. Confirme le perimetre ou refuse la demande.', ctaLabel: 'Repondre au brief', icon: 'lucide:reply', urgent: true }
+      ? { title: 'Commande a accepter', description: 'La commande vient d arriver. Confirme le perimetre pour demarrer le suivi.', ctaLabel: 'Accepter la commande', icon: 'lucide:reply', urgent: true }
       : { title: 'Attente vendeur', description: 'Le vendeur doit accepter la commande avant demarrage.', ctaLabel: 'Voir le brief', icon: 'lucide:hourglass' }
   }
 
@@ -165,13 +166,13 @@ const getMarketplaceOrderAction = (order: MarketplaceOrderPresenter, role: Marke
 
   if (order.status === 'IN_PROGRESS') {
     return role === 'seller'
-      ? { title: 'Production en cours', description: 'Continue la mission et livre quand le resultat est pret.', ctaLabel: 'Ajouter un livrable', icon: 'lucide:upload', urgent: true }
+      ? { title: 'Production en cours', description: 'Quand le resultat est pret, marque la commande comme livree pour demander la validation client.', ctaLabel: 'Marquer comme livre', icon: 'lucide:package-check', urgent: true }
       : { title: 'Production en cours', description: 'Le vendeur travaille sur la commande.', ctaLabel: 'Voir les messages', icon: 'lucide:activity' }
   }
 
   if (order.status === 'DELIVERED') {
     return role === 'buyer'
-      ? { title: 'Livraison a valider', description: 'Le vendeur a livre. Valide la commande ou demande une precision.', ctaLabel: 'Valider la livraison', icon: 'lucide:clipboard-check', urgent: true }
+      ? { title: 'Livraison a valider', description: 'Le vendeur a livre. Valide uniquement si le service correspond a la commande.', ctaLabel: 'Valider la livraison', icon: 'lucide:clipboard-check', urgent: true }
       : { title: 'Attente validation', description: 'La livraison est envoyee. Le prochain mouvement vient du client.', ctaLabel: 'Voir la livraison', icon: 'lucide:hourglass' }
   }
 
@@ -189,7 +190,7 @@ const getMarketplaceOrderMilestones = (status: MarketplaceApiOrderStatus): Marke
     { title: 'Brief accepte', description: 'Le vendeur valide le perimetre.' },
     { title: 'Production', description: 'La prestation est en cours.' },
     { title: 'Livraison', description: 'Le resultat est transmis au client.' },
-    { title: 'Cloture', description: 'La commande est terminee ou fermee.' }
+    { title: 'Validation', description: 'Le client confirme la livraison et cloture la commande.' }
   ]
   const currentIndex = statusIndex[status]
 
@@ -232,6 +233,7 @@ export const toMarketplaceOrder = (order: MarketplaceOrderPresenter, role: Marke
   return {
     id: order.id,
     apiStatus: order.status,
+    serviceId: order.serviceId,
     serviceSlug,
     serviceTitle: serviceName,
     serviceIcon: 'lucide:briefcase-business',
@@ -245,7 +247,7 @@ export const toMarketplaceOrder = (order: MarketplaceOrderPresenter, role: Marke
     orderedAt: formatMarketplaceDate(order.createdAt),
     dueAt: order.deadline === 'flexible' ? 'Delai flexible' : order.deadline === 'week' ? 'Sous 7 jours' : order.deadline === 'two-weeks' ? 'Sous 2 semaines' : 'Dans le mois',
     updatedAt: formatMarketplaceDate(order.updatedAt, true),
-    scope: order.brief,
+    scope: order.brief || 'Aucune information complementaire renseignee.',
     nextCheckpoint: action.description,
     nextActions: {
       buyer: getMarketplaceOrderAction(order, 'buyer'),
@@ -318,6 +320,7 @@ const serviceSnapshot = (slug: string) => {
   const service = requireService(slug)
 
   return {
+    serviceId: service.id ?? service.slug,
     serviceSlug: service.slug,
     serviceTitle: service.title,
     serviceIcon: service.icon,

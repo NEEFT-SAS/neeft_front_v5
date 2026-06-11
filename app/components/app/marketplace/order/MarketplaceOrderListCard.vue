@@ -43,6 +43,17 @@
         >
           <span />
         </span>
+
+        <span class="marketplace-order-list-card__tracking" aria-label="Suivi de la commande">
+          <span
+            v-for="milestone in order.milestones"
+            :key="`${order.id}-${milestone.title}`"
+            :data-state="milestone.state"
+          >
+            <i aria-hidden="true" />
+            <small>{{ milestone.title }}</small>
+          </span>
+        </span>
       </span>
     </span>
 
@@ -52,6 +63,9 @@
       <span class="marketplace-order-list-card__due">
         <Icon name="lucide:calendar-clock" aria-hidden="true" />
         <span>{{ order.dueAt }}</span>
+      </span>
+      <span class="marketplace-order-list-card__detail-cta">
+        Voir le suivi
       </span>
       <Icon name="lucide:chevron-right" aria-hidden="true" />
     </span>
@@ -256,6 +270,49 @@ const hasUnread = computed(() => props.order.messages.some(message => message.un
   background: var(--gradient-action);
 }
 
+.marketplace-order-list-card__tracking {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--orders-space-1);
+}
+
+.marketplace-order-list-card__tracking > span {
+  display: grid;
+  gap: calc(var(--orders-unit) * 0.5);
+  align-content: start;
+}
+
+.marketplace-order-list-card__tracking i {
+  display: block;
+  width: 100%;
+  height: calc(var(--orders-border) * 3);
+  border-radius: var(--orders-radius-round);
+  background-color: color-mix(in oklch, var(--orders-color-line) 72%, var(--orders-color-transparent));
+}
+
+.marketplace-order-list-card__tracking span[data-state='done'] i {
+  background-color: color-mix(in oklch, var(--orders-color-success) 70%, var(--orders-color-line));
+}
+
+.marketplace-order-list-card__tracking span[data-state='current'] i {
+  background-color: var(--orders-color-accent);
+}
+
+.marketplace-order-list-card__tracking small {
+  color: var(--orders-color-subtle);
+  font-size: var(--orders-font-label);
+  font-weight: 600;
+  line-height: var(--orders-line-tight);
+  overflow-wrap: anywhere;
+}
+
+.marketplace-order-list-card__detail-cta {
+  color: var(--orders-color-accent);
+  font-size: var(--orders-font-label);
+  font-weight: 700;
+  line-height: var(--orders-line-tight);
+}
+
 @media (max-width: 46rem) {
   .marketplace-order-list-card {
     grid-template-columns: 1fr;
@@ -263,11 +320,15 @@ const hasUnread = computed(() => props.order.messages.some(message => message.un
 
   .marketplace-order-list-card__side {
     min-width: 0;
-    grid-template-columns: repeat(3, auto);
+    grid-template-columns: repeat(auto-fit, minmax(calc(var(--orders-unit) * 12), auto));
     align-items: center;
     justify-content: start;
     justify-items: start;
     gap: var(--orders-space-2);
+  }
+
+  .marketplace-order-list-card__tracking {
+    grid-template-columns: 1fr;
   }
 
   .marketplace-order-list-card__side > strong {

@@ -168,7 +168,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
 }>()
 
-const toast = useToast()
+const marketplaceToast = useMarketplaceToasts()
 const { $marketplaceAPI } = useNuxtApp()
 const generatedId = useId()
 
@@ -261,12 +261,7 @@ const preparePayment = async () => {
     paymentIntent.value = await $marketplaceAPI.orders.createPaymentIntent(order.id)
     currentStep.value = 'payment'
   } catch {
-    toast.add({
-      title: 'Paiement indisponible',
-      desc: 'Impossible de preparer le paiement Stripe pour le moment.',
-      icon: 'lucide:circle-alert',
-      variant: 'error',
-    })
+    marketplaceToast.orders.paymentPreparationFailed()
   } finally {
     isPreparingPayment.value = false
   }
@@ -275,12 +270,7 @@ const preparePayment = async () => {
 const handlePaymentSucceeded = async () => {
   await refreshNuxtData(['marketplace-orders-buyer-list', 'marketplace-orders-seller-list'])
 
-  toast.add({
-    title: 'Paiement confirme',
-    desc: 'Ta commande est confirmee.',
-    icon: 'lucide:badge-check',
-    variant: 'success',
-  })
+  marketplaceToast.orders.paymentConfirmed()
 
   emit('update:modelValue', false)
 
@@ -290,12 +280,7 @@ const handlePaymentSucceeded = async () => {
 }
 
 const handlePaymentError = (message: string) => {
-  toast.add({
-    title: 'Paiement impossible',
-    desc: message || 'Stripe a refuse le paiement.',
-    icon: 'lucide:circle-alert',
-    variant: 'error',
-  })
+  marketplaceToast.orders.paymentFailed(message)
 }
 
 watch(
