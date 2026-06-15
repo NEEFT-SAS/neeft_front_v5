@@ -20,6 +20,13 @@
         @open-service-form="openServiceProposalModal"
         @open-team-form="openTeamCreationModal"
       />
+      <HeaderWalletMenu
+        :open="isWalletMenuOpen"
+        :theme="theme"
+        :trigger-id="walletTriggerId"
+        :panel-id="walletPanelId"
+        @toggle="toggleWalletMenu"
+      />
       <button class="header-user-actions__icon-button" type="button" aria-label="Messagerie">
         <Icon name="lucide:message-circle" aria-hidden="true" />
       </button>
@@ -58,10 +65,12 @@ type HeaderUserActionsSize = 'sm' | 'md' | 'lg'
 
 const { theme = 'app', size = 'sm' } = defineProps<{ theme?: HeaderUserActionsTheme; size?: HeaderUserActionsSize }>()
 
+const config = useConfig()
 const sessionStore = useSessionStore()
 const route = useRoute()
 const actionsElement = ref<HTMLElement | null>(null)
 const isCreateMenuOpen = ref(false)
+const isWalletMenuOpen = ref(false)
 const isSettingsMenuOpen = ref(false)
 const isNotificationsMenuOpen = ref(false)
 const isServiceProposalModalOpen = ref(false)
@@ -69,6 +78,8 @@ const isTeamCreationModalOpen = ref(false)
 const generatedId = useId()
 const createTriggerId = `header-user-create-trigger-${generatedId}`
 const createPanelId = `header-user-create-panel-${generatedId}`
+const walletTriggerId = `header-user-wallet-trigger-${generatedId}`
+const walletPanelId = `header-user-wallet-panel-${generatedId}`
 const settingsTriggerId = `header-user-settings-trigger-${generatedId}`
 const settingsPanelId = `header-user-settings-panel-${generatedId}`
 const notificationsTriggerId = `header-user-notifications-trigger-${generatedId}`
@@ -81,30 +92,42 @@ const profileTo = computed(() => {
   return slug ? `/players/${encodeURIComponent(slug)}` : '/app'
 })
 const profileAriaLabel = computed(() => sessionStore.myUsername ? `Profil de ${sessionStore.myUsername}` : 'Mon profil')
-const avatarSrc = computed(() => sessionStore.myAvatar || '/images/logos/neeft/Logo_NEEFT_FOX.png')
+const avatarSrc = computed(() => config.profile.getUserAvatarUrl(sessionStore.myAvatar))
 
 const closeCreateMenu = () => { isCreateMenuOpen.value = false }
+const closeWalletMenu = () => { isWalletMenuOpen.value = false }
 const closeSettingsMenu = () => { isSettingsMenuOpen.value = false }
 const closeNotificationsMenu = () => { isNotificationsMenuOpen.value = false }
 const closeMenus = () => {
   closeCreateMenu()
+  closeWalletMenu()
   closeSettingsMenu()
   closeNotificationsMenu()
 }
 const openCreateMenu = () => {
+  closeWalletMenu()
   closeSettingsMenu()
   closeNotificationsMenu()
   isCreateMenuOpen.value = true
 }
 const toggleCreateMenu = () => { isCreateMenuOpen.value ? closeCreateMenu() : openCreateMenu() }
+const openWalletMenu = () => {
+  closeCreateMenu()
+  closeSettingsMenu()
+  closeNotificationsMenu()
+  isWalletMenuOpen.value = true
+}
+const toggleWalletMenu = () => { isWalletMenuOpen.value ? closeWalletMenu() : openWalletMenu() }
 const openSettingsMenu = () => {
   closeCreateMenu()
+  closeWalletMenu()
   closeNotificationsMenu()
   isSettingsMenuOpen.value = true
 }
 const toggleSettingsMenu = () => { isSettingsMenuOpen.value ? closeSettingsMenu() : openSettingsMenu() }
 const openNotificationsMenu = () => {
   closeCreateMenu()
+  closeWalletMenu()
   closeSettingsMenu()
   isNotificationsMenuOpen.value = true
 }

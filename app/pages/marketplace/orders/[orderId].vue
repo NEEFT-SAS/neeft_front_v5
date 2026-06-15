@@ -8,16 +8,18 @@ definePageMeta({
 })
 
 const route = useRoute()
+const config = useConfig()
 const orderId = computed(() => {
   const value = route.params.orderId
   return Array.isArray(value) ? value[0] || '' : value || ''
 })
+const seo = computed(() => config.marketplace.orderDetail.seo(orderId.value))
 
 useSeoMeta({
-  title: () => `Detail commande ${orderId.value}`,
-  description: 'Detail et suivi d une commande marketplace achetee.',
-  ogTitle: () => `Detail commande ${orderId.value}`,
-  ogDescription: 'Detail et suivi d une commande marketplace achetee.',
-  twitterCard: 'summary'
+  title: () => seo.value.title,
+  description: () => seo.value.description,
+  ogTitle: () => seo.value.ogTitle,
+  ogDescription: () => seo.value.ogDescription,
+  twitterCard: () => seo.value.twitterCard
 })
 </script>

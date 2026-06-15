@@ -25,7 +25,7 @@
         <MarketplaceSafeImage
           class="marketplace-order-modal__cover"
           empty-class="marketplace-order-modal__cover--empty"
-          :src="service.bannerUrl"
+          :src="config.marketplace.service.getServiceBannerUrl(service.bannerUrl)"
           :alt="`Banniere du service ${service.name}`"
           width="168"
           height="104"
@@ -169,12 +169,13 @@ const emit = defineEmits<{
 }>()
 
 const marketplaceToast = useMarketplaceToasts()
+const config = useConfig()
 const { $marketplaceAPI } = useNuxtApp()
 const generatedId = useId()
 
 const currentStep = ref<OrderStep>('details')
 const isPreparingPayment = ref(false)
-const createdOrder = ref<MarketplaceOrderPresenter | null>(null)
+const confirmedOrder = ref<MarketplaceOrderPresenter | null>(null)
 const paymentIntent = ref<MarketplaceOrderPaymentIntentPresenter | null>(null)
 
 const form = reactive<OrderForm>({
@@ -209,17 +210,17 @@ const vatLabel = computed(() => formatMarketplacePrice(vatAmount.value))
 const vatPercentLabel = computed(() => `${Math.round(VAT_RATE * 100)}%`)
 const nextLabel = computed(() => isPreparingPayment.value ? 'Preparation...' : 'Suivant')
 const paymentReturnUrl = computed(() => {
-  if (!import.meta.client || !createdOrder.value) {
+  if (!import.meta.client) {
     return ''
   }
 
-  return `${window.location.origin}/marketplace/orders/${createdOrder.value.id}?payment=success`
+  return `${window.location.origin}/marketplace/services/${props.service.slug}?payment=return`
 })
 
 const resetForm = () => {
   currentStep.value = 'details'
   isPreparingPayment.value = false
-  createdOrder.value = null
+  confirmedOrder.value = null
   paymentIntent.value = null
   form.brief = ''
   errors.brief = ''
@@ -230,23 +231,27 @@ const validateOrder = () => {
   return true
 }
 
-const createOrderIfNeeded = async () => {
-  if (createdOrder.value) {
-    return createdOrder.value
+const buildOrderInput = () => ({
+  serviceLineId: props.offer.id,
+  brief: form.brief.trim(),
+  objective: 'other' as MarketplaceOrderObjective,
+  deadline: 'flexible' as MarketplaceOrderDeadline,
+  contact: 'Neeft',
+  confirmed: true,
+})
+
+const buildOrderConfirmationInput = () => {
+  const { confirmed: _confirmed, ...input } = buildOrderInput()
+  return input
+}
+
+const createPaymentIntentIfNeeded = async () => {
+  if (paymentIntent.value) {
+    return paymentIntent.value
   }
 
-  const order = await $marketplaceAPI.orders.create(props.service.id, {
-    serviceLineId: props.offer.id,
-    brief: form.brief.trim(),
-    objective: 'other' as MarketplaceOrderObjective,
-    deadline: 'flexible' as MarketplaceOrderDeadline,
-    contact: 'Neeft',
-    confirmed: true,
-  })
-
-  createdOrder.value = order
-  await refreshNuxtData(['marketplace-orders-buyer-list', 'marketplace-orders-seller-list'])
-  return order
+  paymentIntent.value = await $marketplaceAPI.orders.createPaymentIntentForService(props.service.id, buildOrderInput())
+  return paymentIntent.value
 }
 
 const preparePayment = async () => {
@@ -257,8 +262,7 @@ const preparePayment = async () => {
   isPreparingPayment.value = true
 
   try {
-    const order = await createOrderIfNeeded()
-    paymentIntent.value = await $marketplaceAPI.orders.createPaymentIntent(order.id)
+    await createPaymentIntentIfNeeded()
     currentStep.value = 'payment'
   } catch {
     marketplaceToast.orders.paymentPreparationFailed()
@@ -267,15 +271,33 @@ const preparePayment = async () => {
   }
 }
 
-const handlePaymentSucceeded = async () => {
+const handlePaymentSucceeded = async (paymentIntentId: string) => {
+  const confirmedPaymentIntentId = paymentIntentId || paymentIntent.value?.id || ''
+
+  if (!confirmedPaymentIntentId) {
+    marketplaceToast.orders.paymentFailed('Impossible de confirmer la commande.')
+    return
+  }
+
+  try {
+    confirmedOrder.value = await $marketplaceAPI.orders.confirmPaymentForService({
+      paymentIntentId: confirmedPaymentIntentId,
+      serviceId: props.service.id,
+      ...buildOrderConfirmationInput(),
+    })
+  } catch {
+    marketplaceToast.orders.paymentFailed('Le paiement est confirme par Stripe, mais la commande n a pas pu etre synchronisee.')
+    return
+  }
+
   await refreshNuxtData(['marketplace-orders-buyer-list', 'marketplace-orders-seller-list'])
 
   marketplaceToast.orders.paymentConfirmed()
 
   emit('update:modelValue', false)
 
-  if (createdOrder.value) {
-    await navigateTo(`/marketplace/orders/${createdOrder.value.id}?payment=success`)
+  if (confirmedOrder.value) {
+    await navigateTo(`/marketplace/orders/${confirmedOrder.value.id}?payment=success`)
   }
 }
 

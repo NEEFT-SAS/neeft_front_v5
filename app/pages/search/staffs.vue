@@ -16,18 +16,20 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
+const config = useConfig()
+const pageConfig = config.search.staffs
 
 definePageMeta({
   layout: 'app'
 })
 
 useSeoMeta({
-  title: () => t('app.search.staffs.seo.title'),
-  description: () => t('app.search.staffs.seo.description'),
-  ogTitle: () => t('app.search.staffs.seo.title'),
-  ogDescription: () => t('app.search.staffs.seo.description'),
-  ogImage: '/images/landing/competition-arena.jpg',
-  twitterCard: 'summary_large_image',
-  twitterImage: '/images/landing/competition-arena.jpg'
+  title: () => t(pageConfig.seo.titleKey),
+  description: () => t(pageConfig.seo.descriptionKey),
+  ogTitle: () => t(pageConfig.seo.ogTitleKey || pageConfig.seo.titleKey),
+  ogDescription: () => t(pageConfig.seo.ogDescriptionKey || pageConfig.seo.descriptionKey),
+  ogImage: pageConfig.seo.ogImage,
+  twitterCard: pageConfig.seo.twitterCard,
+  twitterImage: pageConfig.seo.twitterImage
 })
 </script>

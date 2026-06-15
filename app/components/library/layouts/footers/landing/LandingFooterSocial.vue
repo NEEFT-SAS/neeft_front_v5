@@ -7,11 +7,11 @@
 </template>
 
 <script setup lang="ts">
+import type { ExternalNavigationItem } from '~/composables/useConfig'
+
 const { t } = useI18n()
 
-defineProps({
-  items: { type: Array as () => Array<{ href: string; labelKey: string; icon: string }>, required: true }
-})
+defineProps<{ items: readonly ExternalNavigationItem[] }>()
 </script>
 
 <style scoped>

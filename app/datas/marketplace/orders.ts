@@ -2,14 +2,17 @@ import type { MarketplaceOrderPresenter, MarketplaceOrderStatus as MarketplaceAp
 import { formatMarketplacePrice, getMarketplaceServiceBySlug, type MarketplaceService } from './services'
 
 export type MarketplaceOrderRole = 'buyer' | 'seller'
-export type MarketplaceOrderStatus = 'requires_action' | 'in_progress' | 'waiting_partner' | 'review' | 'completed'
+export type MarketplaceOrderStatus = 'requires_action' | 'in_progress' | 'waiting_partner' | 'review' | 'completed' | 'cancelled' | 'refused'
 export type MarketplaceOrderTone = 'primary' | 'success' | 'warning' | 'danger' | 'neutral'
 export type MarketplaceTimelineState = 'done' | 'current' | 'upcoming'
 export type MarketplaceDeliverableStatus = 'ready' | 'pending' | 'approved'
 
 export type MarketplaceOrderParticipant = {
   name: string
+  slug?: string | null
   role: string
+  description?: string | null
+  profilePicture?: string | null
 }
 
 export type MarketplaceOrderAction = {
@@ -65,6 +68,19 @@ export type MarketplaceOrder = {
   milestones: MarketplaceOrderMilestone[]
   deliverables: MarketplaceOrderDeliverable[]
   messages: MarketplaceOrderMessage[]
+  disputeOpenedAt?: string | null
+  disputeReason?: string | null
+  disputeDetails?: string | null
+  sellerAcceptanceDeadlineAt?: string | null
+  acceptedAt?: string | null
+  deliveredAt?: string | null
+  buyerValidationDeadlineAt?: string | null
+  completedAt?: string | null
+  autoCompletedAt?: string | null
+  refundStatus?: MarketplaceOrderPresenter['refundStatus']
+  refundProposedAt?: string | null
+  refundReason?: string | null
+  refundedAt?: string | null
 }
 
 export type MarketplaceOrderStatusFilter = MarketplaceOrderStatus | 'all'
@@ -104,6 +120,18 @@ export const marketplaceOrderStatusMeta: Record<MarketplaceOrderStatus, {
     shortLabel: 'Terminee',
     icon: 'lucide:circle-check',
     tone: 'success'
+  },
+  cancelled: {
+    label: 'Annulee',
+    shortLabel: 'Annulee',
+    icon: 'lucide:circle-x',
+    tone: 'neutral'
+  },
+  refused: {
+    label: 'Refusee',
+    shortLabel: 'Refusee',
+    icon: 'lucide:x-circle',
+    tone: 'danger'
   }
 }
 
@@ -117,7 +145,9 @@ export const marketplaceOrderStatusFilters: Array<{
   { value: 'in_progress', label: 'En cours', icon: marketplaceOrderStatusMeta.in_progress.icon },
   { value: 'waiting_partner', label: 'En attente', icon: marketplaceOrderStatusMeta.waiting_partner.icon },
   { value: 'review', label: 'A valider', icon: marketplaceOrderStatusMeta.review.icon },
-  { value: 'completed', label: 'Terminees', icon: marketplaceOrderStatusMeta.completed.icon }
+  { value: 'completed', label: 'Terminees', icon: marketplaceOrderStatusMeta.completed.icon },
+  { value: 'refused', label: 'Refusees', icon: marketplaceOrderStatusMeta.refused.icon },
+  { value: 'cancelled', label: 'Annulees', icon: marketplaceOrderStatusMeta.cancelled.icon }
 ]
 
 const marketplaceDateFormatter = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -143,12 +173,17 @@ const mapMarketplaceOrderStatus = (status: MarketplaceApiOrderStatus, role: Mark
   if (status === 'PENDING') return role === 'seller' ? 'requires_action' : 'waiting_partner'
   if (status === 'ACCEPTED' || status === 'IN_PROGRESS') return 'in_progress'
   if (status === 'DELIVERED') return role === 'buyer' ? 'review' : 'waiting_partner'
+  if (status === 'REJECTED') return 'refused'
+  if (status === 'CANCELLED') return 'cancelled'
   return 'completed'
 }
 
 const getMarketplaceOrderParticipant = (profile: MarketplaceOrderPresenter['buyer'], fallback: string): MarketplaceOrderParticipant => ({
   name: profile?.username || fallback,
-  role: 'Profil Neeft'
+  slug: profile?.slug || null,
+  role: 'Profil Neeft',
+  description: profile?.description || null,
+  profilePicture: profile?.profilePicture || null
 })
 
 const getMarketplaceOrderAction = (order: MarketplaceOrderPresenter, role: MarketplaceOrderRole): MarketplaceOrderAction => {
@@ -166,7 +201,7 @@ const getMarketplaceOrderAction = (order: MarketplaceOrderPresenter, role: Marke
 
   if (order.status === 'IN_PROGRESS') {
     return role === 'seller'
-      ? { title: 'Production en cours', description: 'Quand le resultat est pret, marque la commande comme livree pour demander la validation client.', ctaLabel: 'Marquer comme livre', icon: 'lucide:package-check', urgent: true }
+      ? { title: 'Production en cours', description: 'Livraison a transmettre.', ctaLabel: 'Marquer comme livre', icon: 'lucide:package-check', urgent: true }
       : { title: 'Production en cours', description: 'Le vendeur travaille sur la commande.', ctaLabel: 'Voir les messages', icon: 'lucide:activity' }
   }
 
@@ -222,6 +257,16 @@ const getMarketplaceOrderMessages = (order: MarketplaceOrderPresenter, role: Mar
     messages.unshift({ author: 'Systeme', role: 'system', excerpt: order.statusNote, date: formatMarketplaceDate(order.updatedAt, true) })
   }
 
+  if (order.disputeOpenedAt) {
+    messages.unshift({
+      author: 'Systeme',
+      role: 'system',
+      excerpt: order.disputeReason ? `Litige ouvert: ${order.disputeReason}` : 'Litige ouvert sur cette commande.',
+      date: formatMarketplaceDate(order.disputeOpenedAt, true),
+      unreadFor: role === 'buyer' ? ['buyer'] : ['seller']
+    })
+  }
+
   return messages
 }
 
@@ -237,7 +282,7 @@ export const toMarketplaceOrder = (order: MarketplaceOrderPresenter, role: Marke
     serviceSlug,
     serviceTitle: serviceName,
     serviceIcon: 'lucide:briefcase-business',
-    serviceCoverImage: order.service?.bannerUrl || '/images/landing/competition-arena.jpg',
+    serviceCoverImage: order.service?.bannerUrl || '',
     buyer: getMarketplaceOrderParticipant(order.buyer, 'Client marketplace'),
     seller: getMarketplaceOrderParticipant(order.seller, 'Vendeur marketplace'),
     status: mapMarketplaceOrderStatus(order.status, role),
@@ -255,7 +300,20 @@ export const toMarketplaceOrder = (order: MarketplaceOrderPresenter, role: Marke
     },
     milestones: getMarketplaceOrderMilestones(order.status),
     deliverables: getMarketplaceOrderDeliverables(order),
-    messages: getMarketplaceOrderMessages(order, role)
+    messages: getMarketplaceOrderMessages(order, role),
+    disputeOpenedAt: order.disputeOpenedAt,
+    disputeReason: order.disputeReason,
+    disputeDetails: order.disputeDetails,
+    sellerAcceptanceDeadlineAt: order.sellerAcceptanceDeadlineAt,
+    acceptedAt: order.acceptedAt,
+    deliveredAt: order.deliveredAt,
+    buyerValidationDeadlineAt: order.buyerValidationDeadlineAt,
+    completedAt: order.completedAt,
+    autoCompletedAt: order.autoCompletedAt,
+    refundStatus: order.refundStatus,
+    refundProposedAt: order.refundProposedAt,
+    refundReason: order.refundReason,
+    refundedAt: order.refundedAt
   }
 }
 

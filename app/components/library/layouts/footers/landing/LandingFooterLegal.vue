@@ -8,11 +8,11 @@
 </template>
 
 <script setup lang="ts">
+import type { LandingNavigationItem } from '~/composables/useConfig'
+
 const { t } = useI18n()
 
-defineProps({
-  items: { type: Array as () => Array<{ to: string; labelKey: string }>, required: true }
-})
+defineProps<{ items: readonly LandingNavigationItem[] }>()
 
 const currentYear = new Date().getFullYear()
 </script>

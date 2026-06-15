@@ -10,7 +10,7 @@
   >
     <NuxtImg
       class="search-players-page__image"
-      :src="props.imageSrc"
+      :src="imageSrc"
       :alt="props.imageAlt"
       :width="props.imageWidth"
       :height="props.imageHeight"
@@ -134,7 +134,7 @@ const props = defineProps({
     default: 'sidebar',
     validator: (value: string) => ['sidebar', 'modal'].includes(value)
   },
-  imageSrc: { type: String, default: '/images/landing/competition-arena.jpg' },
+  imageSrc: { type: String, default: '' },
   imageAlt: { type: String, default: '' },
   imageWidth: { type: [String, Number], default: 1400 },
   imageHeight: { type: [String, Number], default: 933 },
@@ -168,6 +168,8 @@ const props = defineProps({
 })
 
 const summaryLabel = computed(() => props.summaryLabel || t('app.search.layout.summaryLabel'))
+const config = useConfig()
+const imageSrc = computed(() => props.imageSrc || config.search.players.bannerUrl)
 const actionsLabel = computed(() => props.actionsLabel || t('app.search.layout.actionsLabel'))
 const filterButtonLabel = computed(() => props.filterButtonLabel || t('app.search.layout.filterButtonLabel'))
 const sortLabel = computed(() => props.sortLabel || t('app.search.layout.sortLabel'))

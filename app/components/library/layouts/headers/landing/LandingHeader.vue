@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+import type { LandingActionItem, LandingNavigationItem } from '~/composables/useConfig'
+
 const { t } = useI18n()
 const route = useRoute()
 const sessionStore = useSessionStore()
@@ -26,10 +28,10 @@ const mobileMenuId = `landing-header-menu-${useId()}`
 let scrollFrame = 0
 const showGuestActions = computed(() => !sessionStore.isLoggedIn)
 
-defineProps({
-  navItems: { type: Array as () => Array<{ to: string; label: string; active?: boolean }>, required: true },
-  actionItems: { type: Array as () => Array<{ to: string; label: string; variant?: 'default' | 'primary' }>, required: true }
-})
+defineProps<{
+  navItems: readonly LandingNavigationItem[]
+  actionItems: readonly LandingActionItem[]
+}>()
 
 const updatePinnedState = () => { isPinned.value = window.scrollY > 0 }
 

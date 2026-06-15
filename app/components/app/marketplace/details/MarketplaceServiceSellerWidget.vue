@@ -2,22 +2,22 @@
   <MarketplaceServiceSidebarPanel class="marketplace-service-profile-seller-card">
     <header class="marketplace-service-profile-seller-card__header">
       <CustomAvatar
-        :src="sellerAvatarSrc"
-        :name="sellerName"
-        :alt="`Avatar de ${sellerName}`"
+        :src="config.profile.getUserAvatarUrl(seller?.profilePicture)"
+        :name="getSellerName(seller)"
+        :alt="`Avatar de ${getSellerName(seller)}`"
         size="lg"
         theme="app"
         color="primary"
       />
       <div class="marketplace-service-profile-seller-card__identity">
         <p class="marketplace-service-profile-eyebrow">Vendeur</p>
-        <h2>{{ sellerName }}</h2>
+        <h2>{{ getSellerName(seller) }}</h2>
         <span>Prestataire marketplace</span>
       </div>
     </header>
 
     <p class="marketplace-service-profile-seller-card__summary">
-      {{ sellerSummary }}
+      {{ getSellerName(seller) }} est la personne qui realise ce service. Contacte le vendeur pour clarifier le besoin avant de commander.
     </p>
 
     <CustomButton
@@ -33,15 +33,21 @@
 </template>
 
 <script setup lang="ts">
+import type { MarketplaceProfilePresenter } from '~/plugins/marketplace-api'
+
 defineProps<{
-  sellerName: string
-  sellerAvatarSrc: string
-  sellerSummary: string
+  seller: MarketplaceProfilePresenter | null
 }>()
 
 const emit = defineEmits<{
   contact: []
 }>()
+
+const config = useConfig()
+
+const getSellerName = (seller: MarketplaceProfilePresenter | null) => {
+  return seller?.username || 'Vendeur marketplace'
+}
 </script>
 
 <style>

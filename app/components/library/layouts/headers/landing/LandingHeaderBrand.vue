@@ -1,8 +1,12 @@
 <template>
-  <NuxtLink class="landing-header-brand" to="/" aria-label="NEEFT">
-    <img src="/images/logos/neeft/Logo_NEEFT_FOX.png" alt="" decoding="async">
+  <NuxtLink class="landing-header-brand" to="/" :aria-label="config.global.name">
+    <img :src="config.global.assets.logos.mark" alt="" decoding="async">
   </NuxtLink>
 </template>
+
+<script setup lang="ts">
+const config = useConfig()
+</script>
 
 <style scoped lang="scss">
 @use '~/assets/scss/mixins/breakpoints' as *;

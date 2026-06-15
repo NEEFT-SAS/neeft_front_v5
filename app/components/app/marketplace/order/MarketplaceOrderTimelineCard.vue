@@ -45,8 +45,9 @@ const getMilestoneIcon = (state: MarketplaceTimelineState) => {
 .marketplace-order-timeline-card {
   display: grid;
   gap: var(--orders-space-3);
-  padding: var(--orders-space-3) 0 0;
-  border-top: var(--orders-border) solid var(--orders-color-line);
+  padding-bottom: var(--orders-space-4);
+  border-bottom: var(--orders-border) solid var(--orders-color-line);
+  background-color: transparent;
 }
 
 .marketplace-order-timeline-card__header {
@@ -57,11 +58,12 @@ const getMilestoneIcon = (state: MarketplaceTimelineState) => {
 }
 
 .marketplace-order-timeline-card__header > span {
-  max-width: calc(var(--orders-unit) * 36);
-  color: var(--orders-color-muted);
+  display: inline-flex;
+  align-items: center;
+  color: var(--orders-color-accent);
   font-size: var(--orders-font-small);
-  font-weight: 600;
-  line-height: var(--orders-line-body);
+  font-weight: 800;
+  line-height: var(--orders-line-tight);
   text-align: right;
 }
 
@@ -89,7 +91,7 @@ const getMilestoneIcon = (state: MarketplaceTimelineState) => {
 
 .marketplace-order-timeline-card__list {
   display: grid;
-  gap: var(--orders-space-1);
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -100,6 +102,8 @@ const getMilestoneIcon = (state: MarketplaceTimelineState) => {
   display: grid;
   grid-template-columns: var(--orders-hit-size) minmax(0, 1fr);
   gap: var(--orders-space-2);
+  min-height: calc(var(--orders-unit) * 9);
+  padding-top: var(--orders-space-2);
 }
 
 .marketplace-order-timeline-card__list li::before {
@@ -123,9 +127,9 @@ const getMilestoneIcon = (state: MarketplaceTimelineState) => {
   justify-content: center;
   width: var(--orders-hit-size);
   height: var(--orders-hit-size);
-  border: var(--orders-border) solid var(--orders-color-line);
+  border: 0;
   border-radius: var(--orders-radius-round);
-  background-color: var(--orders-color-bg);
+  background-color: transparent;
   color: var(--orders-color-subtle);
 }
 
@@ -147,7 +151,12 @@ const getMilestoneIcon = (state: MarketplaceTimelineState) => {
 .marketplace-order-timeline-card__list div {
   display: grid;
   gap: calc(var(--orders-unit) * 0.5);
-  padding-bottom: var(--orders-space-2);
+  padding-bottom: var(--orders-space-3);
+  border-bottom: var(--orders-border) solid color-mix(in oklch, var(--orders-color-line) 70%, var(--orders-color-transparent));
+}
+
+.marketplace-order-timeline-card__list li:last-child div {
+  border-bottom: 0;
 }
 
 .marketplace-order-timeline-card__list span {

@@ -5,8 +5,8 @@
     :class="{ 'app-header--menu-open': isResponsiveMenuOpen }"
     @keydown.escape="closeResponsiveMenu"
   >
-    <NuxtLink class="app-header__brand" to="/" aria-label="Accueil NEEFT" @click="closeResponsiveMenu">
-      <img src="/images/logos/neeft/Logo_NEEFT_FOX.png" alt="" decoding="async">
+    <NuxtLink class="app-header__brand" to="/" :aria-label="`Accueil ${config.global.name}`" @click="closeResponsiveMenu">
+      <img :src="config.global.assets.logos.app" alt="" decoding="async">
     </NuxtLink>
 
     <button
@@ -32,33 +32,15 @@
 </template>
 
 <script setup lang="ts">
-type NavigationItem = { label: string; to: string; icon?: string }
-type NavigationMenu = { key: string; label: string; icon: string; items: NavigationItem[] }
-
+const config = useConfig()
 const route = useRoute()
 const headerElement = ref<HTMLElement | null>(null)
 const isResponsiveMenuOpen = ref(false)
 const responsiveMenuId = `app-header-menu-${useId()}`
 const responsiveMenuLabel = computed(() => isResponsiveMenuOpen.value ? 'Fermer la navigation' : 'Ouvrir la navigation')
 
-const navigationMenus: NavigationMenu[] = [
-  {
-    key: 'directories',
-    label: 'Rechercher',
-    icon: 'lucide:search',
-    items: [
-      { label: 'Rechercher un joueur', to: '/search/players', icon: 'lucide:gamepad-2' },
-      { label: 'Rechercher une equipe', to: '/search/teams', icon: 'lucide:users-round' },
-      { label: 'Rechercher un staff', to: '/search/staffs', icon: 'lucide:user-round-cog' }
-    ]
-  }
-]
-
-const navigationLinks: NavigationItem[] = [
-  { label: 'Marketplace', to: '/marketplace', icon: 'lucide:store' },
-  { label: 'Feed', to: '/feed', icon: 'lucide:newspaper' },
-  { label: 'Offres de recrutement', to: '/recruitment', icon: 'lucide:briefcase-business' }
-]
+const navigationMenus = config.app.navigation.menus
+const navigationLinks = config.app.navigation.links
 
 const closeResponsiveMenu = () => { isResponsiveMenuOpen.value = false }
 const toggleResponsiveMenu = () => { isResponsiveMenuOpen.value = !isResponsiveMenuOpen.value }

@@ -2,76 +2,89 @@
   <MarketplaceServiceDetailLayout>
     <template #hero>
       <MarketplaceServiceDetailHero
-        :service="service"
-        :games="serviceGames"
-        :rating="serviceReviewRating"
-        :review-count="serviceReviewCount"
-        :is-owner="isServiceOwner"
-        @contact="requestQuote"
-        @share="shareService"
-        @edit="isServiceEditOpen = true"
-        @delete="isDeleteServiceOpen = true"
+        :service="detail.service"
+        :rating="detail.reviewRating"
+        :review-count="detail.reviewCount"
+        :is-owner="detail.isOwner"
+        @contact="detail.requestQuote"
+        @share="detail.shareService"
+        @edit="detail.isServiceEditOpen = true"
+        @delete="detail.isDeleteServiceOpen = true"
       />
     </template>
 
-    <MarketplaceServiceDescriptionWidget :paragraphs="descriptionParagraphs" />
+    <MarketplaceServiceDescriptionWidget :description="detail.service.description" />
 
     <MarketplaceServiceGalleryWidget
-      v-if="serviceGalleryImages.length"
-      :images="serviceGalleryImages"
-      :service-name="service.name"
+      :images="detail.service.images || []"
+      :service-name="detail.service.name"
     />
 
     <MarketplaceServiceReviewsWidget
-      :reviews="serviceReviews"
-      :rating="serviceReviewRating"
-      :review-count="serviceReviewCount"
-      :pending="areServiceReviewsPending"
-      :error="serviceReviewsError"
+      :reviews="detail.reviews"
+      :rating="detail.reviewRating"
+      :review-count="detail.reviewCount"
+      :pending="detail.areReviewsPending"
+      :error="detail.reviewsError"
     />
 
     <template #sidebar>
       <MarketplaceServiceOffersWidget
-        v-model:selected-offer-id="selectedOfferId"
-        :offers="serviceOffers"
-        :selected-offer="selectedOffer"
-        @order="openOrderModal"
+        v-model:selected-offer-id="detail.selectedOfferId"
+        :offers="detail.service.services || []"
+        :selected-offer="detail.selectedOffer"
+        @order="detail.openOrderModal"
       />
 
       <MarketplaceServiceSellerWidget
-        :seller-name="sellerName"
-        :seller-avatar-src="sellerAvatarSrc"
-        :seller-summary="sellerSummary"
-        @contact="requestQuote"
+        :seller="detail.service.seller"
+        @contact="detail.requestQuote"
       />
     </template>
 
     <template #overlays>
       <MarketplaceOrderModal
-        v-if="selectedOffer"
-        v-model="isOrderModalOpen"
-        :service="service"
-        :offer="selectedOffer"
+        v-if="detail.selectedOffer"
+        v-model="detail.isOrderModalOpen"
+        :service="detail.service"
+        :offer="detail.selectedOffer"
       />
       <HeaderServiceProposalModal
-        v-model="isServiceEditOpen"
-        :service="service"
+        v-model="detail.isServiceEditOpen"
+        :service="detail.service"
         :refresh-on-saved="false"
-        @saved="handleServiceSaved"
+        @saved="detail.handleServiceSaved"
       />
       <MarketplaceServiceDeleteModal
-        v-model="isDeleteServiceOpen"
-        :service="service"
-        :deleting="isDeletingService"
-        @confirm="deleteService"
+        v-model="detail.isDeleteServiceOpen"
+        :service="detail.service"
+        :deleting="detail.isDeletingService"
+        @confirm="detail.deleteService"
       />
     </template>
   </MarketplaceServiceDetailLayout>
 </template>
 
 <script setup lang="ts">
-import type { MarketplaceServiceLinePresenter, MarketplaceServicePresenter } from '~/plugins/marketplace-api'
-import { getSafeMarketplaceImageSrc, isSafeMarketplaceImageSrc } from '~/utils/marketplaceImages'
+import type { MarketplaceProfilePresenter, MarketplaceServiceLinePresenter, MarketplaceServicePresenter } from '~/plugins/marketplace-api'
+
+const REVIEWS_LIMIT = 8
+const SERVICE_NOT_FOUND_MESSAGE = 'Service marketplace introuvable'
+
+const normalizeRouteParam = (value: unknown) => {
+  return String(Array.isArray(value) ? value[0] || '' : value || '')
+}
+
+const getSellerName = (seller: MarketplaceProfilePresenter | null | undefined) => {
+  return seller?.username || 'Vendeur marketplace'
+}
+
+const getShortDescription = (description: string) => {
+  const normalized = description.replace(/\s+/g, ' ').trim()
+  if (normalized.length <= 180) return normalized
+
+  return `${normalized.slice(0, 177).trim()}...`
+}
 
 definePageMeta({
   layout: 'app'
@@ -79,78 +92,68 @@ definePageMeta({
 
 const route = useRoute()
 const marketplaceToast = useMarketplaceToasts()
+const config = useConfig()
 const sessionStore = useSessionStore()
 const { $marketplaceAPI } = useNuxtApp()
-const routeSlug = String(Array.isArray(route.params.slug) ? route.params.slug[0] || '' : route.params.slug || '')
-
-const getDescriptionParagraphs = (description: string) => {
-  return description.split(/\n{2,}/).map(paragraph => paragraph.trim()).filter(Boolean)
-}
-
-const getShortDescription = (description: string) => {
-  const normalized = description.replace(/\s+/g, ' ').trim()
-  if (normalized.length <= 180) return normalized
-  return `${normalized.slice(0, 177).trim()}...`
-}
+const routeSlug = normalizeRouteParam(route.params.slug)
 
 if (!routeSlug) {
-  throw createError({ statusCode: 404, statusMessage: 'Service marketplace introuvable' })
+  throw createError({ statusCode: 404, statusMessage: SERVICE_NOT_FOUND_MESSAGE })
 }
 
-const { data: apiService, error: serviceError } = await useAsyncData(`marketplace-service-${routeSlug}`, () => $marketplaceAPI.services.get(routeSlug))
-
-if (serviceError.value || !apiService.value) {
-  const statusCode = Number((serviceError.value as { statusCode?: unknown } | null)?.statusCode || 404)
-  throw createError({ statusCode, statusMessage: 'Service marketplace introuvable' })
-}
-
-const { data: serviceReviewsResponse, pending: areServiceReviewsPending, error: serviceReviewsError } = await useAsyncData(`marketplace-service-reviews-${routeSlug}`, () => {
-  return $marketplaceAPI.reviews.listForService(routeSlug, { limit: 8 })
+const { data, error } = await useAsyncData(`marketplace-service-${routeSlug}`, () => {
+  return $marketplaceAPI.services.get(routeSlug)
 })
 
-const service = computed(() => apiService.value as MarketplaceServicePresenter)
+if (error.value || !data.value) {
+  const statusCode = Number((error.value as { statusCode?: unknown } | null)?.statusCode || 404)
+  throw createError({ statusCode, statusMessage: SERVICE_NOT_FOUND_MESSAGE })
+}
+
+const service = ref(data.value as MarketplaceServicePresenter)
 const selectedOfferId = ref('')
+const selectedOffer = ref<MarketplaceServiceLinePresenter>()
+const isOwner = ref(false)
 const isOrderModalOpen = ref(false)
 const isServiceEditOpen = ref(false)
 const isDeleteServiceOpen = ref(false)
 const isDeletingService = ref(false)
 
-const serviceOffers = computed(() => service.value.services || [])
+const reviewsResponse = await useAsyncData(`marketplace-service-reviews-${routeSlug}`, () => {
+  return $marketplaceAPI.reviews.listForService(routeSlug, { limit: REVIEWS_LIMIT })
+})
 
-watch(serviceOffers, (offers) => {
-  if (!offers.length) return
-  if (!offers.some(offer => offer.id === selectedOfferId.value)) {
-    selectedOfferId.value = offers[0].id
+const reviews = ref(reviewsResponse.data.value?.data || [])
+const reviewRating = ref(Number(reviewsResponse.data.value?.meta?.ratingAvg ?? service.value.ratingAvg ?? 0))
+const reviewCount = ref(Number(reviewsResponse.data.value?.meta?.total ?? service.value.ratingCount ?? 0))
+
+const syncSelectedOffer = () => {
+  const offers = service.value.services || []
+  selectedOffer.value = offers.find(offer => offer.id === selectedOfferId.value) || offers[0]
+
+  if (selectedOffer.value && selectedOfferId.value !== selectedOffer.value.id) {
+    selectedOfferId.value = selectedOffer.value.id
   }
-}, { immediate: true })
+}
 
-const selectedOffer = computed<MarketplaceServiceLinePresenter | undefined>(() => {
-  return serviceOffers.value.find(offer => offer.id === selectedOfferId.value) || serviceOffers.value[0]
-})
-
-const descriptionParagraphs = computed(() => getDescriptionParagraphs(service.value.description))
-const serviceShortDescription = computed(() => getShortDescription(service.value.description))
-const sellerName = computed(() => service.value.seller?.username || 'Vendeur marketplace')
-const sellerAvatarSrc = computed(() => service.value.seller?.profilePicture || '')
-const isServiceOwner = computed(() => {
+const syncOwner = () => {
   const sellerSlug = service.value.seller?.slug
-  return Boolean(sessionStore.isLoggedIn && sellerSlug && sessionStore.mySlug && sellerSlug === sessionStore.mySlug)
-})
-const serviceGames = computed(() => service.value.rscGames || [])
-const serviceGalleryImages = computed(() => (service.value.images || []).filter(isSafeMarketplaceImageSrc))
-const serviceReviews = computed(() => serviceReviewsResponse.value?.data || [])
-const serviceReviewRating = computed(() => Number(serviceReviewsResponse.value?.meta?.ratingAvg ?? service.value.ratingAvg ?? 0))
-const serviceReviewCount = computed(() => Number(serviceReviewsResponse.value?.meta?.total ?? service.value.ratingCount ?? 0))
-const sellerSummary = computed(() => {
-  return `${sellerName.value} est la personne qui realise ce service. Contacte le vendeur pour clarifier le besoin avant de commander.`
-})
+  isOwner.value = Boolean(sessionStore.isLoggedIn && sellerSlug && sessionStore.mySlug && sellerSlug === sessionStore.mySlug)
+}
+
+syncSelectedOffer()
+syncOwner()
+
+watch(selectedOfferId, syncSelectedOffer)
+watch(() => [sessionStore.isLoggedIn, sessionStore.mySlug, service.value.seller?.slug], syncOwner)
 
 const requestQuote = () => {
-  marketplaceToast.services.contactRequestSent(sellerName.value, service.value.name)
+  marketplaceToast.services.contactRequestSent(getSellerName(service.value.seller), service.value.name)
 }
 
 const openOrderModal = () => {
   if (!selectedOffer.value) return
+
   isOrderModalOpen.value = true
 }
 
@@ -163,42 +166,34 @@ const shareService = async () => {
     if (navigator.share) {
       await navigator.share({
         title: service.value.name,
-        text: serviceShortDescription.value,
+        text: getShortDescription(service.value.description),
         url
       })
       return
     }
 
     await navigator.clipboard?.writeText(url)
-
     marketplaceToast.services.linkCopied()
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') return
+  } catch (shareError) {
+    if (shareError instanceof DOMException && shareError.name === 'AbortError') return
 
     marketplaceToast.services.shareFailed()
   }
 }
 
-const refreshMarketplaceServiceViews = async (savedService?: MarketplaceServicePresenter) => {
-  if (savedService) {
-    apiService.value = savedService
-
-    if (savedService.slug && savedService.slug !== routeSlug) {
-      await navigateTo(`/marketplace/${savedService.slug}`)
-    }
-
-    return
-  }
-
-  await refreshNuxtData(['marketplace-services', 'marketplace-services-mine'])
-}
-
 const handleServiceSaved = async (savedService: MarketplaceServicePresenter) => {
-  await refreshMarketplaceServiceViews(savedService)
+  service.value = savedService
+  data.value = savedService
+  syncSelectedOffer()
+  syncOwner()
+
+  if (savedService.slug && savedService.slug !== routeSlug) {
+    await navigateTo(`/marketplace/${savedService.slug}`)
+  }
 }
 
 const deleteService = async (targetService: MarketplaceServicePresenter) => {
-  if (!isServiceOwner.value) return
+  if (!isOwner.value) return
 
   isDeletingService.value = true
 
@@ -215,17 +210,39 @@ const deleteService = async (targetService: MarketplaceServicePresenter) => {
   }
 }
 
-onMounted(() => {
-  void sessionStore.bootstrap()
+onMounted(async () => {
+  await sessionStore.bootstrap()
+  syncOwner()
 })
 
 useSeoMeta({
   title: () => service.value.name,
-  description: () => serviceShortDescription.value,
+  description: () => getShortDescription(service.value.description),
   ogTitle: () => service.value.name,
-  ogDescription: () => serviceShortDescription.value,
-  ogImage: () => getSafeMarketplaceImageSrc(service.value.bannerUrl) || undefined,
+  ogDescription: () => getShortDescription(service.value.description),
+  ogImage: () => config.marketplace.service.getServiceBannerUrl(service.value.bannerUrl),
   twitterCard: 'summary_large_image',
-  twitterImage: () => getSafeMarketplaceImageSrc(service.value.bannerUrl) || undefined
+  twitterImage: () => config.marketplace.service.getServiceBannerUrl(service.value.bannerUrl)
+})
+
+const detail = reactive({
+  service,
+  selectedOfferId,
+  selectedOffer,
+  reviews,
+  reviewRating,
+  reviewCount,
+  isOwner,
+  isOrderModalOpen,
+  isServiceEditOpen,
+  isDeleteServiceOpen,
+  isDeletingService,
+  areReviewsPending: reviewsResponse.pending,
+  reviewsError: reviewsResponse.error,
+  requestQuote,
+  openOrderModal,
+  shareService,
+  handleServiceSaved,
+  deleteService
 })
 </script>

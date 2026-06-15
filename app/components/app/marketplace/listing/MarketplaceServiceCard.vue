@@ -9,7 +9,7 @@
         <MarketplaceSafeImage
           class="marketplace-service-card__banner"
           empty-class="marketplace-service-card__banner--empty"
-          :src="props.service.coverImageUrl"
+          :src="config.marketplace.service.getServiceBannerUrl(props.service.coverImageUrl)"
           :alt="`Banniere du service ${props.service.title}`"
           width="320"
           height="180"
@@ -75,6 +75,8 @@ const props = defineProps<{
   service: MarketplaceServiceListItemPresenter
 }>()
 
+const config = useConfig()
+
 const formatMarketplacePrice = (price: number) => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
@@ -86,7 +88,7 @@ const formatMarketplacePrice = (price: number) => {
 const servicePath = computed(() => `/marketplace/${props.service.slug}`)
 const primaryCategory = computed(() => props.service.rscCategories?.[0] || null)
 const sellerName = computed(() => props.service.seller?.username || '')
-const sellerAvatarSrc = computed(() => props.service.seller?.profilePicture || '')
+const sellerAvatarSrc = computed(() => config.profile.getUserAvatarUrl(props.service.seller?.profilePicture))
 
 const priceLabel = computed(() => {
   const prices = (props.service.offers || [])

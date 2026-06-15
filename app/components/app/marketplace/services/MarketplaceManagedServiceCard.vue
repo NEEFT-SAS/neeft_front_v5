@@ -1,7 +1,7 @@
 <template>
   <article class="marketplace-managed-service-card">
     <NuxtLink class="marketplace-managed-service-card__cover" :to="servicePath" :aria-label="`Voir le service ${service.name}`">
-      <MarketplaceSafeImage :src="service.bannerUrl" :alt="`Banniere du service ${service.name}`" class="marketplace-managed-service-card__cover-image" empty-class="marketplace-managed-service-card__cover-empty" width="360" height="220" loading="lazy" decoding="async" />
+      <MarketplaceSafeImage :src="config.marketplace.service.getServiceBannerUrl(service.bannerUrl)" :alt="`Banniere du service ${service.name}`" class="marketplace-managed-service-card__cover-image" empty-class="marketplace-managed-service-card__cover-empty" width="360" height="220" loading="lazy" decoding="async" />
       <span :data-status="service.status">{{ statusLabel }}</span>
     </NuxtLink>
 
@@ -90,6 +90,8 @@ const emit = defineEmits<{
   toggleStatus: [service: MarketplaceServicePresenter]
   delete: [service: MarketplaceServicePresenter]
 }>()
+
+const config = useConfig()
 
 const statusLabels: Record<MarketplaceServiceStatus, string> = {
   DRAFT: 'Brouillon',

@@ -14,12 +14,14 @@
 </template>
 
 <script setup lang="ts">
+import type { LandingNavigationItem } from '~/composables/useConfig'
+
 const { t } = useI18n()
 
-defineProps({
-  titleId: { type: String, required: true },
-  items: { type: Array as () => Array<{ to: string; labelKey: string }>, required: true }
-})
+defineProps<{
+  titleId: string
+  items: readonly LandingNavigationItem[]
+}>()
 </script>
 
 <style scoped lang="scss">

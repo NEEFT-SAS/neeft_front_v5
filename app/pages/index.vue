@@ -11,4 +11,8 @@
 definePageMeta({
   layout: 'landing'
 })
+
+const config = useConfig()
+
+useSeoMeta(config.landing.home.seo)
 </script>

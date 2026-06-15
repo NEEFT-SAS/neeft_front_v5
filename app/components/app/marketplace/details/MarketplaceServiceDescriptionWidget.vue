@@ -6,7 +6,7 @@
     id="marketplace-service-description"
   >
     <div class="marketplace-service-profile-copy">
-      <p v-for="paragraph in paragraphs" :key="paragraph">
+      <p v-for="paragraph in getDescriptionParagraphs(description)" :key="paragraph">
         {{ paragraph }}
       </p>
     </div>
@@ -15,8 +15,12 @@
 
 <script setup lang="ts">
 defineProps<{
-  paragraphs: string[]
+  description: string
 }>()
+
+const getDescriptionParagraphs = (description: string) => {
+  return description.split(/\n{2,}/).map(paragraph => paragraph.trim()).filter(Boolean)
+}
 </script>
 
 <style>

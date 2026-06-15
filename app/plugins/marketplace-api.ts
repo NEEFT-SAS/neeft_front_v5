@@ -9,6 +9,7 @@ export type MarketplaceProfilePresenter = {
   id: string
   username: string
   slug: string
+  description: string | null
   profilePicture: string | null
 }
 
@@ -117,12 +118,30 @@ export type MarketplaceOrderPresenter = {
   amount: number
   currency: string
   status: MarketplaceOrderStatus
+  paymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED' | 'REFUNDED'
+  paidAt: string | null
   objective: MarketplaceOrderObjective
   deadline: MarketplaceOrderDeadline
   brief: string
   assets: string | null
   contact: string
   statusNote: string | null
+  disputeOpenedAt: string | null
+  disputeOpenedByProfileId: string | null
+  disputeReason: string | null
+  disputeDetails: string | null
+  sellerAcceptanceDeadlineAt: string | null
+  acceptedAt: string | null
+  deliveredAt: string | null
+  buyerValidationDeadlineAt: string | null
+  completedAt: string | null
+  autoCompletedAt: string | null
+  refundStatus: 'NONE' | 'PROPOSED' | 'REFUNDED'
+  refundProposedAt: string | null
+  refundProposedByProfileId: string | null
+  refundReason: string | null
+  refundedAt: string | null
+  stripeRefundId: string | null
   createdAt: string
   updatedAt: string
 }
@@ -188,7 +207,35 @@ export type MarketplaceOrderPaymentIntentPresenter = {
   id: string
   intentType: 'payment'
   clientSecret: string | null
-  orderId: string
+  orderId: string | null
+}
+
+export type ConfirmMarketplaceOrderPaymentInput = {
+  paymentIntentId: string
+}
+
+export type ConfirmMarketplaceOrderCreationPaymentInput = ConfirmMarketplaceOrderPaymentInput & Omit<CreateMarketplaceOrderInput, 'confirmed'> & {
+  serviceId: string
+}
+
+export type MarketplaceOrderPaymentDocumentPresenter = {
+  receiptUrl: string | null
+  invoiceUrl: string | null
+  invoicePdf: string | null
+}
+
+export type OpenMarketplaceOrderDisputeInput = {
+  reason: string
+  details?: string
+}
+
+export type ProposeMarketplaceOrderRefundInput = {
+  reason: string
+}
+
+export type CreateMarketplaceServiceReviewInput = {
+  rating: number
+  comment: string
 }
 
 export type UpdateMarketplaceOrderInput = Partial<Omit<CreateMarketplaceOrderInput, 'serviceLineId' | 'confirmed'>>
@@ -230,13 +277,22 @@ export type MarketplaceApi = {
     create: (serviceId: string, input: CreateMarketplaceOrderInput) => Promise<MarketplaceOrderPresenter>
     checkout: (orderId: string, input?: CreateMarketplaceOrderCheckoutInput) => Promise<MarketplaceOrderCheckoutPresenter>
     createPaymentIntent: (orderId: string) => Promise<MarketplaceOrderPaymentIntentPresenter>
+    createPaymentIntentForService: (serviceId: string, input: CreateMarketplaceOrderInput) => Promise<MarketplaceOrderPaymentIntentPresenter>
+    confirmPayment: (orderId: string, input: ConfirmMarketplaceOrderPaymentInput) => Promise<MarketplaceOrderPresenter>
+    confirmPaymentForService: (input: ConfirmMarketplaceOrderCreationPaymentInput) => Promise<MarketplaceOrderPresenter>
     listBuyer: (query?: MarketplaceOrdersQuery) => Promise<MarketplaceEnvelope<MarketplaceOrderPresenter[], MarketplaceListMeta>>
     listSeller: (query?: MarketplaceOrdersQuery) => Promise<MarketplaceEnvelope<MarketplaceOrderPresenter[], MarketplaceListMeta>>
     getBuyer: (orderId: string) => Promise<MarketplaceOrderPresenter>
     getSeller: (orderId: string) => Promise<MarketplaceOrderPresenter>
+    getBuyerPaymentDocuments: (orderId: string) => Promise<MarketplaceOrderPaymentDocumentPresenter>
+    getSellerPaymentDocuments: (orderId: string) => Promise<MarketplaceOrderPaymentDocumentPresenter>
     update: (orderId: string, input: UpdateMarketplaceOrderInput) => Promise<MarketplaceOrderPresenter>
     updateBuyerStatus: (orderId: string, input: UpdateMarketplaceOrderStatusInput) => Promise<MarketplaceOrderPresenter>
     updateSellerStatus: (orderId: string, input: UpdateMarketplaceOrderStatusInput) => Promise<MarketplaceOrderPresenter>
+    openBuyerDispute: (orderId: string, input: OpenMarketplaceOrderDisputeInput) => Promise<MarketplaceOrderPresenter>
+    openSellerDispute: (orderId: string, input: OpenMarketplaceOrderDisputeInput) => Promise<MarketplaceOrderPresenter>
+    proposeSellerRefund: (orderId: string, input: ProposeMarketplaceOrderRefundInput) => Promise<MarketplaceOrderPresenter>
+    createReview: (orderId: string, input: CreateMarketplaceServiceReviewInput) => Promise<MarketplaceServiceReviewPresenter>
     delete: (orderId: string) => Promise<{ deleted: boolean }>
   }
 }
@@ -291,6 +347,15 @@ export default defineNuxtPlugin(() => {
       createPaymentIntent: async (orderId: string) => {
         return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPaymentIntentPresenter>>(`/marketplace/orders/${encodeURIComponent(orderId)}/payment-intent`, { method: 'POST', cache: 'no-store' }))
       },
+      createPaymentIntentForService: async (serviceId: string, input: CreateMarketplaceOrderInput) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPaymentIntentPresenter>>(`/marketplace/services/${encodeURIComponent(serviceId)}/orders/payment-intent`, { method: 'POST', body: input, cache: 'no-store' }))
+      },
+      confirmPayment: async (orderId: string, input: ConfirmMarketplaceOrderPaymentInput) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPresenter>>(`/marketplace/orders/${encodeURIComponent(orderId)}/confirm-payment`, { method: 'POST', body: input, cache: 'no-store' }))
+      },
+      confirmPaymentForService: async (input: ConfirmMarketplaceOrderCreationPaymentInput) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPresenter>>('/marketplace/orders/confirm-payment', { method: 'POST', body: input, cache: 'no-store' }))
+      },
       listBuyer: async (query = {}) => {
         return await api<MarketplaceEnvelope<MarketplaceOrderPresenter[], MarketplaceListMeta>>('/marketplace/orders', { method: 'GET', query: getQuery(query), cache: 'no-store' })
       },
@@ -303,6 +368,12 @@ export default defineNuxtPlugin(() => {
       getSeller: async (orderId: string) => {
         return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPresenter>>(`/marketplace/sales/${encodeURIComponent(orderId)}`, { method: 'GET', cache: 'no-store' }))
       },
+      getBuyerPaymentDocuments: async (orderId: string) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPaymentDocumentPresenter>>(`/marketplace/orders/${encodeURIComponent(orderId)}/payment-documents`, { method: 'GET', cache: 'no-store' }))
+      },
+      getSellerPaymentDocuments: async (orderId: string) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPaymentDocumentPresenter>>(`/marketplace/sales/${encodeURIComponent(orderId)}/payment-documents`, { method: 'GET', cache: 'no-store' }))
+      },
       update: async (orderId: string, input: UpdateMarketplaceOrderInput) => {
         return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPresenter>>(`/marketplace/orders/${encodeURIComponent(orderId)}`, { method: 'PATCH', body: input, cache: 'no-store' }))
       },
@@ -311,6 +382,18 @@ export default defineNuxtPlugin(() => {
       },
       updateSellerStatus: async (orderId: string, input: UpdateMarketplaceOrderStatusInput) => {
         return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPresenter>>(`/marketplace/sales/${encodeURIComponent(orderId)}/status`, { method: 'PATCH', body: input, cache: 'no-store' }))
+      },
+      openBuyerDispute: async (orderId: string, input: OpenMarketplaceOrderDisputeInput) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPresenter>>(`/marketplace/orders/${encodeURIComponent(orderId)}/disputes`, { method: 'POST', body: input, cache: 'no-store' }))
+      },
+      openSellerDispute: async (orderId: string, input: OpenMarketplaceOrderDisputeInput) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPresenter>>(`/marketplace/sales/${encodeURIComponent(orderId)}/disputes`, { method: 'POST', body: input, cache: 'no-store' }))
+      },
+      proposeSellerRefund: async (orderId: string, input: ProposeMarketplaceOrderRefundInput) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceOrderPresenter>>(`/marketplace/sales/${encodeURIComponent(orderId)}/refund-proposals`, { method: 'POST', body: input, cache: 'no-store' }))
+      },
+      createReview: async (orderId: string, input: CreateMarketplaceServiceReviewInput) => {
+        return await unwrap(api<MarketplaceEnvelope<MarketplaceServiceReviewPresenter>>(`/marketplace/orders/${encodeURIComponent(orderId)}/reviews`, { method: 'POST', body: input, cache: 'no-store' }))
       },
       delete: async (orderId: string) => {
         return await unwrap(api<MarketplaceEnvelope<{ deleted: boolean }>>(`/marketplace/orders/${encodeURIComponent(orderId)}`, { method: 'DELETE', cache: 'no-store' }))

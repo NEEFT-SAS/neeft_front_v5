@@ -3,16 +3,16 @@
     <div class="landing-footer__inner">
       <section class="landing-footer__top">
         <LandingFooterBrand />
-        <LandingFooterColumn titleId="footer-solutions" :items="footerSolutions">
+        <LandingFooterColumn titleId="footer-solutions" :items="config.menus.landing.footer.solutions">
           <template #title>{{ t('landing.layout.footer.sections.solutions.title') }}</template>
         </LandingFooterColumn>
-        <LandingFooterColumn titleId="footer-product" :items="footerProduct">
+        <LandingFooterColumn titleId="footer-product" :items="config.menus.landing.footer.product">
           <template #title>{{ t('landing.layout.footer.sections.product.title') }}</template>
         </LandingFooterColumn>
-        <LandingFooterColumn titleId="footer-company" :items="footerCompany">
+        <LandingFooterColumn titleId="footer-company" :items="config.menus.landing.footer.company">
           <template #title>{{ t('landing.layout.footer.sections.company.title') }}</template>
         </LandingFooterColumn>
-        <LandingFooterColumn titleId="footer-links" :items="footerLinks">
+        <LandingFooterColumn titleId="footer-links" :items="config.menus.landing.footer.links">
           <template #title>{{ t('landing.layout.footer.sections.usefulLinks.title') }}</template>
         </LandingFooterColumn>
       </section>
@@ -20,8 +20,8 @@
       <div class="landing-footer__separator" aria-hidden="true" />
 
       <section class="landing-footer__bottom">
-        <LandingFooterLegal :items="footerLegal" />
-        <LandingFooterSocial :items="footerSocial" />
+        <LandingFooterLegal :items="config.menus.landing.footer.legal" />
+        <LandingFooterSocial :items="config.menus.landing.footer.social" />
       </section>
     </div>
   </footer>
@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
-import { footerSolutions, footerProduct, footerCompany, footerLinks, footerLegal, footerSocial } from '~/datas/navigations/footers/landing'
+const config = useConfig()
 </script>
 
 <style scoped lang="scss">

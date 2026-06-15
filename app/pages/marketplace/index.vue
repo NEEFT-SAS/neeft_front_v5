@@ -2,7 +2,7 @@
   <SearchPageLayout
     layout-theme="app"
     filter-presentation="sidebar"
-    image-src="/images/landing/competition-arena.jpg"
+    :image-src="config.marketplace.index.bannerUrl"
     title-id="marketplace-title"
     actions-label="Categories de services"
     results-count-id="marketplace-results-count"
@@ -132,15 +132,9 @@ definePageMeta({
   layout: 'app'
 })
 
-useSeoMeta({
-  title: 'Marketplace esport',
-  description: 'Services esport pour trouver un community manager, un coach, un manager ou un expert operationnel.',
-  ogTitle: 'Marketplace esport',
-  ogDescription: 'Services esport pour structurer un projet joueur, equipe ou staff.',
-  ogImage: '/images/landing/competition-arena.jpg',
-  twitterCard: 'summary_large_image',
-  twitterImage: '/images/landing/competition-arena.jpg'
-})
+const config = useConfig()
+
+useSeoMeta(config.marketplace.index.seo)
 
 const { $marketplaceAPI } = useNuxtApp()
 const { data: marketplaceServiceData, pending: isServicesPending, error: servicesError, refresh } = await useAsyncData('marketplace-services', async () => {

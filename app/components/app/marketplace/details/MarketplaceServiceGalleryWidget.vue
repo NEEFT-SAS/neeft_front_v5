@@ -1,12 +1,13 @@
 <template>
   <BaseProfileSection
+    v-if="hasSafeImages(images)"
     title="Images"
     eyebrow="Portfolio"
     surface="plain"
     id="marketplace-service-gallery"
   >
     <ul class="marketplace-service-profile-gallery" aria-label="Images du service">
-      <li v-for="image in images" :key="image">
+      <li v-for="image in images.filter(isSafeMarketplaceImageSrc)" :key="image">
         <MarketplaceSafeImage
           :src="image"
           :alt="`Image du service ${serviceName}`"
@@ -21,10 +22,16 @@
 </template>
 
 <script setup lang="ts">
+import { isSafeMarketplaceImageSrc } from '~/utils/marketplaceImages'
+
 defineProps<{
   images: string[]
   serviceName: string
 }>()
+
+const hasSafeImages = (images: string[]) => {
+  return images.some(isSafeMarketplaceImageSrc)
+}
 </script>
 
 <style>

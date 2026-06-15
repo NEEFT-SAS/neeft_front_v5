@@ -7,11 +7,7 @@ definePageMeta({
   layout: 'app'
 })
 
-useSeoMeta({
-  title: 'Ventes marketplace',
-  description: 'Liste des ventes et commandes passees sur tes services marketplace.',
-  ogTitle: 'Ventes marketplace',
-  ogDescription: 'Liste des ventes et commandes passees sur tes services marketplace.',
-  twitterCard: 'summary'
-})
+const config = useConfig()
+
+useSeoMeta(config.marketplace.sales.seo)
 </script>

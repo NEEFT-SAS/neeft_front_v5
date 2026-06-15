@@ -1,8 +1,8 @@
 <template>
   <div class="landing-layout">
     <LandingHeader 
-      :nav-items="landingHeaderNav" 
-      :action-items="landingHeaderActions" 
+      :nav-items="config.menus.landing.header.nav" 
+      :action-items="config.menus.landing.header.actions" 
     />
     <main class="landing-layout__main">
       <slot />
@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { landingHeaderNav, landingHeaderActions } from '~/datas/navigations/headers/landing'
+const config = useConfig()
 
 useHead({
   meta: [

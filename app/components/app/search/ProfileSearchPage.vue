@@ -2,7 +2,7 @@
   <SearchPageLayout
     :layout-theme="layoutTheme"
     filter-presentation="sidebar"
-    image-src="/images/landing/competition-arena.jpg"
+    :image-src="pageConfig.bannerUrl"
     :title-id="`${searchDomPrefix}-title`"
     :actions-label="actionsLabel"
     :results-count-id="`${searchDomPrefix}-results-count`"
@@ -241,6 +241,7 @@ type LayoutTheme = 'landing' | 'app'
 type ProfileKind = SearchEntityKind
 
 const { t } = useI18n()
+const config = useConfig()
 
 const props = defineProps({
   layoutTheme: {
@@ -366,6 +367,7 @@ const selectedFilters = reactive<SearchFilterState>({})
 const isFilterModalOpen = ref(false)
 
 const profileKind = computed(() => props.profileKind as ProfileKind)
+const pageConfig = computed(() => config.search[profileKind.value])
 const layoutTheme = computed(() => props.layoutTheme as LayoutTheme)
 const searchDomPrefix = computed(() => `search-${profileKind.value}`)
 const actionsLabel = computed(() => {

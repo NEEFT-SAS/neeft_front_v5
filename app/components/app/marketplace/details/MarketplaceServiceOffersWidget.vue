@@ -5,7 +5,7 @@
         <p class="marketplace-service-profile-eyebrow">Commande</p>
         <h2>Choisir une offre</h2>
       </div>
-      <strong v-if="priceLabel">{{ priceLabel }}</strong>
+      <strong v-if="selectedOffer">{{ formatMarketplacePrice(Number(selectedOffer.price) || 0) }}</strong>
     </template>
 
     <div class="marketplace-service-profile-offers__list" role="radiogroup" aria-label="Offres disponibles">
@@ -16,10 +16,11 @@
         :data-selected="offer.id === selectedOfferId ? 'true' : 'false'"
       >
         <input
-          v-model="selectedOfferModel"
           type="radio"
           name="marketplace-service-offer"
           :value="offer.id"
+          :checked="offer.id === selectedOfferId"
+          @change="emit('update:selectedOfferId', offer.id)"
         >
         <span class="marketplace-service-profile-offer__check" aria-hidden="true">
           <Icon v-if="offer.id === selectedOfferId" name="lucide:check" />
@@ -61,11 +62,6 @@ const emit = defineEmits<{
   order: []
 }>()
 
-const selectedOfferModel = computed({
-  get: () => props.selectedOfferId,
-  set: value => emit('update:selectedOfferId', value)
-})
-
 const formatMarketplacePrice = (price: number) => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
@@ -73,8 +69,6 @@ const formatMarketplacePrice = (price: number) => {
     maximumFractionDigits: 0
   }).format(price)
 }
-
-const priceLabel = computed(() => props.selectedOffer ? formatMarketplacePrice(Number(props.selectedOffer.price) || 0) : '')
 </script>
 
 <style>

@@ -51,8 +51,9 @@ const emit = defineEmits<{
 .marketplace-order-messages-card {
   display: grid;
   gap: var(--orders-space-3);
-  padding: var(--orders-space-3) 0 0;
-  border-top: var(--orders-border) solid var(--orders-color-line);
+  padding-bottom: var(--orders-space-4);
+  border-bottom: var(--orders-border) solid var(--orders-color-line);
+  background-color: transparent;
 }
 
 .marketplace-order-messages-card__header {
@@ -85,7 +86,7 @@ const emit = defineEmits<{
 
 .marketplace-order-messages-card__list {
   display: grid;
-  gap: var(--orders-space-1);
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -95,11 +96,11 @@ const emit = defineEmits<{
   display: grid;
   grid-template-columns: var(--orders-hit-size) minmax(0, 1fr);
   gap: var(--orders-space-2);
-  align-items: center;
+  align-items: start;
   min-height: calc(var(--orders-unit) * 8);
   padding: var(--orders-space-2) 0;
-  border-bottom: var(--orders-border) solid var(--orders-color-line);
-  background-color: var(--orders-color-transparent);
+  border-top: var(--orders-border) solid color-mix(in oklch, var(--orders-color-line) 70%, var(--orders-color-transparent));
+  background-color: transparent;
 }
 
 .marketplace-order-messages-card__icon {
@@ -109,8 +110,6 @@ const emit = defineEmits<{
   width: calc(var(--orders-hit-size) * 0.82);
   height: calc(var(--orders-hit-size) * 0.82);
   min-width: calc(var(--orders-hit-size) * 0.82);
-  border-radius: var(--orders-radius-round);
-  background-color: color-mix(in oklch, var(--orders-color-accent) 10%, var(--orders-color-panel));
   color: var(--orders-color-accent);
 }
 

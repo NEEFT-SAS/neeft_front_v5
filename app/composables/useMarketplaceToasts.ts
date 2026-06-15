@@ -130,6 +130,111 @@ export const useMarketplaceToasts = () => {
       icon: 'lucide:message-circle',
       variant: 'neutral',
     }),
+
+    contactOpened: (orderId: string, targetName: string) => add({
+      title: 'Contact',
+      desc: `${orderId} - message a ${targetName}`,
+      icon: 'lucide:message-circle',
+      variant: 'neutral',
+    }),
+
+    receiptRequested: (orderId: string) => add({
+      title: 'Recu ouvert',
+      desc: `${orderId} - le recu Stripe est disponible.`,
+      icon: 'lucide:receipt-text',
+      variant: 'success',
+    }),
+
+    receiptUnavailable: (orderId: string) => add({
+      title: 'Recu indisponible',
+      desc: `${orderId} - Stripe n a pas encore fourni de recu.`,
+      icon: 'lucide:circle-alert',
+      variant: 'warn',
+    }),
+
+    invoiceOpened: (orderId: string) => add({
+      title: 'Facture ouverte',
+      desc: `${orderId} - la facture Stripe est disponible.`,
+      icon: 'lucide:file-text',
+      variant: 'success',
+    }),
+
+    invoiceUnavailable: (orderId: string) => add({
+      title: 'Facture indisponible',
+      desc: `${orderId} - aucun document facture n est genere pour ce paiement.`,
+      icon: 'lucide:circle-alert',
+      variant: 'warn',
+    }),
+
+    paymentDocumentFailed: () => add({
+      title: 'Document indisponible',
+      desc: 'Impossible de recuperer le document de paiement pour le moment.',
+      icon: 'lucide:circle-alert',
+      variant: 'error',
+    }),
+
+    sellerUpdateOpened: (orderId: string) => add({
+      title: 'Mise a jour vendeur',
+      desc: `${orderId} - ajout d une information de suivi`,
+      icon: 'lucide:send',
+      variant: 'neutral',
+    }),
+
+    disputeOpened: (orderId: string) => add({
+      title: 'Litige ouvert',
+      desc: `${orderId} - le dossier litige est enregistre.`,
+      icon: 'lucide:flag',
+      variant: 'success',
+    }),
+
+    disputeAlreadyOpened: (orderId: string) => add({
+      title: 'Litige deja ouvert',
+      desc: `${orderId} - un dossier litige existe deja.`,
+      icon: 'lucide:flag',
+      variant: 'warn',
+    }),
+
+    disputeFailed: () => add({
+      title: 'Litige non cree',
+      desc: 'Impossible d ouvrir un litige pour cette commande.',
+      icon: 'lucide:circle-alert',
+      variant: 'error',
+    }),
+
+    refundProposed: (orderId: string) => add({
+      title: 'Remboursement propose',
+      desc: `${orderId} - le client est informe.`,
+      icon: 'lucide:rotate-ccw',
+      variant: 'success',
+    }),
+
+    refundAlreadyProposed: (orderId: string) => add({
+      title: 'Remboursement deja propose',
+      desc: `${orderId} - une proposition existe deja.`,
+      icon: 'lucide:rotate-ccw',
+      variant: 'warn',
+    }),
+
+    refundProposalFailed: () => add({
+      title: 'Remboursement non propose',
+      desc: 'Impossible de proposer ce remboursement.',
+      icon: 'lucide:circle-alert',
+      variant: 'error',
+    }),
+
+    reviewCreated: (orderId: string) => add({
+      title: 'Avis publie',
+      desc: `${orderId} - merci pour ton retour.`,
+      icon: 'lucide:star',
+      variant: 'success',
+    }),
+
+    reviewFailed: () => add({
+      title: 'Avis non publie',
+      desc: 'Impossible de publier cet avis pour le moment.',
+      icon: 'lucide:circle-alert',
+      variant: 'error',
+    }),
   }
 
   return {

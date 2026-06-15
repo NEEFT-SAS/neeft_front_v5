@@ -72,30 +72,38 @@ const emit = defineEmits<{
 const amountLabel = computed(() => props.order ? getMarketplaceOrderAmountLabel(props.order) : '')
 
 const modalTitle = computed(() => {
+  if (props.targetStatus === 'REJECTED') return 'Refuser la demande'
   if (props.targetStatus === 'COMPLETED') return 'Valider la livraison'
   if (props.targetStatus === 'DELIVERED') return 'Confirmer la livraison'
   return 'Confirmer l action'
 })
 
 const modalDescription = computed(() => {
+  if (props.targetStatus === 'REJECTED') return 'Cette action ferme la demande et le client sera informe du refus.'
   if (props.targetStatus === 'COMPLETED') return 'Cette validation cloture la commande.'
   if (props.targetStatus === 'DELIVERED') return 'Le client devra confirmer que le service est bien livre.'
   return 'Confirme la mise a jour de cette commande.'
 })
 
 const modalIcon = computed(() => {
+  if (props.targetStatus === 'REJECTED') return 'lucide:x-circle'
   if (props.targetStatus === 'COMPLETED') return 'lucide:clipboard-check'
   if (props.targetStatus === 'DELIVERED') return 'lucide:package-check'
   return 'lucide:circle-check'
 })
 
 const confirmLabel = computed(() => {
+  if (props.targetStatus === 'REJECTED') return 'Refuser la demande'
   if (props.targetStatus === 'COMPLETED') return 'Valider la livraison'
   if (props.targetStatus === 'DELIVERED') return 'Marquer comme livre'
   return 'Confirmer'
 })
 
 const notice = computed(() => {
+  if (props.targetStatus === 'REJECTED') {
+    return 'Refuse uniquement si tu ne peux pas prendre cette commande. La demande sera fermee et ne pourra plus avancer dans le suivi.'
+  }
+
   if (props.targetStatus === 'COMPLETED') {
     return 'Valide seulement si le service correspond a la commande. Une fois validee, la commande passe en terminee et le suivi est archive.'
   }

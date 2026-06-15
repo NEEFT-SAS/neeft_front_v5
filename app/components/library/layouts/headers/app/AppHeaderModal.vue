@@ -118,14 +118,13 @@
 </template>
 
 <script setup lang="ts">
-type NavigationItem = { label: string; to: string; icon?: string }
-type NavigationMenu = { key: string; label: string; icon: string; items: NavigationItem[] }
+import type { AppNavigationItem, AppNavigationMenu } from '~/composables/useConfig'
 
 const props = defineProps<{
   id: string
   open: boolean
-  navigationMenus: NavigationMenu[]
-  navigationLinks: NavigationItem[]
+  navigationMenus: readonly AppNavigationMenu[]
+  navigationLinks: readonly AppNavigationItem[]
 }>()
 
 const emit = defineEmits<{ close: [] }>()
@@ -139,7 +138,7 @@ const desktopElement = ref<HTMLElement | null>(null)
 const openNavigationMenu = ref<string | null>(null)
 const fallbackIcon = 'lucide:circle'
 
-const mobileNavigationLinks = computed<NavigationItem[]>(() => [
+const mobileNavigationLinks = computed<AppNavigationItem[]>(() => [
   ...props.navigationMenus.flatMap(menu => menu.items),
   ...props.navigationLinks
 ])
@@ -177,7 +176,7 @@ const isLinkActive = (to: string) => {
   return route.path === to || route.path.startsWith(`${to}/`)
 }
 
-const isMenuActive = (menu: NavigationMenu) => menu.items.some(item => isLinkActive(item.to))
+const isMenuActive = (menu: AppNavigationMenu) => menu.items.some(item => isLinkActive(item.to))
 
 onMounted(() => { document.addEventListener('pointerdown', closeMenuOnOutsidePointer) })
 onBeforeUnmount(() => { document.removeEventListener('pointerdown', closeMenuOnOutsidePointer) })

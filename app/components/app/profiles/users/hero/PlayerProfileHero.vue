@@ -3,8 +3,7 @@
     <div class="player-profile-shell">
       <div class="player-profile-hero__banner">
         <NuxtImg
-          v-if="profile?.bannerPicture"
-          :src="profile.bannerPicture"
+          :src="config.profile.getUserBannerUrl(profile?.bannerPicture)"
           :alt="`Banniere du profil ${profile?.username || ''}`"
           width="1440"
           height="360"
@@ -27,7 +26,7 @@
         <div class="player-profile-hero__identity">
           <div class="player-profile-hero__logo-stack">
             <CustomAvatar
-              :src="profile?.logoPicture"
+              :src="config.profile.getUserAvatarUrl(profile?.logoPicture)"
               :alt="`Logo du profil ${profile?.username || ''}`"
               :name="profile?.username"
               size="3xl"
@@ -95,12 +94,13 @@
 <script setup lang="ts">
 import type { PropType } from 'vue'
 import type { PlayerProfilePresenter } from '@neeft-sas/shared'
-import { isNativeImageSource } from '~/utils/imageSources'
 
 const props = defineProps({
   profile: { type: Object as PropType<PlayerProfilePresenter>, required: true },
   canEdit: { type: Boolean, default: false }
 })
+
+const config = useConfig()
 </script>
 
 <style>

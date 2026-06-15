@@ -2,7 +2,7 @@
   <div class="hero-background">
     <NuxtImg
       class="hero-background__image"
-      src="/images/landing/home-crowd.jpg"
+      :src="config.landing.home.bannerUrl"
       alt=""
       width="1400"
       height="933"
@@ -19,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+const config = useConfig()
 </script>
 
 <style scoped lang="scss">

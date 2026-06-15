@@ -7,11 +7,7 @@ definePageMeta({
   layout: 'app'
 })
 
-useSeoMeta({
-  title: 'Commandes achetees',
-  description: 'Suivi des commandes marketplace achetees a des vendeurs.',
-  ogTitle: 'Commandes achetees',
-  ogDescription: 'Suivi des services commandes sur la marketplace.',
-  twitterCard: 'summary'
-})
+const config = useConfig()
+
+useSeoMeta(config.marketplace.orders.seo)
 </script>

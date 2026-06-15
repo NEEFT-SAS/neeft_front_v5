@@ -1,18 +1,15 @@
 <template>
-  <section class="marketplace-order-deliverables-card" aria-labelledby="marketplace-orders-deliverables-title">
-    <header class="marketplace-order-deliverables-card__header">
-      <div>
-        <p class="marketplace-order-deliverables-card__eyebrow">
-          Mission
-        </p>
-        <h3 id="marketplace-orders-deliverables-title">
-          Livrables
-        </h3>
-      </div>
-      <span>{{ order.nextCheckpoint }}</span>
-    </header>
+  <BaseProfileSection
+    title="Livrables"
+    eyebrow="Mission"
+    surface="plain"
+    id="marketplace-order-deliverables"
+  >
+    <template #action>
+      <span class="marketplace-order-deliverables-widget__checkpoint">{{ order.nextCheckpoint }}</span>
+    </template>
 
-    <ul class="marketplace-order-deliverables-card__list">
+    <ul class="marketplace-order-deliverables-widget__list">
       <li v-for="deliverable in order.deliverables" :key="deliverable.title" :data-status="deliverable.status">
         <Icon :name="getDeliverableIcon(deliverable.status)" aria-hidden="true" />
         <span>
@@ -22,7 +19,7 @@
         <em>{{ getDeliverableLabel(deliverable.status) }}</em>
       </li>
     </ul>
-  </section>
+  </BaseProfileSection>
 </template>
 
 <script setup lang="ts">
@@ -46,21 +43,8 @@ const getDeliverableLabel = (status: MarketplaceDeliverableStatus) => {
 </script>
 
 <style scoped>
-.marketplace-order-deliverables-card {
-  display: grid;
-  gap: var(--orders-space-3);
-  padding: var(--orders-space-3) 0 0;
-  border-top: var(--orders-border) solid var(--orders-color-line);
-}
-
-.marketplace-order-deliverables-card__header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--orders-space-3);
-  align-items: start;
-}
-
-.marketplace-order-deliverables-card__header > span {
+.marketplace-order-deliverables-widget__checkpoint {
+  display: block;
   max-width: calc(var(--orders-unit) * 36);
   color: var(--orders-color-muted);
   font-size: var(--orders-font-small);
@@ -69,66 +53,46 @@ const getDeliverableLabel = (status: MarketplaceDeliverableStatus) => {
   text-align: right;
 }
 
-.marketplace-order-deliverables-card__eyebrow,
-.marketplace-order-deliverables-card h3 {
-  margin: 0;
-}
-
-.marketplace-order-deliverables-card__eyebrow {
-  color: var(--orders-color-subtle);
-  font-size: var(--orders-font-label);
-  font-weight: 600;
-  line-height: var(--orders-line-body);
-  text-transform: uppercase;
-}
-
-.marketplace-order-deliverables-card h3 {
-  color: var(--orders-color-text);
-  font-size: var(--orders-font-section);
-  font-weight: 600;
-  line-height: var(--orders-line-title);
-}
-
-.marketplace-order-deliverables-card__list {
+.marketplace-order-deliverables-widget__list {
   display: grid;
-  gap: var(--orders-space-1);
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.marketplace-order-deliverables-card__list li {
+.marketplace-order-deliverables-widget__list li {
   display: grid;
   grid-template-columns: var(--orders-hit-size) minmax(0, 1fr) auto;
   gap: var(--orders-space-2);
   align-items: center;
   min-height: calc(var(--orders-unit) * 8);
   padding: var(--orders-space-2) 0;
-  border-bottom: var(--orders-border) solid var(--orders-color-line);
-  background-color: var(--orders-color-transparent);
+  border-top: var(--orders-border) solid color-mix(in oklch, var(--orders-color-line) 70%, var(--orders-color-transparent));
+  background-color: transparent;
 }
 
-.marketplace-order-deliverables-card__list svg {
+.marketplace-order-deliverables-widget__list svg {
   width: var(--orders-icon-size);
   height: var(--orders-icon-size);
   justify-self: center;
   color: var(--orders-color-subtle);
 }
 
-.marketplace-order-deliverables-card__list li[data-status='ready'] svg {
+.marketplace-order-deliverables-widget__list li[data-status='ready'] svg {
   color: var(--orders-color-accent);
 }
 
-.marketplace-order-deliverables-card__list li[data-status='approved'] svg {
+.marketplace-order-deliverables-widget__list li[data-status='approved'] svg {
   color: var(--orders-color-success);
 }
 
-.marketplace-order-deliverables-card__list span {
+.marketplace-order-deliverables-widget__list span {
   display: grid;
   gap: calc(var(--orders-unit) * 0.5);
 }
 
-.marketplace-order-deliverables-card__list strong {
+.marketplace-order-deliverables-widget__list strong {
   color: var(--orders-color-text);
   font-size: var(--orders-font-small);
   font-weight: 600;
@@ -136,14 +100,19 @@ const getDeliverableLabel = (status: MarketplaceDeliverableStatus) => {
   overflow-wrap: anywhere;
 }
 
-.marketplace-order-deliverables-card__list small {
+.marketplace-order-deliverables-widget__list small {
   color: var(--orders-color-subtle);
   font-size: var(--orders-font-label);
   font-weight: 600;
   line-height: var(--orders-line-body);
 }
 
-.marketplace-order-deliverables-card__list em {
+.marketplace-order-deliverables-widget__list em {
+  display: inline-flex;
+  min-height: calc(var(--orders-unit) * 3);
+  align-items: center;
+  padding: 0;
+  background-color: transparent;
   color: var(--orders-color-muted);
   font-size: var(--orders-font-label);
   font-style: normal;
@@ -152,18 +121,25 @@ const getDeliverableLabel = (status: MarketplaceDeliverableStatus) => {
   white-space: nowrap;
 }
 
-@media (max-width: 46rem) {
-  .marketplace-order-deliverables-card__header,
-  .marketplace-order-deliverables-card__list li {
-    grid-template-columns: 1fr;
-  }
+.marketplace-order-deliverables-widget__list li[data-status='ready'] em {
+  color: var(--orders-color-accent);
+}
 
-  .marketplace-order-deliverables-card__header > span {
+.marketplace-order-deliverables-widget__list li[data-status='approved'] em {
+  color: var(--orders-color-success);
+}
+
+@media (max-width: 46rem) {
+  .marketplace-order-deliverables-widget__checkpoint {
     max-width: none;
     text-align: left;
   }
 
-  .marketplace-order-deliverables-card__list em {
+  .marketplace-order-deliverables-widget__list li {
+    grid-template-columns: 1fr;
+  }
+
+  .marketplace-order-deliverables-widget__list em {
     justify-self: start;
   }
 }

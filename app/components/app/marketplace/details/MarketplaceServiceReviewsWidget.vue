@@ -10,7 +10,7 @@
         :rating="rating"
         :review-count="reviewCount"
       />
-      <span>{{ reviewCountLabel }}</span>
+      <span>{{ reviewCount }} avis</span>
     </div>
 
     <p v-if="pending" class="marketplace-service-profile-reviews__state">
@@ -25,7 +25,7 @@
       <li v-for="review in reviews" :key="review.id">
         <NuxtImg
           class="marketplace-service-profile-reviews__avatar"
-          :src="review.author?.profilePicture || '/images/logos/neeft/Logo_NEEFT_FOX.png'"
+          :src="config.profile.getUserAvatarUrl(review.author?.profilePicture)"
           :alt="getAuthorAvatarAlt(review)"
           width="48"
           height="48"
@@ -69,13 +69,13 @@ const props = defineProps<{
   error?: unknown
 }>()
 
+const config = useConfig()
+
 const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
   month: 'short',
   year: 'numeric'
 })
-
-const reviewCountLabel = computed(() => `${props.reviewCount} avis`)
 
 const formatReviewDate = (date: string) => {
   const parsedDate = new Date(date)

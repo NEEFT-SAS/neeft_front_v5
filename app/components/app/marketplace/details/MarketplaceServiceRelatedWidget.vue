@@ -13,7 +13,7 @@
           :aria-label="`Voir le service ${relatedService.title}`"
         >
           <MarketplaceSafeImage
-            :src="relatedService.coverImageUrl"
+            :src="config.marketplace.service.getServiceBannerUrl(relatedService.coverImageUrl)"
             :alt="`Banniere du service ${relatedService.title}`"
             empty-class="marketplace-service-profile-related__empty"
             width="320"
@@ -38,6 +38,8 @@ import type { MarketplaceServiceListItemPresenter } from '~/plugins/marketplace-
 defineProps<{
   services: MarketplaceServiceListItemPresenter[]
 }>()
+
+const config = useConfig()
 
 const formatMarketplacePrice = (price: number) => {
   return new Intl.NumberFormat('fr-FR', {

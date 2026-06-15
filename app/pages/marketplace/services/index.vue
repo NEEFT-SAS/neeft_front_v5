@@ -106,13 +106,9 @@ definePageMeta({
   layout: 'app'
 })
 
-useSeoMeta({
-  title: 'Mes services marketplace',
-  description: 'Gestion des services proposes sur la marketplace.',
-  ogTitle: 'Mes services marketplace',
-  ogDescription: 'Gestion des fiches services et prestations marketplace.',
-  twitterCard: 'summary'
-})
+const config = useConfig()
+
+useSeoMeta(config.marketplace.services.seo)
 
 const { $marketplaceAPI } = useNuxtApp()
 const marketplaceToast = useMarketplaceToasts()

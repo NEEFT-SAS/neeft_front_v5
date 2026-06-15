@@ -5,7 +5,7 @@
         <MarketplaceSafeImage
           class="marketplace-service-profile-hero__image"
           empty-class="marketplace-service-profile-hero__image--empty"
-          :src="service.bannerUrl"
+          :src="config.marketplace.service.getServiceBannerUrl(service.bannerUrl)"
           :alt="`Banniere du service ${service.name}`"
           width="1440"
           height="360"
@@ -25,8 +25,8 @@
           />
         </div>
 
-        <div v-if="games.length" class="marketplace-service-profile-hero__games" aria-label="Jeux concernes">
-          <span v-for="game in games" :key="game.id" class="marketplace-service-profile-hero__game">
+        <div v-if="service.rscGames?.length" class="marketplace-service-profile-hero__games" aria-label="Jeux concernes">
+          <span v-for="game in service.rscGames" :key="game.id" class="marketplace-service-profile-hero__game">
             <Icon v-if="game.icon" :name="game.icon" aria-hidden="true" />
             {{ game.shortName || game.name }}
           </span>
@@ -111,7 +111,6 @@ import type { MarketplaceServicePresenter } from '~/plugins/marketplace-api'
 
 defineProps<{
   service: MarketplaceServicePresenter
-  games: MarketplaceServicePresenter['rscGames']
   rating: number
   reviewCount: number
   isOwner?: boolean
@@ -123,6 +122,8 @@ const emit = defineEmits<{
   edit: []
   delete: []
 }>()
+
+const config = useConfig()
 </script>
 
 <style>
