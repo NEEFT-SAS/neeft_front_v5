@@ -103,7 +103,7 @@ const confirmReview = () => {
 .marketplace-order-review-modal {
   display: grid;
   gap: 14px;
-  min-width: min(460px, calc(100vw - 48px));
+  width: 100%;
 }
 
 .marketplace-order-review-modal__summary {
@@ -130,9 +130,4 @@ const confirmReview = () => {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 520px) {
-  .marketplace-order-review-modal {
-    min-width: 0;
-  }
-}
 </style>

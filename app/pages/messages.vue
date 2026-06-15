@@ -61,7 +61,7 @@
 
         <ul class="messages-page__conversation-list">
           <li v-for="conversation in filteredConversations" :key="conversation.id">
-            <button type="button" class="messages-page__conversation" :class="{ 'is-active': selectedConversation.id === conversation.id, 'has-unread': conversation.unread }" @click="selectedConversationId = conversation.id">
+            <button type="button" class="messages-page__conversation" :class="{ 'is-active': selectedConversation.id === conversation.id, 'has-unread': conversation.unread }" @click="selectConversation(conversation.id)">
               <span class="messages-page__avatar" :class="`messages-page__avatar--${conversation.kind}`" aria-hidden="true">
                 {{ conversation.initials }}
               </span>
@@ -134,7 +134,7 @@
             resize="none"
             size="sm"
           />
-          <CustomButton class="messages-page__send-action" left-icon="lucide:send-horizontal" theme="app" variant="filled" color="primary" size="sm" shape="circle" aria-label="Envoyer le message" title="Envoyer le message" />
+          <CustomButton class="messages-page__send-action" left-icon="lucide:send-horizontal" theme="app" variant="filled" color="primary" size="sm" shape="circle" aria-label="Envoyer le message" title="Envoyer le message" :disabled="isSending || !messageDraft.trim() || !selectedConversation.id" @click="sendMessage" />
         </footer>
       </section>
 
@@ -171,6 +171,8 @@
 </template>
 
 <script setup lang="ts">
+import type { MessagingConversationSummaryPresenter, MessagingMessagePresenter } from '@neeft-sas/shared'
+
 type MessageTab = 'all' | 'unread' | 'teams'
 
 type ConversationMessage = {
@@ -204,15 +206,19 @@ definePageMeta({
 })
 
 const config = useConfig()
-
 useSeoMeta(config.messages.seo)
 
+const { $messagingAPI } = useNuxtApp()
+const route = useRoute()
+const router = useRouter()
 const generatedId = useId()
 const chatTitleId = `messages-chat-title-${generatedId}`
 const searchQuery = ref('')
 const messageDraft = ref('')
 const activeTab = ref<MessageTab>('all')
-const selectedConversationId = ref('team-karmine')
+const selectedConversationId = ref(String(route.query.conversation || ''))
+const messageRows = ref<MessagingMessagePresenter[]>([])
+const isSending = ref(false)
 
 const tabs: { value: MessageTab; label: string }[] = [
   { value: 'all', label: 'Tous' },
@@ -220,96 +226,61 @@ const tabs: { value: MessageTab; label: string }[] = [
   { value: 'teams', label: 'Equipes' }
 ]
 
-const conversations: Conversation[] = [
-  {
-    id: 'team-karmine',
-    name: 'Karmine Academy',
-    initials: 'KA',
-    role: 'Equipe - Valorant',
-    kind: 'team',
-    kindLabel: 'Equipe verifiee',
-    status: 'Actif maintenant',
-    time: '14:18',
-    preview: 'On peut caler un scrim test cette semaine ?',
-    unread: 2,
-    contextTitle: 'Tryout Valorant',
-    context: 'Shortlist active - reponse conseillee sous 24h',
-    bio: 'Structure academy en recherche de profils flexibles pour completer son roster competitif.',
-    tags: ['Valorant', 'Tryout', 'Academy'],
-    messages: [
-      { id: 'm1', text: 'Ton profil ressort bien sur les agents flex. Tu es disponible cette semaine ?', time: '13:42' },
-      { id: 'm2', text: 'Oui, plutot mardi ou jeudi soir apres 20h.', time: '13:51', mine: true },
-      { id: 'm3', text: 'Parfait. On peut caler un scrim test jeudi avec le staff.', time: '14:18' }
-    ]
-  },
-  {
-    id: 'coach-elena',
-    name: 'Elena Rossi',
-    initials: 'ER',
-    role: 'Coach tactique',
-    kind: 'staff',
-    kindLabel: 'Staff',
-    status: 'En ligne il y a 12 min',
-    time: '12:05',
-    preview: 'Je t ai envoye mes notes sur la VOD.',
-    unread: 0,
-    contextTitle: 'Review VOD',
-    context: 'Analyse post-match en cours',
-    bio: 'Coach tactique specialisee FPS, preparation de tryouts et analyse de patterns collectifs.',
-    tags: ['Coaching', 'FPS', 'VOD'],
-    messages: [
-      { id: 'm1', text: 'Je t ai envoye mes notes sur la VOD.', time: '12:05' },
-      { id: 'm2', text: 'Top, je regarde ca ce soir et je reviens vers toi.', time: '12:09', mine: true }
-    ]
-  },
-  {
-    id: 'player-noe',
-    name: 'Noe Lambert',
-    initials: 'NL',
-    role: 'Joueur LFT',
-    kind: 'player',
-    kindLabel: 'Joueur',
-    status: 'Disponible',
-    time: 'Hier',
-    preview: 'Merci pour le contact, je t envoie mon tracker.',
-    unread: 1,
-    contextTitle: 'Recherche duo',
-    context: 'Contact issu de la recherche joueurs',
-    bio: 'Duelist ambitieux, ouvert aux projets semi-pro et aux bootcamps intensifs.',
-    tags: ['LFT', 'Duelist', 'Semi-pro'],
-    messages: [
-      { id: 'm1', text: 'Merci pour le contact, je t envoie mon tracker.', time: 'Hier' },
-      { id: 'm2', text: 'Conversation creee depuis la recherche Neeft.', time: 'Hier', system: true }
-    ]
-  },
-  {
-    id: 'partner-arena',
-    name: 'Arena Clash',
-    initials: 'AC',
-    role: 'Organisateur tournoi',
-    kind: 'partner',
-    kindLabel: 'Partenaire',
-    status: 'Repond generalement dans la journee',
-    time: 'Lun.',
-    preview: 'Les inscriptions ferment vendredi soir.',
-    unread: 0,
-    contextTitle: 'Tournoi communautaire',
-    context: 'Phase inscriptions ouverte',
-    bio: 'Organisateur de competitions communautaires avec formats courts et cashprizes mensuels.',
-    tags: ['Tournoi', 'Community', 'Cashprize'],
-    messages: [
-      { id: 'm1', text: 'Les inscriptions ferment vendredi soir.', time: 'Lun.' },
-      { id: 'm2', text: 'Merci, je partage au roster.', time: 'Lun.', mine: true }
-    ]
-  }
-]
+const { data: conversationResponse, refresh: refreshConversations } = await useAsyncData(
+  'messaging-conversations',
+  () => $messagingAPI.listConversations({ scope: 'SELF', limit: 100 })
+)
 
-const unreadTotal = computed(() => conversations.reduce((total, conversation) => total + conversation.unread, 0))
-const selectedConversation = computed(() => conversations.find(conversation => conversation.id === selectedConversationId.value) || conversations[0])
+const formatTime = (value?: string | null) => {
+  if (!value) return ''
+  return new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
+}
+
+const initials = (name: string) => name.split(/\s+/).slice(0, 2).map(part => part[0] || '').join('').toLocaleUpperCase('fr-FR')
+
+const mapConversation = (summary: MessagingConversationSummaryPresenter): Conversation => {
+  const name = summary.counterpart.displayName || summary.counterpart.slug
+  const selectedMessages: ConversationMessage[] = summary.id === selectedConversationId.value
+    ? messageRows.value.map(message => ({
+        id: message.id,
+        text: message.content,
+        time: formatTime(message.createdAt),
+        mine: message.isOwn,
+        system: message.senderType === 'SYSTEM'
+      }))
+    : []
+
+  return {
+    id: summary.id,
+    name,
+    initials: initials(name),
+    role: summary.counterpart.type === 'TEAM' ? 'Equipe Neeft' : 'Profil Neeft',
+    kind: summary.counterpart.type === 'TEAM' ? 'team' : 'player',
+    kindLabel: summary.counterpart.type === 'TEAM' ? 'Equipe' : 'Joueur',
+    status: 'Conversation Neeft',
+    time: formatTime(summary.lastMessage?.createdAt),
+    preview: summary.lastMessage?.preview || 'Nouvelle conversation',
+    unread: summary.unreadCount,
+    contextTitle: summary.scope === 'TEAM' ? summary.context.displayName : 'Conversation directe',
+    context: summary.scope === 'TEAM' ? 'Echange dans un contexte equipe' : 'Echange entre profils Neeft',
+    bio: `Profil ${summary.counterpart.slug}`,
+    tags: [summary.counterpart.type === 'TEAM' ? 'Equipe' : 'Profil'],
+    messages: selectedMessages
+  }
+}
+
+const conversations = computed(() => (conversationResponse.value?.items || []).map(mapConversation))
+const emptyConversation: Conversation = {
+  id: '', name: 'Aucune conversation', initials: '--', role: '', kind: 'player', kindLabel: 'Messagerie', status: '', time: '', preview: '', unread: 0,
+  contextTitle: 'Selectionne une conversation', context: '', bio: 'Tes conversations apparaitront ici.', tags: [], messages: []
+}
+
+const unreadTotal = computed(() => conversations.value.reduce((total, conversation) => total + conversation.unread, 0))
+const selectedConversation = computed(() => conversations.value.find(conversation => conversation.id === selectedConversationId.value) || emptyConversation)
 const filteredConversations = computed(() => {
   const query = searchQuery.value.trim().toLocaleLowerCase('fr-FR')
 
-  return conversations.filter((conversation) => {
+  return conversations.value.filter((conversation) => {
     if (activeTab.value === 'unread' && !conversation.unread) return false
     if (activeTab.value === 'teams' && conversation.kind !== 'team') return false
     if (!query) return true
@@ -320,6 +291,45 @@ const filteredConversations = computed(() => {
       .includes(query)
   })
 })
+
+const loadMessages = async (conversationId: string) => {
+  if (!conversationId) {
+    messageRows.value = []
+    return
+  }
+
+  const response = await $messagingAPI.getMessages(conversationId, { limit: 50 })
+  messageRows.value = [...response.items].reverse()
+  const lastMessageId = messageRows.value.at(-1)?.id
+  if (lastMessageId) await $messagingAPI.markRead(conversationId, lastMessageId)
+  await refreshConversations()
+}
+
+const selectConversation = async (conversationId: string) => {
+  selectedConversationId.value = conversationId
+  await router.replace({ query: { ...route.query, conversation: conversationId } })
+}
+
+const sendMessage = async () => {
+  const content = messageDraft.value.trim()
+  if (!content || !selectedConversationId.value || isSending.value) return
+
+  isSending.value = true
+  try {
+    await $messagingAPI.sendMessage(selectedConversationId.value, content)
+    messageDraft.value = ''
+    await loadMessages(selectedConversationId.value)
+  } finally {
+    isSending.value = false
+  }
+}
+
+watch(conversations, (items) => {
+  if (!items.length) return
+  if (!items.some(item => item.id === selectedConversationId.value)) selectedConversationId.value = items[0].id
+}, { immediate: true })
+
+watch(selectedConversationId, conversationId => loadMessages(conversationId), { immediate: true })
 </script>
 
 <style scoped>

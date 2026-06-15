@@ -69,6 +69,17 @@
         @click="emit('sellerUpdate', order)"
       />
       <CustomButton
+        v-if="showUploadButton"
+        label="Ajouter des fichiers"
+        left-icon="lucide:upload"
+        theme="app"
+        variant="outlined"
+        color="secondary"
+        size="sm"
+        :disabled="isUpdating"
+        @click="emit('upload', order)"
+      />
+      <CustomButton
         v-if="showRefundProposalButton"
         :label="order.refundStatus === 'PROPOSED' ? 'Remboursement propose' : 'Proposer un remboursement'"
         left-icon="lucide:rotate-ccw"
@@ -89,6 +100,39 @@
         size="sm"
         :disabled="isReviewLoading"
         @click="emit('review', order)"
+      />
+      <CustomButton
+        v-if="showBuyerRefundDecisionButtons"
+        label="Accepter le remboursement"
+        left-icon="lucide:circle-check"
+        theme="app"
+        variant="filled"
+        color="primary"
+        size="sm"
+        :disabled="isRefundLoading"
+        @click="emit('acceptRefund', order)"
+      />
+      <CustomButton
+        v-if="showRevisionButton"
+        label="Demander une correction"
+        left-icon="lucide:rotate-ccw"
+        theme="app"
+        variant="outlined"
+        color="secondary"
+        size="sm"
+        :disabled="isUpdating"
+        @click="emit('requestRevision', order)"
+      />
+      <CustomButton
+        v-if="showBuyerRefundDecisionButtons"
+        label="Refuser le remboursement"
+        left-icon="lucide:x"
+        theme="app"
+        variant="outlined"
+        color="secondary"
+        size="sm"
+        :disabled="isRefundLoading"
+        @click="emit('rejectRefund', order)"
       />
       <CustomButton
         :label="order.disputeOpenedAt ? 'Litige ouvert' : isDisputeLoading ? 'Ouverture...' : 'Ouvrir un litige'"
@@ -124,9 +168,13 @@ const emit = defineEmits<{
   receipt: [order: MarketplaceOrder]
   invoice: [order: MarketplaceOrder]
   sellerUpdate: [order: MarketplaceOrder]
+  upload: [order: MarketplaceOrder]
   dispute: [order: MarketplaceOrder]
   refund: [order: MarketplaceOrder]
   review: [order: MarketplaceOrder]
+  acceptRefund: [order: MarketplaceOrder]
+  rejectRefund: [order: MarketplaceOrder]
+  requestRevision: [order: MarketplaceOrder]
 }>()
 
 const action = computed(() => props.order.nextActions[props.role])
@@ -154,7 +202,10 @@ const nextMarketplaceStatus = computed(() => {
 const showPrimaryAction = computed(() => Boolean(nextMarketplaceStatus.value) && !action.value.disabled)
 const showSellerDecisionButtons = computed(() => props.role === 'seller' && props.order.apiStatus === 'PENDING' && !action.value.disabled)
 const showRefundProposalButton = computed(() => props.role === 'seller' && !isClosedOrder.value && props.order.refundStatus !== 'REFUNDED')
-const showReviewButton = computed(() => props.role === 'buyer' && props.order.apiStatus === 'COMPLETED')
+const showReviewButton = computed(() => props.role === 'buyer' && !props.order.review && props.order.apiStatus === 'COMPLETED')
+const showUploadButton = computed(() => props.role === 'seller' && props.order.apiStatus === 'IN_PROGRESS' && !props.order.disputeOpenedAt)
+const showBuyerRefundDecisionButtons = computed(() => props.role === 'buyer' && props.order.refundStatus === 'PROPOSED')
+const showRevisionButton = computed(() => props.role === 'buyer' && props.order.apiStatus === 'DELIVERED' && !props.order.disputeOpenedAt)
 </script>
 
 <style scoped>

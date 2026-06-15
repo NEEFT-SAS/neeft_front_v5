@@ -13,7 +13,8 @@
       <li v-for="deliverable in order.deliverables" :key="deliverable.title" :data-status="deliverable.status">
         <Icon :name="getDeliverableIcon(deliverable.status)" aria-hidden="true" />
         <span>
-          <strong>{{ deliverable.title }}</strong>
+          <a v-if="deliverable.url" :href="deliverable.url" target="_blank" rel="noopener noreferrer"><strong>{{ deliverable.title }}</strong></a>
+          <strong v-else>{{ deliverable.title }}</strong>
           <small>{{ deliverable.description }}</small>
         </span>
         <em>{{ getDeliverableLabel(deliverable.status) }}</em>

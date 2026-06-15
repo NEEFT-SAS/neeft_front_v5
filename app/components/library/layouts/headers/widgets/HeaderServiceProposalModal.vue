@@ -37,6 +37,14 @@
             searchable
           />
 
+          <CustomInputMultiselect
+            v-model="selectedCategoryIds"
+            name="serviceCategories"
+            label="Categories"
+            placeholder="Selectionne une ou plusieurs categories"
+            :options="categoryOptions"
+          />
+
           <CustomInputTextarea
             v-model="form.description"
             class="header-action-form__field--wide"
@@ -329,6 +337,7 @@ const galleryUploads = ref<MediaUploadState[]>([
   createMediaUploadState(),
 ])
 const selectedGameIds = ref<Array<string | number>>([])
+const selectedCategoryIds = ref<Array<string | number>>([])
 const services = ref<ServiceItem[]>([createServiceItem()])
 const serviceErrors = ref<ServiceItemErrors[]>([createServiceErrors()])
 
@@ -361,6 +370,15 @@ const gameOptions = computed(() => {
       icon: game.icon || undefined,
     }))
 })
+
+const categoryOptions = [
+  { value: 'coaching', label: 'Coaching', icon: 'lucide:graduation-cap' },
+  { value: 'analysis', label: 'Analyse', icon: 'lucide:chart-no-axes-combined' },
+  { value: 'creative', label: 'Creation', icon: 'lucide:palette' },
+  { value: 'management', label: 'Management', icon: 'lucide:briefcase-business' },
+  { value: 'community', label: 'Community', icon: 'lucide:users' },
+  { value: 'growth', label: 'Croissance', icon: 'lucide:trending-up' }
+]
 
 const resetMediaUploadState = (state: MediaUploadState) => {
   state.runId += 1
@@ -407,6 +425,7 @@ const resetCreateForm = () => {
   resetMediaUploadState(bannerUpload)
   galleryUploads.value = createGalleryUploadStates()
   selectedGameIds.value = []
+  selectedCategoryIds.value = []
   services.value = [createServiceItem()]
   serviceErrors.value = [createServiceErrors()]
 }
@@ -433,8 +452,9 @@ const hydrateEditForm = (service: MarketplaceServicePresenter) => {
   })
 
   selectedGameIds.value = (service.rscGames || []).map(game => game.id)
+  selectedCategoryIds.value = (service.rscCategories || []).map(category => category.id)
   services.value = (service.services || []).map((serviceLine) => ({
-    id: `service-${serviceIdSeed++}`,
+    id: serviceLine.id,
     name: serviceLine.name || '',
     description: serviceLine.description || '',
     price: String(serviceLine.price ?? ''),
@@ -651,6 +671,7 @@ const toMarketplaceServicePayload = ({ bannerUrl, images }: { bannerUrl: string,
     name: form.name.trim(),
     description: form.description.trim(),
     services: services.value.map(service => ({
+      ...(service.id && !service.id.startsWith('service-') ? { id: service.id } : {}),
       name: service.name.trim(),
       description: service.description.trim(),
       price: parsePrice(service.price)
@@ -661,6 +682,7 @@ const toMarketplaceServicePayload = ({ bannerUrl, images }: { bannerUrl: string,
   if (bannerUrl || isEditMode.value) payload.bannerUrl = bannerUrl || null
   if (images.length || isEditMode.value) payload.images = images
   if (gameIds.length || isEditMode.value) payload.gameIds = gameIds
+  if (selectedCategoryIds.value.length || isEditMode.value) payload.categoryIds = selectedCategoryIds.value.map(String)
 
   return payload
 }
@@ -717,7 +739,7 @@ onMounted(() => {
 .header-action-form {
   display: grid;
   gap: 28px;
-  min-width: min(760px, calc(100vw - 48px));
+  width: 100%;
 }
 
 .header-action-form__section {
@@ -825,10 +847,6 @@ onMounted(() => {
 }
 
 @media (max-width: 760px) {
-  .header-action-form {
-    min-width: 0;
-  }
-
   .header-action-form__section-head--inline,
   .header-action-form__grid,
   .header-action-form__media-grid {

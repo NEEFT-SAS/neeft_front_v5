@@ -48,6 +48,15 @@
           </header>
 
           <p>{{ review.comment }}</p>
+          <blockquote v-if="review.sellerResponse" class="marketplace-service-profile-reviews__response">
+            <strong>Reponse du vendeur</strong>
+            <span>{{ review.sellerResponse }}</span>
+          </blockquote>
+          <div v-if="canEdit(review) || isSeller" class="marketplace-service-profile-reviews__actions">
+            <CustomButton v-if="canEdit(review)" label="Modifier" theme="app" variant="ghost" color="secondary" size="sm" @click="editReview(review)" />
+            <CustomButton v-if="canEdit(review)" label="Supprimer" theme="app" variant="ghost" color="secondary" size="sm" @click="deleteReview(review)" />
+            <CustomButton v-if="isSeller" :label="review.sellerResponse ? 'Modifier la reponse' : 'Repondre'" theme="app" variant="ghost" color="secondary" size="sm" @click="respondToReview(review)" />
+          </div>
         </article>
       </li>
     </ul>
@@ -67,9 +76,37 @@ const props = defineProps<{
   reviewCount: number
   pending?: boolean
   error?: unknown
+  sellerProfileId?: string
 }>()
 
+const emit = defineEmits<{ changed: [] }>()
+
 const config = useConfig()
+const sessionStore = useSessionStore()
+const { $marketplaceAPI } = useNuxtApp()
+const currentProfileId = computed(() => String(sessionStore.me?.profileId || ''))
+const isSeller = computed(() => Boolean(currentProfileId.value && currentProfileId.value === props.sellerProfileId))
+const canEdit = (review: MarketplaceServiceReviewPresenter) => Boolean(currentProfileId.value && review.author?.id === currentProfileId.value)
+
+const editReview = async (review: MarketplaceServiceReviewPresenter) => {
+  const comment = window.prompt('Modifier votre avis', review.comment)?.trim()
+  if (!comment || comment === review.comment) return
+  await $marketplaceAPI.reviews.update(review.id, { comment })
+  emit('changed')
+}
+
+const deleteReview = async (review: MarketplaceServiceReviewPresenter) => {
+  if (!window.confirm('Supprimer definitivement cet avis ?')) return
+  await $marketplaceAPI.reviews.delete(review.id)
+  emit('changed')
+}
+
+const respondToReview = async (review: MarketplaceServiceReviewPresenter) => {
+  const response = window.prompt('Reponse publique du vendeur', review.sellerResponse || '')?.trim()
+  if (!response || response === review.sellerResponse) return
+  await $marketplaceAPI.reviews.respond(review.id, response)
+  emit('changed')
+}
 
 const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
@@ -188,6 +225,21 @@ const getAuthorAvatarAlt = (review: MarketplaceServiceReviewPresenter) => {
 .marketplace-service-profile-reviews__content p {
   overflow-wrap: anywhere;
   text-wrap: pretty;
+}
+
+.marketplace-service-profile-reviews__response {
+  display: grid;
+  gap: var(--profile-space-1);
+  margin: 0;
+  padding: var(--profile-space-2);
+  border-left: calc(var(--profile-border) * 3) solid var(--profile-color-border);
+  color: var(--profile-color-muted);
+}
+
+.marketplace-service-profile-reviews__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--profile-space-1);
 }
 
 .marketplace-service-profile-reviews__state--error {

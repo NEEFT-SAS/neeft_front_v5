@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import type { MarketplaceServiceListItemPresenter } from '~/plugins/marketplace-api'
+import type { MarketplaceServiceListItemPresenter, SearchMarketplaceServicesQuery } from '~/plugins/marketplace-api'
 import type { SearchFilterDefinition, SearchFilterOption, SearchFilterOptionValue, SearchFilterState, SearchFilterValue, SearchRangeValue } from '~/datas/searchs'
 
 definePageMeta({
@@ -137,10 +137,12 @@ const config = useConfig()
 useSeoMeta(config.marketplace.index.seo)
 
 const { $marketplaceAPI } = useNuxtApp()
+const marketplaceBackendQuery = ref<SearchMarketplaceServicesQuery>({ limit: 24, sort: 'RATING_DESC' })
 const { data: marketplaceServiceData, pending: isServicesPending, error: servicesError, refresh } = await useAsyncData('marketplace-services', async () => {
-  const response = await $marketplaceAPI.services.search({ limit: 100 })
+  const response = await $marketplaceAPI.services.search(marketplaceBackendQuery.value)
   return response.data
 })
+const { data: marketplaceCategories } = await useAsyncData('marketplace-service-categories', () => $marketplaceAPI.services.categories())
 
 const marketplaceServiceList = computed(() => marketplaceServiceData.value || [])
 const refreshMarketplaceServices = () => refresh()
@@ -182,6 +184,11 @@ const getServiceCategoryValues = (service: MarketplaceServiceListItemPresenter) 
 
 const marketplaceCategoryOptions = computed<SearchFilterOption[]>(() => {
   const categoryOptions = new Map<string, SearchFilterOption>()
+
+  ;(marketplaceCategories.value || []).forEach((category) => {
+    const value = getCategoryValue(category)
+    categoryOptions.set(value, { label: category.label, value, icon: category.icon || undefined })
+  })
 
   marketplaceServiceList.value.forEach((service) => {
     service.rscCategories?.forEach((category) => {
@@ -462,6 +469,23 @@ const visibleServices = computed(() => {
 
   return sortServices(filteredServices)
 })
+
+watch(selectedFilters, () => {
+  const queryValue = selectedFilters.query
+  const priceRange = getRangeFilterValue('price')
+  const ratingRange = getRangeFilterValue('rating')
+  const categories = selectedCategoryValues.value
+  marketplaceBackendQuery.value = {
+    limit: 24,
+    sort: 'RATING_DESC',
+    ...(typeof queryValue === 'string' && queryValue.trim() ? { q: queryValue.trim() } : {}),
+    ...(categories.length === 1 ? { category: categories[0] } : {}),
+    ...(toNumberOrNull(priceRange.min) !== null ? { minPrice: toNumberOrNull(priceRange.min)! } : {}),
+    ...(toNumberOrNull(priceRange.max) !== null ? { maxPrice: toNumberOrNull(priceRange.max)! } : {}),
+    ...(toNumberOrNull(ratingRange.min) !== null ? { minRating: toNumberOrNull(ratingRange.min)! } : {})
+  }
+  refresh()
+}, { deep: true })
 
 const resultsLabel = computed(() => {
   const total = visibleServices.value.length

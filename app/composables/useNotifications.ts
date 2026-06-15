@@ -67,8 +67,7 @@ export const useNotifications = () => {
       notifications.value = response.items
       unreadNotificationsCount.value = response.unreadCount
     } catch {
-      notifications.value = []
-      unreadNotificationsCount.value = 0
+      return
     } finally {
       isNotificationsLoading.value = false
     }

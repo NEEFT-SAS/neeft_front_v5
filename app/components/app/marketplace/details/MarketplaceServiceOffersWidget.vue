@@ -42,7 +42,7 @@
       variant="filled"
       color="primary"
       size="lg"
-      :disabled="!selectedOffer"
+      :disabled="!selectedOffer || !canOrder"
       @click="emit('order')"
     />
   </MarketplaceServiceSidebarPanel>
@@ -55,6 +55,7 @@ const props = defineProps<{
   offers: MarketplaceServiceLinePresenter[]
   selectedOfferId: string
   selectedOffer?: MarketplaceServiceLinePresenter
+  canOrder: boolean
 }>()
 
 const emit = defineEmits<{

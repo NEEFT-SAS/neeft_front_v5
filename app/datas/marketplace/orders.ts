@@ -1,4 +1,4 @@
-import type { MarketplaceOrderPresenter, MarketplaceOrderStatus as MarketplaceApiOrderStatus } from '~/plugins/marketplace-api'
+import type { MarketplaceOrderPresenter, MarketplaceOrderStatus as MarketplaceApiOrderStatus, MarketplaceServiceReviewPresenter } from '~/plugins/marketplace-api'
 import { formatMarketplacePrice, getMarketplaceServiceBySlug, type MarketplaceService } from './services'
 
 export type MarketplaceOrderRole = 'buyer' | 'seller'
@@ -8,6 +8,7 @@ export type MarketplaceTimelineState = 'done' | 'current' | 'upcoming'
 export type MarketplaceDeliverableStatus = 'ready' | 'pending' | 'approved'
 
 export type MarketplaceOrderParticipant = {
+  id?: string | null
   name: string
   slug?: string | null
   role: string
@@ -35,6 +36,9 @@ export type MarketplaceOrderDeliverable = {
   title: string
   description: string
   status: MarketplaceDeliverableStatus
+  url?: string
+  mimeType?: string
+  size?: number
 }
 
 export type MarketplaceOrderMessage = {
@@ -67,6 +71,7 @@ export type MarketplaceOrder = {
   nextActions: Record<MarketplaceOrderRole, MarketplaceOrderAction>
   milestones: MarketplaceOrderMilestone[]
   deliverables: MarketplaceOrderDeliverable[]
+  review: MarketplaceServiceReviewPresenter | null
   messages: MarketplaceOrderMessage[]
   disputeOpenedAt?: string | null
   disputeReason?: string | null
@@ -179,6 +184,7 @@ const mapMarketplaceOrderStatus = (status: MarketplaceApiOrderStatus, role: Mark
 }
 
 const getMarketplaceOrderParticipant = (profile: MarketplaceOrderPresenter['buyer'], fallback: string): MarketplaceOrderParticipant => ({
+  id: profile?.id || null,
   name: profile?.username || fallback,
   slug: profile?.slug || null,
   role: 'Profil Neeft',
@@ -238,6 +244,18 @@ const getMarketplaceOrderMilestones = (status: MarketplaceApiOrderStatus): Marke
 
 const getMarketplaceOrderDeliverables = (order: MarketplaceOrderPresenter): MarketplaceOrderDeliverable[] => {
   const status: MarketplaceDeliverableStatus = order.status === 'COMPLETED' ? 'approved' : order.status === 'DELIVERED' ? 'ready' : 'pending'
+  const latestDelivery = [...(order.deliveries || [])].sort((left, right) => right.version - left.version)[0]
+
+  if (latestDelivery?.files?.length) {
+    return latestDelivery.files.map(file => ({
+      title: file.fileName,
+      description: latestDelivery.message || `Livraison version ${latestDelivery.version}`,
+      status,
+      url: file.url,
+      mimeType: file.mimeType,
+      size: file.size
+    }))
+  }
 
   return [
     {
@@ -300,6 +318,7 @@ export const toMarketplaceOrder = (order: MarketplaceOrderPresenter, role: Marke
     },
     milestones: getMarketplaceOrderMilestones(order.status),
     deliverables: getMarketplaceOrderDeliverables(order),
+    review: order.review || null,
     messages: getMarketplaceOrderMessages(order, role),
     disputeOpenedAt: order.disputeOpenedAt,
     disputeReason: order.disputeReason,

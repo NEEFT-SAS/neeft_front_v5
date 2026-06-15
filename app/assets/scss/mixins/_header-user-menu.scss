@@ -53,7 +53,10 @@
   }
 
   .header-user-menu--wide {
+    width: min(calc(var(--unit) * 52), calc(100vw - (var(--space-2) * 2)));
     min-width: calc(var(--unit) * 45);
+    max-height: min(calc(var(--unit) * 70), calc(100vh - (var(--space-4) * 2)));
+    overflow-y: auto;
   }
 
   .header-user-menu__title,
@@ -71,8 +74,18 @@
   }
 
   .header-user-menu__empty {
-    padding: var(--header-user-actions-gap-2) var(--header-user-actions-gap-1);
+    display: grid;
+    min-height: calc(var(--unit) * 14);
+    place-items: center;
+    gap: var(--header-user-actions-gap-1);
+    padding: var(--header-user-actions-gap-2);
     color: var(--header-user-actions-color-muted);
+    text-align: center;
+  }
+
+  .header-user-menu__empty svg {
+    width: calc(var(--unit) * 3);
+    height: calc(var(--unit) * 3);
   }
 
   .header-user-menu__item {
@@ -133,18 +146,48 @@
 
   .header-user-menu__notification {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-columns: calc(var(--unit) * 4.5) minmax(0, 1fr);
     gap: var(--header-user-actions-gap-2);
+    align-items: start;
+    padding: var(--header-user-actions-gap-2);
+    border-bottom: var(--header-user-actions-border) solid var(--header-user-actions-color-line);
+  }
+
+  .header-user-menu__notification-icon {
+    display: inline-flex;
+    width: calc(var(--unit) * 4.5);
+    height: calc(var(--unit) * 4.5);
     align-items: center;
-    padding: var(--header-user-actions-gap-2) var(--header-user-actions-gap-1);
-    border-top: var(--header-user-actions-border) solid var(--header-user-actions-color-line);
+    justify-content: center;
+    border: var(--header-user-actions-border) solid color-mix(in oklch, var(--color-accent) 42%, var(--header-user-actions-color-line));
+    border-radius: var(--header-user-actions-radius);
+    background: color-mix(in oklch, var(--color-accent) 10%, var(--header-user-actions-color-transparent));
+    color: var(--color-accent);
+  }
+
+  .header-user-menu__notification-icon svg {
+    width: calc(var(--unit) * 2.25);
+    height: calc(var(--unit) * 2.25);
+  }
+
+  .header-user-menu__notification-logo {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+  }
+
+  .header-user-menu__notification-logo--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .header-user-menu__notification-copy {
     display: grid;
     gap: calc(var(--unit) * 0.35);
     min-width: 0;
-    white-space: nowrap;
+    white-space: normal;
   }
 
   .header-user-menu__notification-meta {
@@ -156,7 +199,6 @@
   }
 
   .header-user-menu__notification-copy span,
-  .header-user-menu__notification-copy small,
   .header-user-menu__notification-copy time {
     color: var(--header-user-actions-color-muted);
     font-size: var(--font-eyebrow);
@@ -176,10 +218,24 @@
     line-height: var(--header-user-actions-line);
   }
 
+  .header-user-menu__notification-copy p {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: var(--header-user-actions-color-muted);
+    font-size: var(--header-user-actions-font-size);
+    line-height: var(--line-body);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
   .header-user-menu__notification-actions {
     display: flex;
+    grid-column: 2;
     gap: var(--header-user-actions-gap-1);
     align-items: center;
+    justify-content: flex-end;
+    margin-top: calc(var(--unit) * 0.5);
   }
 
   .header-user-menu__action,
@@ -220,6 +276,11 @@
     padding: 0;
   }
 
+  .header-user-menu__dismiss svg {
+    width: calc(var(--unit) * 1.8);
+    height: calc(var(--unit) * 1.8);
+  }
+
   .header-user-menu__item:focus-visible,
   .header-user-menu__action:focus-visible,
   .header-user-menu__dismiss:focus-visible {
@@ -234,11 +295,16 @@
     }
 
     .header-user-menu__notification {
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: calc(var(--unit) * 4.5) minmax(0, 1fr);
     }
 
-    .header-user-menu__notification-copy {
-      white-space: normal;
+    .header-user-menu__notification-actions {
+      grid-column: 1 / -1;
+      justify-content: stretch;
+    }
+
+    .header-user-menu__action {
+      flex: 1;
     }
   }
 }

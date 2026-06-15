@@ -131,8 +131,9 @@
               :detail-title="content.detailTitle"
               :title-id="detailTitleId"
             />
-            <MarketplaceOrderTrackingWidget :order="selectedOrder" />
+            <MarketplaceOrderTrackingWidget :order="selectedOrder" :events="orderEvents || []" />
             <MarketplaceOrderDeliverablesWidget :order="selectedOrder" />
+            <MarketplaceOrderReviewWidget v-if="selectedOrder.review" :review="selectedOrder.review" />
           </div>
 
           <aside class="marketplace-orders__detail-sidebar" aria-label="Actions et intervenant de commande">
@@ -150,8 +151,12 @@
               @receipt="downloadOrderReceipt"
               @invoice="downloadOrderInvoice"
               @seller-update="openSellerUpdate"
+              @upload="pendingDeliveryOrder = $event"
               @dispute="openDispute"
               @refund="openRefundProposal"
+              @accept-refund="respondRefund($event, true)"
+              @reject-refund="respondRefund($event, false)"
+              @request-revision="pendingRevisionOrder = $event"
               @review="openReview"
             />
             <MarketplaceOrderCounterpartWidget
@@ -208,11 +213,32 @@
       @update:model-value="handleReviewToggle"
       @confirm="confirmReview"
     />
+    <MarketplaceOrderDeliveryModal
+      :model-value="Boolean(pendingDeliveryOrder)"
+      :order="pendingDeliveryOrder"
+      :processing="Boolean(actionOrderId)"
+      @update:model-value="value => { if (!value && !actionOrderId) pendingDeliveryOrder = null }"
+      @confirm="confirmDelivery"
+    />
+    <MarketplaceOrderRevisionModal
+      :model-value="Boolean(pendingRevisionOrder)"
+      :processing="Boolean(actionOrderId)"
+      @update:model-value="value => { if (!value && !actionOrderId) pendingRevisionOrder = null }"
+      @confirm="confirmRevision"
+    />
+    <MarketplaceOrderMessageModal
+      :model-value="Boolean(pendingMessageAction)"
+      :mode="pendingMessageAction?.mode || 'contact'"
+      :counterpart-name="pendingMessageAction?.counterpartName || ''"
+      :processing="Boolean(messageOrderId)"
+      @update:model-value="value => { if (!value && !messageOrderId) pendingMessageAction = null }"
+      @confirm="confirmOrderMessage"
+    />
   </main>
 </template>
 
 <script setup lang="ts">
-import type { CreateMarketplaceServiceReviewInput, MarketplaceOrderPaymentDocumentPresenter, MarketplaceOrderStatus as MarketplaceApiOrderStatus, OpenMarketplaceOrderDisputeInput, ProposeMarketplaceOrderRefundInput } from '~/plugins/marketplace-api'
+import type { CreateMarketplaceOrderDeliveryInput, CreateMarketplaceServiceReviewInput, MarketplaceOrderPaymentDocumentPresenter, MarketplaceOrderStatus as MarketplaceApiOrderStatus, OpenMarketplaceOrderDisputeInput, ProposeMarketplaceOrderRefundInput } from '~/plugins/marketplace-api'
 import { marketplaceOrderRoleContent, marketplaceOrderStatusFilters, marketplaceOrderStatusMeta, toMarketplaceOrder, toMarketplaceOrders, type MarketplaceOrder, type MarketplaceOrderRole, type MarketplaceOrderStatus, type MarketplaceOrderStatusFilter } from '~/datas/marketplace/orders'
 
 const props = withDefaults(defineProps<{
@@ -225,7 +251,7 @@ const props = withDefaults(defineProps<{
 })
 
 const marketplaceToast = useMarketplaceToasts()
-const { $marketplaceAPI } = useNuxtApp()
+const { $marketplaceAPI, $messagingAPI } = useNuxtApp()
 const route = useRoute()
 const generatedId = useId()
 const detailTitleId = `marketplace-orders-detail-title-${generatedId}`
@@ -237,10 +263,14 @@ const documentActionId = ref('')
 const disputeOrderId = ref('')
 const refundOrderId = ref('')
 const reviewOrderId = ref('')
+const messageOrderId = ref('')
 const pendingStatusAction = ref<{ order: MarketplaceOrder; nextStatus: MarketplaceApiOrderStatus } | null>(null)
 const pendingDisputeOrder = ref<MarketplaceOrder | null>(null)
 const pendingRefundOrder = ref<MarketplaceOrder | null>(null)
 const pendingReviewOrder = ref<MarketplaceOrder | null>(null)
+const pendingDeliveryOrder = ref<MarketplaceOrder | null>(null)
+const pendingRevisionOrder = ref<MarketplaceOrder | null>(null)
+const pendingMessageAction = ref<{ order: MarketplaceOrder; mode: 'contact' | 'update'; counterpartName: string } | null>(null)
 
 const content = computed(() => marketplaceOrderRoleContent[props.role])
 const listPath = computed(() => props.role === 'buyer' ? '/marketplace/orders' : '/marketplace/sales')
@@ -268,8 +298,13 @@ const fetchMarketplaceOrders = async () => {
 }
 
 const { data: marketplaceOrders, pending: isOrdersPending, error: ordersError, refresh: refreshOrders } = await useAsyncData(marketplaceOrdersDataKey.value, fetchMarketplaceOrders, { watch: [() => props.role, () => props.view, () => props.orderId, serviceIdFilter] })
+const { data: orderEvents, refresh: refreshOrderEvents } = await useAsyncData(
+  `marketplace-order-events-${props.orderId || 'list'}`,
+  () => props.view === 'detail' && props.orderId ? $marketplaceAPI.orders.getEvents(props.orderId) : Promise.resolve([]),
+  { watch: [() => props.view, () => props.orderId] }
+)
 const orders = computed(() => marketplaceOrders.value || [])
-const refreshMarketplaceOrders = () => refreshOrders()
+const refreshMarketplaceOrders = () => Promise.all([refreshOrders(), refreshOrderEvents()])
 
 const normalizeSearch = (value: string) => value
   .toLocaleLowerCase('fr-FR')
@@ -381,7 +416,7 @@ const runPrimaryAction = async (order: MarketplaceOrder) => {
   await updateOrderStatus(order, nextStatus)
 }
 
-const updateOrderStatus = async (order: MarketplaceOrder, nextStatus: MarketplaceApiOrderStatus) => {
+const updateOrderStatus = async (order: MarketplaceOrder, nextStatus: MarketplaceApiOrderStatus, reviewInput?: CreateMarketplaceServiceReviewInput) => {
   const action = getStatusActionFeedback(order, nextStatus)
   actionOrderId.value = order.id
 
@@ -392,10 +427,23 @@ const updateOrderStatus = async (order: MarketplaceOrder, nextStatus: Marketplac
       await $marketplaceAPI.orders.updateBuyerStatus(order.id, { status: nextStatus, note: getStatusNote(nextStatus) })
     }
 
-    await refreshOrders()
+    if (reviewInput) {
+      try {
+        await $marketplaceAPI.orders.createReview(order.id, reviewInput)
+      } catch {
+        await refreshMarketplaceOrders()
+        pendingStatusAction.value = null
+        marketplaceToast.orders.statusUpdated(order.id, action.ctaLabel, action.icon)
+        marketplaceToast.orders.reviewFailed()
+        return
+      }
+    }
+
+    await refreshMarketplaceOrders()
     pendingStatusAction.value = null
 
     marketplaceToast.orders.statusUpdated(order.id, action.ctaLabel, action.icon)
+    if (reviewInput) marketplaceToast.orders.reviewCreated(order.id)
   } catch {
     marketplaceToast.orders.statusUpdateFailed()
   } finally {
@@ -413,13 +461,17 @@ const handleStatusConfirmationToggle = (value: boolean) => {
   }
 }
 
-const confirmPendingStatusAction = async () => {
+const confirmPendingStatusAction = async (reviewInput?: CreateMarketplaceServiceReviewInput) => {
   if (!pendingStatusAction.value) return
-  await updateOrderStatus(pendingStatusAction.value.order, pendingStatusAction.value.nextStatus)
+  await updateOrderStatus(pendingStatusAction.value.order, pendingStatusAction.value.nextStatus, reviewInput)
 }
 
 const openOrderContact = (order: MarketplaceOrder) => {
-  marketplaceToast.orders.contactOpened(order.id, props.role === 'buyer' ? order.seller.name : order.buyer.name)
+  pendingMessageAction.value = {
+    order,
+    mode: 'contact',
+    counterpartName: props.role === 'buyer' ? order.seller.name : order.buyer.name
+  }
 }
 
 const getOrderPaymentDocuments = (order: MarketplaceOrder) => {
@@ -501,7 +553,28 @@ const downloadOrderInvoice = async (order: MarketplaceOrder) => {
 }
 
 const openSellerUpdate = (order: MarketplaceOrder) => {
-  marketplaceToast.orders.sellerUpdateOpened(order.id)
+  pendingMessageAction.value = { order, mode: 'update', counterpartName: order.buyer.name }
+}
+
+const confirmOrderMessage = async (content: string) => {
+  if (!pendingMessageAction.value) return
+
+  const { order, mode } = pendingMessageAction.value
+  const counterpart = props.role === 'buyer' ? order.seller : order.buyer
+  if (!counterpart.id) return
+
+  messageOrderId.value = order.id
+  try {
+    const result = await $messagingAPI.startConversation({
+      targetType: 'PLAYER',
+      targetId: counterpart.id,
+      content: mode === 'update' ? `[Commande ${order.id}] ${content}` : content
+    })
+    pendingMessageAction.value = null
+    await navigateTo({ path: '/messages', query: { conversation: result.conversationId } })
+  } finally {
+    messageOrderId.value = ''
+  }
 }
 
 const openDispute = (order: MarketplaceOrder) => {
@@ -532,7 +605,7 @@ const confirmDispute = async (input: OpenMarketplaceOrderDisputeInput) => {
       await $marketplaceAPI.orders.openSellerDispute(order.id, input)
     }
 
-    await refreshOrders()
+    await refreshMarketplaceOrders()
     pendingDisputeOrder.value = null
     marketplaceToast.orders.disputeOpened(order.id)
   } catch {
@@ -565,13 +638,62 @@ const confirmRefundProposal = async (input: ProposeMarketplaceOrderRefundInput) 
 
   try {
     await $marketplaceAPI.orders.proposeSellerRefund(order.id, input)
-    await refreshOrders()
+    await refreshMarketplaceOrders()
     pendingRefundOrder.value = null
     marketplaceToast.orders.refundProposed(order.id)
   } catch {
     marketplaceToast.orders.refundProposalFailed()
   } finally {
     refundOrderId.value = ''
+  }
+}
+
+const respondRefund = async (order: MarketplaceOrder, accepted: boolean) => {
+  refundOrderId.value = order.id
+  try {
+    await $marketplaceAPI.orders.respondBuyerRefund(order.id, accepted)
+    await refreshMarketplaceOrders()
+    marketplaceToast.orders.statusUpdated(
+      order.id,
+      accepted ? 'Remboursement accepte' : 'Remboursement refuse',
+      accepted ? 'lucide:circle-check' : 'lucide:x',
+    )
+  } catch {
+    marketplaceToast.orders.refundProposalFailed()
+  } finally {
+    refundOrderId.value = ''
+  }
+}
+
+const confirmDelivery = async (input: CreateMarketplaceOrderDeliveryInput) => {
+  if (!pendingDeliveryOrder.value) return
+  const order = pendingDeliveryOrder.value
+  actionOrderId.value = order.id
+  try {
+    await $marketplaceAPI.orders.createDelivery(order.id, input)
+    await refreshMarketplaceOrders()
+    pendingDeliveryOrder.value = null
+    marketplaceToast.orders.statusUpdated(order.id, 'Fichiers ajoutes', 'lucide:upload')
+  } catch {
+    marketplaceToast.orders.statusUpdateFailed()
+  } finally {
+    actionOrderId.value = ''
+  }
+}
+
+const confirmRevision = async (reason: string) => {
+  if (!pendingRevisionOrder.value) return
+  const order = pendingRevisionOrder.value
+  actionOrderId.value = order.id
+  try {
+    await $marketplaceAPI.orders.requestRevision(order.id, reason)
+    await refreshMarketplaceOrders()
+    pendingRevisionOrder.value = null
+    marketplaceToast.orders.statusUpdated(order.id, 'Correction demandee', 'lucide:rotate-ccw')
+  } catch {
+    marketplaceToast.orders.statusUpdateFailed()
+  } finally {
+    actionOrderId.value = ''
   }
 }
 
@@ -593,7 +715,7 @@ const confirmReview = async (input: CreateMarketplaceServiceReviewInput) => {
 
   try {
     await $marketplaceAPI.orders.createReview(order.id, input)
-    await refreshOrders()
+    await refreshMarketplaceOrders()
     pendingReviewOrder.value = null
     marketplaceToast.orders.reviewCreated(order.id)
   } catch {

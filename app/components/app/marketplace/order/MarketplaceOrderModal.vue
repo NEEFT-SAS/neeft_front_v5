@@ -240,11 +240,6 @@ const buildOrderInput = () => ({
   confirmed: true,
 })
 
-const buildOrderConfirmationInput = () => {
-  const { confirmed: _confirmed, ...input } = buildOrderInput()
-  return input
-}
-
 const createPaymentIntentIfNeeded = async () => {
   if (paymentIntent.value) {
     return paymentIntent.value
@@ -282,8 +277,6 @@ const handlePaymentSucceeded = async (paymentIntentId: string) => {
   try {
     confirmedOrder.value = await $marketplaceAPI.orders.confirmPaymentForService({
       paymentIntentId: confirmedPaymentIntentId,
-      serviceId: props.service.id,
-      ...buildOrderConfirmationInput(),
     })
   } catch {
     marketplaceToast.orders.paymentFailed('Le paiement est confirme par Stripe, mais la commande n a pas pu etre synchronisee.')
@@ -319,7 +312,7 @@ watch(
 .marketplace-order-modal {
   display: grid;
   gap: 20px;
-  min-width: min(640px, calc(100vw - 48px));
+  width: 100%;
 }
 
 .marketplace-order-modal__steps {
@@ -541,10 +534,6 @@ watch(
 }
 
 @media (max-width: 760px) {
-  .marketplace-order-modal {
-    min-width: 0;
-  }
-
   .marketplace-order-modal__summary {
     grid-template-columns: 1fr;
   }

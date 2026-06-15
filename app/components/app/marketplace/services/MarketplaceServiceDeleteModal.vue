@@ -71,7 +71,7 @@ const confirmDelete = () => {
 .marketplace-service-delete-modal {
   display: grid;
   gap: 14px;
-  min-width: min(420px, calc(100vw - 48px));
+  width: 100%;
 }
 
 .marketplace-service-delete-modal__text {
@@ -94,9 +94,4 @@ const confirmDelete = () => {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 520px) {
-  .marketplace-service-delete-modal {
-    min-width: 0;
-  }
-}
 </style>

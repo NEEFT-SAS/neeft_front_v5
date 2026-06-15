@@ -26,6 +26,8 @@
       :review-count="detail.reviewCount"
       :pending="detail.areReviewsPending"
       :error="detail.reviewsError"
+      :seller-profile-id="detail.service.sellerProfileId"
+      @changed="detail.refreshReviews"
     />
 
     <template #sidebar>
@@ -33,6 +35,7 @@
         v-model:selected-offer-id="detail.selectedOfferId"
         :offers="detail.service.services || []"
         :selected-offer="detail.selectedOffer"
+        :can-order="detail.canOrder"
         @order="detail.openOrderModal"
       />
 
@@ -44,7 +47,7 @@
 
     <template #overlays>
       <MarketplaceOrderModal
-        v-if="detail.selectedOffer"
+        v-if="detail.selectedOffer && detail.canOrder"
         v-model="detail.isOrderModalOpen"
         :service="detail.service"
         :offer="detail.selectedOffer"
@@ -61,22 +64,25 @@
         :deleting="detail.isDeletingService"
         @confirm="detail.deleteService"
       />
+      <MarketplaceOrderMessageModal
+        v-model="detail.isContactModalOpen"
+        mode="contact"
+        :counterpart-name="detail.service.seller?.username || 'vendeur'"
+        :processing="detail.isContacting"
+        @confirm="detail.sendContactMessage"
+      />
     </template>
   </MarketplaceServiceDetailLayout>
 </template>
 
 <script setup lang="ts">
-import type { MarketplaceProfilePresenter, MarketplaceServiceLinePresenter, MarketplaceServicePresenter } from '~/plugins/marketplace-api'
+import type { MarketplaceServiceLinePresenter, MarketplaceServicePresenter } from '~/plugins/marketplace-api'
 
 const REVIEWS_LIMIT = 8
 const SERVICE_NOT_FOUND_MESSAGE = 'Service marketplace introuvable'
 
 const normalizeRouteParam = (value: unknown) => {
   return String(Array.isArray(value) ? value[0] || '' : value || '')
-}
-
-const getSellerName = (seller: MarketplaceProfilePresenter | null | undefined) => {
-  return seller?.username || 'Vendeur marketplace'
 }
 
 const getShortDescription = (description: string) => {
@@ -94,7 +100,7 @@ const route = useRoute()
 const marketplaceToast = useMarketplaceToasts()
 const config = useConfig()
 const sessionStore = useSessionStore()
-const { $marketplaceAPI } = useNuxtApp()
+const { $marketplaceAPI, $messagingAPI } = useNuxtApp()
 const routeSlug = normalizeRouteParam(route.params.slug)
 
 if (!routeSlug) {
@@ -118,6 +124,8 @@ const isOrderModalOpen = ref(false)
 const isServiceEditOpen = ref(false)
 const isDeleteServiceOpen = ref(false)
 const isDeletingService = ref(false)
+const isContactModalOpen = ref(false)
+const isContacting = ref(false)
 
 const reviewsResponse = await useAsyncData(`marketplace-service-reviews-${routeSlug}`, () => {
   return $marketplaceAPI.reviews.listForService(routeSlug, { limit: REVIEWS_LIMIT })
@@ -126,6 +134,13 @@ const reviewsResponse = await useAsyncData(`marketplace-service-reviews-${routeS
 const reviews = ref(reviewsResponse.data.value?.data || [])
 const reviewRating = ref(Number(reviewsResponse.data.value?.meta?.ratingAvg ?? service.value.ratingAvg ?? 0))
 const reviewCount = ref(Number(reviewsResponse.data.value?.meta?.total ?? service.value.ratingCount ?? 0))
+
+const refreshReviews = async () => {
+  await reviewsResponse.refresh()
+  reviews.value = reviewsResponse.data.value?.data || []
+  reviewRating.value = Number(reviewsResponse.data.value?.meta?.ratingAvg ?? 0)
+  reviewCount.value = Number(reviewsResponse.data.value?.meta?.total ?? 0)
+}
 
 const syncSelectedOffer = () => {
   const offers = service.value.services || []
@@ -137,22 +152,45 @@ const syncSelectedOffer = () => {
 }
 
 const syncOwner = () => {
+  const currentProfileId = String(sessionStore.me?.profileId || '')
+  const sellerProfileId = String(service.value.sellerProfileId || '')
   const sellerSlug = service.value.seller?.slug
-  isOwner.value = Boolean(sessionStore.isLoggedIn && sellerSlug && sessionStore.mySlug && sellerSlug === sessionStore.mySlug)
+  const ownsByProfileId = Boolean(currentProfileId && sellerProfileId && currentProfileId === sellerProfileId)
+  const ownsBySlug = Boolean(sellerSlug && sessionStore.mySlug && sellerSlug === sessionStore.mySlug)
+
+  isOwner.value = Boolean(sessionStore.isLoggedIn && (ownsByProfileId || ownsBySlug))
 }
+
+const canOrder = computed(() => sessionStore.isLoggedIn && !isOwner.value)
 
 syncSelectedOffer()
 syncOwner()
 
 watch(selectedOfferId, syncSelectedOffer)
-watch(() => [sessionStore.isLoggedIn, sessionStore.mySlug, service.value.seller?.slug], syncOwner)
+watch(() => [sessionStore.isLoggedIn, sessionStore.me?.profileId, sessionStore.mySlug, service.value.sellerProfileId, service.value.seller?.slug], syncOwner)
 
 const requestQuote = () => {
-  marketplaceToast.services.contactRequestSent(getSellerName(service.value.seller), service.value.name)
+  isContactModalOpen.value = true
+}
+
+const sendContactMessage = async (content: string) => {
+  if (!service.value.sellerProfileId) return
+  isContacting.value = true
+  try {
+    const conversation = await $messagingAPI.startConversation({
+      targetType: 'PLAYER',
+      targetId: service.value.sellerProfileId,
+      content
+    })
+    isContactModalOpen.value = false
+    await navigateTo({ path: '/messages', query: { conversation: conversation.conversationId } })
+  } finally {
+    isContacting.value = false
+  }
 }
 
 const openOrderModal = () => {
-  if (!selectedOffer.value) return
+  if (!selectedOffer.value || !canOrder.value) return
 
   isOrderModalOpen.value = true
 }
@@ -229,6 +267,7 @@ const detail = reactive({
   service,
   selectedOfferId,
   selectedOffer,
+  canOrder,
   reviews,
   reviewRating,
   reviewCount,
@@ -237,12 +276,16 @@ const detail = reactive({
   isServiceEditOpen,
   isDeleteServiceOpen,
   isDeletingService,
+  isContactModalOpen,
+  isContacting,
   areReviewsPending: reviewsResponse.pending,
   reviewsError: reviewsResponse.error,
   requestQuote,
+  sendContactMessage,
   openOrderModal,
   shareService,
   handleServiceSaved,
-  deleteService
+  deleteService,
+  refreshReviews
 })
 </script>

@@ -264,7 +264,9 @@ onBeforeUnmount(() => {
   --modal-control-bg: color-mix(in oklch, var(--color-bg-soft) 86%, var(--color-transparent));
   --modal-control-hover-bg: color-mix(in oklch, var(--color-bg-soft-hover) 88%, var(--color-accent));
   width: min(100%, var(--modal-width));
+  min-width: 0;
   max-height: var(--modal-max-height);
+  max-width: 100%;
   border: var(--border) solid var(--modal-border);
   border-radius: var(--radius);
   background-color: var(--modal-bg);
@@ -288,6 +290,7 @@ onBeforeUnmount(() => {
 }
 
 .cus-modal__header {
+  min-width: 0;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: var(--modal-gap);
   padding: var(--modal-padding);
@@ -312,6 +315,7 @@ onBeforeUnmount(() => {
 }
 
 .cus-modal__heading {
+  min-width: 0;
   gap: calc(var(--unit) * 0.5);
 
   @apply grid;
@@ -360,16 +364,26 @@ onBeforeUnmount(() => {
 
 .cus-modal__body {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   padding: var(--modal-padding);
   color: var(--color-muted);
   font-size: var(--font-body);
   line-height: var(--line-base);
 
+  overflow-x: hidden;
+
   @apply overflow-y-auto;
 }
 
+.cus-modal__body > * {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .cus-modal__footer {
+  min-width: 0;
   gap: var(--space-2);
   padding: var(--modal-padding);
   border-block-start: var(--border) solid var(--modal-border);

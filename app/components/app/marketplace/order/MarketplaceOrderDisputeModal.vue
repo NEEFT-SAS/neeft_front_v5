@@ -113,7 +113,7 @@ const confirmDispute = () => {
 .marketplace-order-dispute-modal {
   display: grid;
   gap: 14px;
-  min-width: min(460px, calc(100vw - 48px));
+  width: 100%;
 }
 
 .marketplace-order-dispute-modal__summary {
@@ -140,9 +140,4 @@ const confirmDispute = () => {
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 520px) {
-  .marketplace-order-dispute-modal {
-    min-width: 0;
-  }
-}
 </style>

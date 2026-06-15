@@ -28,6 +28,36 @@
       <p class="marketplace-order-status-confirm__notice">
         {{ notice }}
       </p>
+
+      <section v-if="targetStatus === 'COMPLETED'" class="marketplace-order-status-confirm__review">
+        <div class="marketplace-order-status-confirm__review-heading">
+          <strong>Noter le vendeur</strong>
+          <span>La note sera publiee avec la validation de la commande.</span>
+        </div>
+
+        <CustomInputRating
+          v-model="rating"
+          name="marketplaceOrderValidationRating"
+          label="Note"
+          :max="5"
+          :disabled="processing"
+          :error-message="ratingError"
+          required
+        />
+
+        <CustomInputTextarea
+          v-model="comment"
+          label="Avis"
+          label-position="inside"
+          size="sm"
+          :rows="4"
+          :max-length="2000"
+          show-count
+          resize="vertical"
+          :disabled="processing"
+          :error-message="commentError"
+        />
+      </section>
     </div>
 
     <template #footer>
@@ -47,7 +77,7 @@
         variant="filled"
         color="primary"
         :disabled="processing || !order"
-        @click="emit('confirm')"
+        @click="confirmStatus"
       />
     </template>
   </CustomModal>
@@ -55,7 +85,7 @@
 
 <script setup lang="ts">
 import { getMarketplaceOrderAmountLabel, type MarketplaceOrder } from '~/datas/marketplace/orders'
-import type { MarketplaceOrderStatus } from '~/plugins/marketplace-api'
+import type { CreateMarketplaceServiceReviewInput, MarketplaceOrderStatus } from '~/plugins/marketplace-api'
 
 const props = defineProps<{
   modelValue: boolean
@@ -66,10 +96,47 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  confirm: []
+  confirm: [review?: CreateMarketplaceServiceReviewInput]
 }>()
 
 const amountLabel = computed(() => props.order ? getMarketplaceOrderAmountLabel(props.order) : '')
+const rating = ref(5)
+const comment = ref('')
+const ratingError = ref('')
+const commentError = ref('')
+
+watch(() => props.modelValue, (isOpen) => {
+  if (!isOpen) return
+  rating.value = 5
+  comment.value = ''
+  ratingError.value = ''
+  commentError.value = ''
+})
+
+watch([rating, comment], () => {
+  ratingError.value = ''
+  commentError.value = ''
+})
+
+const confirmStatus = () => {
+  if (props.targetStatus !== 'COMPLETED') {
+    emit('confirm')
+    return
+  }
+
+  const normalizedComment = comment.value.trim()
+  if (!Number.isFinite(Number(rating.value)) || rating.value < 1 || rating.value > 5) {
+    ratingError.value = 'Choisis une note entre 1 et 5.'
+    return
+  }
+
+  if (normalizedComment.length < 3) {
+    commentError.value = 'Ajoute un avis court.'
+    return
+  }
+
+  emit('confirm', { rating: rating.value, comment: normalizedComment })
+}
 
 const modalTitle = computed(() => {
   if (props.targetStatus === 'REJECTED') return 'Refuser la demande'
@@ -120,7 +187,7 @@ const notice = computed(() => {
 .marketplace-order-status-confirm {
   display: grid;
   gap: 14px;
-  min-width: min(460px, calc(100vw - 48px));
+  width: 100%;
 }
 
 .marketplace-order-status-confirm__summary {
@@ -160,9 +227,29 @@ const notice = computed(() => {
   line-height: 1.5;
 }
 
-@media (max-width: 520px) {
-  .marketplace-order-status-confirm {
-    min-width: 0;
-  }
+.marketplace-order-status-confirm__review {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--modal-border);
+}
+
+.marketplace-order-status-confirm__review-heading {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.marketplace-order-status-confirm__review-heading strong {
+  color: var(--modal-text);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.marketplace-order-status-confirm__review-heading span {
+  color: var(--modal-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 </style>

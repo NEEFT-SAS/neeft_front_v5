@@ -144,6 +144,14 @@ export function useFirebaseUpload() {
     return await uploadFileToPath(file, path)
   }
 
+  const uploadMarketplaceOrderFile = async (orderId: string, file: File) => {
+    const safeOrderId = sanitizePathSegment(orderId) || 'order'
+    const safeName = sanitizePathSegment(file.name.replace(/\.[^.]+$/, '')) || 'file'
+    const extension = resolveExtension(file)
+    const path = `marketplace/orders/${safeOrderId}/deliveries/${safeName}-${createUploadId()}.${extension}`
+    return await uploadFileToPath(file, path)
+  }
+
   const deleteFileByUrl = async (downloadUrl: string): Promise<void> => {
     const storage = ensureStorage($fireStorage)
     const fileRef = storageRef(storage, downloadUrl)
@@ -161,6 +169,7 @@ export function useFirebaseUpload() {
     isConfigured,
     uploadFileToPath,
     uploadMarketplaceServiceImage,
+    uploadMarketplaceOrderFile,
     deleteFileByUrl,
     clearUploads
   }
