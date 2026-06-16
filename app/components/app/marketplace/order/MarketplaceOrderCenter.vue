@@ -133,7 +133,14 @@
             />
             <MarketplaceOrderTrackingWidget :order="selectedOrder" :events="orderEvents || []" />
             <MarketplaceOrderDeliverablesWidget :order="selectedOrder" />
-            <MarketplaceOrderReviewWidget v-if="selectedOrder.review" :review="selectedOrder.review" />
+            <MarketplaceServiceReviewsWidget
+              v-if="selectedOrder.review"
+              :reviews="[selectedOrder.review]"
+              :rating="selectedOrder.review.rating"
+              :review-count="1"
+              :seller-profile-id="selectedOrder.seller.id || undefined"
+              @changed="refreshMarketplaceOrders"
+            />
           </div>
 
           <aside class="marketplace-orders__detail-sidebar" aria-label="Actions et intervenant de commande">
