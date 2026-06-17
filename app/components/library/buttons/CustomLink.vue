@@ -6,6 +6,7 @@
     :data-color="props.color"
     :data-shape="props.shape"
     :data-size="props.size"
+    :data-icon-only="isIconOnly ? 'true' : 'false'"
     :aria-disabled="props.disabled ? 'true' : undefined"
     :tabindex="props.disabled ? -1 : undefined"
     :to="props.to"
@@ -14,7 +15,7 @@
     @click="onLinkClick"
   >
     <Icon v-if="props.leftIcon" class="cus-link__icon cus-link__icon--left" :name="props.leftIcon" aria-hidden="true" />
-    <span class="cus-link__label">
+    <span v-if="props.label || hasDefaultSlot" class="cus-link__label">
       <slot>{{ props.label }}</slot>
     </span>
     <Icon v-if="props.rightIcon" class="cus-link__icon cus-link__icon--right" :name="props.rightIcon" aria-hidden="true" />
@@ -22,6 +23,8 @@
 </template>
 
 <script setup lang="ts">
+const slots = useSlots()
+
 const props = defineProps({
   label: { type: String, default: '' },
   leftIcon: { type: String, default: '' },
@@ -30,7 +33,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'filled',
-    validator: (value: string) => ['filled', 'outlined'].includes(value)
+    validator: (value: string) => ['filled', 'outlined', 'ghost'].includes(value)
   },
   color: {
     type: String,
@@ -55,6 +58,11 @@ const props = defineProps({
   target: { type: String, default: '' },
   rel: { type: String, default: '' },
   disabled: { type: Boolean, default: false }
+})
+
+const hasDefaultSlot = computed(() => Boolean(slots.default))
+const isIconOnly = computed(() => {
+  return !props.label && !hasDefaultSlot.value && Boolean(props.leftIcon || props.rightIcon)
 })
 
 const linkRel = computed(() => {
@@ -129,6 +137,24 @@ const onLinkClick = (event: MouseEvent) => {
   --action-secondary-outlined-disabled-bg: var(--color-transparent);
   --action-secondary-outlined-disabled-text: var(--action-disabled-text);
   --action-secondary-outlined-disabled-border: var(--action-disabled-border);
+  --action-primary-ghost-bg: var(--color-transparent);
+  --action-primary-ghost-text: var(--landing-color-header-text);
+  --action-primary-ghost-border: var(--color-transparent);
+  --action-primary-ghost-hover-bg: color-mix(in oklch, var(--color-accent) 14%, var(--color-transparent));
+  --action-primary-ghost-hover-text: var(--landing-color-header-strong);
+  --action-primary-ghost-hover-border: color-mix(in oklch, var(--color-accent) 24%, var(--color-transparent));
+  --action-primary-ghost-disabled-bg: var(--action-disabled-bg);
+  --action-primary-ghost-disabled-text: var(--action-disabled-text);
+  --action-primary-ghost-disabled-border: var(--color-transparent);
+  --action-secondary-ghost-bg: var(--color-transparent);
+  --action-secondary-ghost-text: var(--color-text);
+  --action-secondary-ghost-border: var(--color-transparent);
+  --action-secondary-ghost-hover-bg: color-mix(in oklch, var(--color-bg-soft-hover) 72%, var(--color-transparent));
+  --action-secondary-ghost-hover-text: var(--color-text);
+  --action-secondary-ghost-hover-border: color-mix(in oklch, var(--color-line) 24%, var(--color-transparent));
+  --action-secondary-ghost-disabled-bg: var(--action-disabled-bg);
+  --action-secondary-ghost-disabled-text: var(--action-disabled-text);
+  --action-secondary-ghost-disabled-border: var(--color-transparent);
   --action-bg: var(--action-primary-filled-bg);
   --action-text: var(--action-primary-filled-text);
   --action-border: var(--action-primary-filled-border);
@@ -229,6 +255,32 @@ const onLinkClick = (event: MouseEvent) => {
   --action-current-disabled-border: var(--action-secondary-outlined-disabled-border);
 }
 
+.cus-link[data-action-theme='landing'][data-color='primary'][data-variant='ghost'],
+.cus-link[data-action-theme='app'][data-color='primary'][data-variant='ghost'] {
+  --action-bg: var(--action-primary-ghost-bg);
+  --action-text: var(--action-primary-ghost-text);
+  --action-border: var(--action-primary-ghost-border);
+  --action-hover-bg: var(--action-primary-ghost-hover-bg);
+  --action-hover-text: var(--action-primary-ghost-hover-text);
+  --action-hover-border: var(--action-primary-ghost-hover-border);
+  --action-current-disabled-bg: var(--action-primary-ghost-disabled-bg);
+  --action-current-disabled-text: var(--action-primary-ghost-disabled-text);
+  --action-current-disabled-border: var(--action-primary-ghost-disabled-border);
+}
+
+.cus-link[data-action-theme='landing'][data-color='secondary'][data-variant='ghost'],
+.cus-link[data-action-theme='app'][data-color='secondary'][data-variant='ghost'] {
+  --action-bg: var(--action-secondary-ghost-bg);
+  --action-text: var(--action-secondary-ghost-text);
+  --action-border: var(--action-secondary-ghost-border);
+  --action-hover-bg: var(--action-secondary-ghost-hover-bg);
+  --action-hover-text: var(--action-secondary-ghost-hover-text);
+  --action-hover-border: var(--action-secondary-ghost-hover-border);
+  --action-current-disabled-bg: var(--action-secondary-ghost-disabled-bg);
+  --action-current-disabled-text: var(--action-secondary-ghost-disabled-text);
+  --action-current-disabled-border: var(--action-secondary-ghost-disabled-border);
+}
+
 .cus-link[data-shape='circle'] {
   border-radius: var(--radius-round);
 }
@@ -259,6 +311,19 @@ const onLinkClick = (event: MouseEvent) => {
   min-width: var(--action-width-lg);
   padding: var(--action-padding-y-lg) var(--action-padding-x-lg);
   font-size: var(--action-font-lg);
+}
+
+.cus-link[data-icon-only='true'] {
+  min-width: var(--action-height-md);
+  padding-inline: 0;
+}
+
+.cus-link[data-icon-only='true'][data-size='sm'] {
+  min-width: var(--action-height-sm);
+}
+
+.cus-link[data-icon-only='true'][data-size='lg'] {
+  min-width: var(--action-height-lg);
 }
 
 .cus-link:not([aria-disabled='true']):hover {

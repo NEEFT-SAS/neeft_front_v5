@@ -6,6 +6,9 @@
     </NuxtLayout>
     <CustomModalProvider />
     <CustomToastProvider />
+    <ClientOnly>
+      <FloatingMessenger />
+    </ClientOnly>
   </div>
 </template>
 
